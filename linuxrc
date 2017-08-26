@@ -460,7 +460,7 @@ for x in `cat /tmp/modules`; do
        if [ "$_M" == "1" ]; then mount $LODEV /memory/images/$NAME 2>/dev/null; fi
     fi
     if [ $? -eq 0 ]; then
-	  echo "  $m  $NAME"; LOWERDIR="$LOWERDIR:/memory/images/$NAME"
+	  echo "  $m  $NAME"; LOWERDIR="/memory/images/${NAME}:$LOWERDIR"
     else
 	echo $i"[1;36m""Cannot read $NAME - corrupted module?""[0m"; rmdir /memory/images/$NAME
         losetup -d $LODEV
@@ -486,7 +486,7 @@ if [ -e /tmp/changes-exit ]; then
     echo $CHNEXIT/changes >>/tmp/modules
 fi
 
-LOWERDIR=`echo $LOWERDIR | sed 's/://'` # remove the first :
+LOWERDIR=`echo $LOWERDIR | sed 's/:$//'` # remove the last :
 
 echo "Mount overlay fs here at /union 'mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=/memory/changes,workdir=/memory/workdir /union'"
 rm -rf /memory/changes/workdir >/dev/null 2>&1
