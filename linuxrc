@@ -445,6 +445,9 @@ fi
 echo -e "Populate overlay with modules. If there is a .new file then use it if possible\n"
 debug
 umount /lib/modules 2>/dev/null; umount /opt/000-kernel 2>/dev/null
+
+if grep aufs /proc/filesystems >/dev/null 2>&1; then UNION_FS_TYPE=aufs; else UNION_FS_TYPE=overlay; fi
+
 for x in `cat /tmp/modules`; do
     if [ -f ${x}.new ]; then mv ${x}.new $x; fi # will fail from the cdrom but does not matter
     NAME=`basename $x`; mkdir "/memory/images/$NAME"; LODEV=$(losetup -f); losetup $LODEV $x
@@ -460,7 +463,12 @@ for x in `cat /tmp/modules`; do
        if [ "$_M" == "1" ]; then mount $LODEV /memory/images/$NAME 2>/dev/null; fi
     fi
     if [ $? -eq 0 ]; then
-	  echo "  $m  $NAME"; LOWERDIR="/memory/images/${NAME}:$LOWERDIR"
+	  echo "  $m  $NAME"
+      if [ $UNION_FS_TYPE == 'aufs' ]; then
+          LOWERDIR="/memory/images/${NAME}=ro:${LOWERDIR}"
+      else    
+          LOWERDIR="/memory/images/${NAME}:$LOWERDIR"
+      fi    
     else
 	echo $i"[1;36m""Cannot read $NAME - corrupted module?""[0m"; rmdir /memory/images/$NAME
         losetup -d $LODEV
@@ -488,11 +496,15 @@ fi
 
 LOWERDIR=`echo $LOWERDIR | sed 's/:$//'` # remove the last :
 
-echo "Mount overlay fs here at /union 'mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=/memory/changes,workdir=/memory/workdir /union'"
+echo "Mount $UNION_FS_TYPE fs here at /union option: overlay: '$LOWERDIR'"
 rm -rf /memory/changes/workdir >/dev/null 2>&1
 mkdir /memory/changes/workdir /memory/changes/rootdir
-mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=/memory/changes/rootdir,workdir=/memory/changes/workdir /union
-if [ "$?" != 0 ]; then echo "Error mount overlay fs at /union start shell for debugging .."; /bin/sh ; exit 1; fi
+if [ $UNION_FS_TYPE == 'aufs' ]; then
+    mount -t aufs -o br=/memory/changes/rootdir=rw:${LOWERDIR} none /union
+else
+    mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=/memory/changes/rootdir,workdir=/memory/changes/workdir /union
+fi    
+if [ "$?" != 0 ]; then echo "Error mount $UNION_FS_TYPE fs at /union start shell for debugging .."; /bin/sh ; exit 1; fi
 
 echo -e "done\nCopy /rootcopy folder...\n"
 if param norootcopy; then
