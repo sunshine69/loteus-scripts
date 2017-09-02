@@ -283,8 +283,8 @@ else
 		if [ $? -eq 0 ]; then
 		    DIR=`echo $LPTH | rev | cut -d/ -f3- | rev`; [ $DIR ] && OSDIR=$DIR/${OSDIR}
 		else
-		    echo $i"from= cheatcode is incorrect, press enter to search through all devices"
-		    read -s; search -e ${OSDIR}/$SGN
+		    echo $i"from= cheatcode is incorrect, I am going to search through all devices"
+		    debug; search -e ${OSDIR}/$SGN
 		fi
     else
 		search -e ${OSDIR}/$SGN || lazy -e ${OSDIR}/$SGN

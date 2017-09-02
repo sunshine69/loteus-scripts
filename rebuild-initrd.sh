@@ -21,6 +21,7 @@ mkdir /tmp/initrd_$$ && cd /tmp/initrd_$$
 xzcat $INF | cpio -id
 cp -a $CWD/linuxrc .
 echo "Copy modules in - /tmp/initrd_$$/lib/modules/ if needed and then type kernel version in"
+mc /tmp/initrd_$$/lib/modules/
 read KVER
 
 [ ! -z "$KVER" ] && depmod $KVER -b .
