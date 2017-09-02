@@ -501,12 +501,15 @@ fi
 
 LOWERDIR=`echo $LOWERDIR | sed 's/:$//'` # remove the last :
 echo "Mount $UNION_FS_TYPE fs here at /union option: overlay: '$LOWERDIR'"
+
+rm -rf /memory/changes/workdir >/dev/null 2>&1
+mkdir /memory/changes/workdir /memory/changes/rootdir
+
 if [ $UNION_FS_TYPE == 'aufs' ]; then
     mount -t aufs -o br=/memory/changes/rootdir=rw:${LOWERDIR} none /union
 else
-    rm -rf /memory/changes/workdir >/dev/null 2>&1
-    mkdir /memory/changes/workdir /memory/changes/rootdir
     mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=/memory/changes/rootdir,workdir=/memory/changes/workdir /union
+
 fi    
 if [ "$?" != 0 ]; then echo "Error mount $UNION_FS_TYPE fs at /union start shell for debugging .."; /bin/sh ; exit 1; fi
 
