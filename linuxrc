@@ -220,7 +220,7 @@ for x in `cat $1`; do
     fi
 done
 echo -en "                       \r"; } # end cpmod
-echo "start portetus init script - modified by stevek version 1.8"
+echo "start portetus init script - modified by stevek version 1.9"
 # Make all drivers available: stevek move it first so we have module
 debug
 mount -nt devtmpfs none /dev
@@ -310,15 +310,15 @@ if [ $CHANGES ]; then
 		  	if [ "$FACTORYRESET" == '3' ]; then
 		  	  rm -rf /mnt/$DEV/$LPTH/changes
 		  	elif [ "$FACTORYRESET" == '1' ] || [ "$FACTORYRESET" == 'keephome' ];  then
-		  	  mv /mnt/$DEV/$LPTH/changes/home /mnt/$DEV/$LPTH/
-          rm -rf /mnt/$DEV/$LPTH/changes.backup
-          mv /mnt/$DEV/$LPTH/changes /mnt/$DEV/$LPTH/changes.backup
-		  	  mkdir "/mnt/$DEV/$LPTH/changes"
+              mv /mnt/$DEV/$LPTH/changes/rootdir/home /mnt/$DEV/$LPTH/home_$$
+              rm -rf /mnt/$DEV/$LPTH/changes.backup
+              mv /mnt/$DEV/$LPTH/changes /mnt/$DEV/$LPTH/changes.backup
+		  	  mkdir -p "/mnt/$DEV/$LPTH/changes/rootdir"
 		  	  debug
-		  	  mv /mnt/$DEV/$LPTH/home /mnt/$DEV/$LPTH/changes/
+		  	  mv /mnt/$DEV/$LPTH/home_$$ /mnt/$DEV/$LPTH/changes/rootdir/home
 		  	elif [ "$FACTORYRESET" == '2' ] || [ "$FACTORYRESET" == 'backup' ];  then
-          rm -rf /mnt/$DEV/$LPTH/changes.backup
-          mv /mnt/$DEV/$LPTH/changes /mnt/$DEV/$LPTH/changes.backup
+                rm -rf /mnt/$DEV/$LPTH/changes.backup
+                mv /mnt/$DEV/$LPTH/changes /mnt/$DEV/$LPTH/changes.backup
 		  	fi
 		  	mkdir -p "/mnt/$DEV/$LPTH/changes" 2>/dev/null && \
 		  	mount -o bind /mnt/$DEV/$LPTH/changes /memory/changes && touch /memory/changes/._test1 2>/dev/null
@@ -335,10 +335,15 @@ if [ $CHANGES ]; then
 		  	  fsck_dat /mnt/$DEV/$LPTH
 		  	  mount -o loop /mnt/$DEV/$LPTH /memory/changes 2>/dev/null && touch /memory/changes/._test1 2>/dev/null
 		  	fi
+# factory reset handling
 		  	if [ "$FACTORYRESET" == '1' ]; then
-		  		rm -rf /memory/changes/??* /memory/changes/* >/dev/null 2>&1
+                rm -rf /memory/changes/rootdir.bak; mv /memory/changes/rootdir /memory/changes/rootdir.bak
+                mkdir -p /memory/changes/rootdir; mv /memory/changes/rootdir.bak/home /memory/changes/rootdir/
 		  	elif [ "$FACTORYRESET" == '2' ]; then
-		  		for x in `find /memory/changes/ 2>/dev/null | egrep -v 'home'`; do rm -rf $x; done
+		  		rm -rf /memory/changes/rootdir.bak; mv /memory/changes/rootdir /memory/changes/rootdir.bak
+                mkdir -p /memory/changes/rootdir
+		  	elif [ "$FACTORYRESET" == '3' ]; then
+                rm -rf /memory/changes/rootdir
 		  	fi
 		  fi
 		if [ $? -eq 0 ]; then
