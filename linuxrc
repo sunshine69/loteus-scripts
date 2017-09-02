@@ -220,7 +220,7 @@ for x in `cat $1`; do
     fi
 done
 echo -en "                       \r"; } # end cpmod
-echo "start portetus init script - modified by stevek version 1.9"
+echo "start portetus init script - modified by stevek version v1.9"
 # Make all drivers available: stevek move it first so we have module
 debug
 mount -nt devtmpfs none /dev
