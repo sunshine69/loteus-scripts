@@ -9,7 +9,7 @@ else
 fi
 
 if [ -z "$2" ]; then
-    OUT=/tmp/initrd.xz
+    OUT=$INF
 else
     OUT=$2
 fi
@@ -28,6 +28,7 @@ read KVER
 
 echo "Building ..."
 
+mv $OUT ${OUT}.bak
 find . | cpio --quiet -o -H newc | lzma -7 > $OUT
 
 cd $CWD
