@@ -57,6 +57,7 @@ KVER=`uname -r`
 KPATH=`value kpath`; [ $KPATH ] || KPATH=
 KMOD_DETECTED=
 HOSTNAME=`value hostname`;
+UNION_FS_TYPE=`value unionfs`; [ $UNION_FS_TYPE ] || UNION_FS_TYPE='overlay'
 # Device Functions:
 fstab() { # make fstab, decrypt module, temp mount kernel and load base modules
 # require /tmp/devices with filled with the output of blkid
@@ -451,7 +452,7 @@ echo -e "Populate overlay with modules. If there is a .new file then use it if p
 debug
 umount /lib/modules 2>/dev/null; umount /opt/000-kernel 2>/dev/null
 
-if grep aufs /proc/filesystems >/dev/null 2>&1; then UNION_FS_TYPE=aufs; else UNION_FS_TYPE=overlay; fi
+if ! grep $UNION_FS_TYPE /proc/filesystems >/dev/null 2>&1; then echo "UNION_FS_TYPE $UNION_FS_TYPE is not supported in kernel. "; debug; fi
 
 for x in `cat /tmp/modules`; do
     if [ -f ${x}.new ]; then mv ${x}.new $x; fi # will fail from the cdrom but does not matter
