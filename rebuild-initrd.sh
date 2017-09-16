@@ -21,11 +21,26 @@ mkdir /tmp/initrd_$$ && cd /tmp/initrd_$$
 xzcat $INF | cpio -id
 cp -a $CWD/linuxrc .
 echo "Copy modules in - /tmp/initrd_$$/lib/modules/ if needed and then type kernel version in"
-mc /tmp/initrd_$$/lib/modules/
 echo "Enter kernel version: "
 read KVER
 
-[ ! -z "$KVER" ] && depmod $KVER -b .
+if [ ! -z "$KVER" ]; then
+    KBUILDDIR="/mnt/sda4/build/kernel-binary/kernel-$KVER"
+    DESTDIR="/tmp/initrd_$$/lib/modules/$KVER" ; rm -rf $DESTDIR; mkdir -p $DESTDIR
+    mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
+    SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
+    cp -a $SRCDIR/{crypto,lib} $DESTDIR/
+    cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc} $DESTDIR/
+    cp -a $SRCDIR/drivers/hwmon/applesmc.ko drivers/input/input-polldev.ko $DESTDIR/
+    cp -a $SRCDIR/fs/{jfs,reiserfs,xfs} $DESTDIR/
+    depmod $KVER -b .
+    umount $KBUILDDIR/1; rm -rf $KBUILDDIR/1
+else
+    mc /tmp/initrd_$$/lib/modules/
+    echo "Enter kernel version: "
+    read KVER
+    depmod $KVER -b .
+fi
 
 echo "Building ..."
 
@@ -42,9 +57,12 @@ if [ ! -z "$KVER" ]; then
     SAVEDIR="/mnt/doc/tmp"
     FROMDIR="/mnt/sda4/port"
     mv $KPATH/bzImage $KPATH/bzImage.old
-    cp $KBUILDPATH/bzImage $KPATH/bzImage
-    cp $KBUILDPATH/*$KVER*.xzm $FROMDIR/
-    cp $KBUILDPATH/bzImage $SAVEDIR/bzImage-$KVER
-    cp $KBUILDPATH/*$KVER*.xzm $SAVEDIR/
+    cp -a $KBUILDPATH/bzImage $KPATH/bzImage
+    cp -a $KBUILDPATH/*$KVER*.xzm $FROMDIR/
+    if [ ! -f $SAVEDIR/bzImage-$KVER ]; then
+        echo "Saving new kernel"
+        cp -a $KBUILDPATH/bzImage $SAVEDIR/bzImage-$KVER
+        cp -a $KBUILDPATH/*$KVER*.xzm $SAVEDIR/
+    fi
 fi
 
