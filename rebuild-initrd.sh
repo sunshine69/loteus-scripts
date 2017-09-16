@@ -31,16 +31,18 @@ if [ ! -z "$KVER" ]; then
     SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
     cp -a $SRCDIR/{crypto,lib} $DESTDIR/
     cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc} $DESTDIR/
-    cp -a $SRCDIR/drivers/hwmon/applesmc.ko drivers/input/input-polldev.ko $DESTDIR/
+    cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/
     cp -a $SRCDIR/fs/{jfs,reiserfs,xfs} $DESTDIR/
     depmod $KVER -b .
     umount $KBUILDDIR/1; rm -rf $KBUILDDIR/1
-else
-    mc /tmp/initrd_$$/lib/modules/
+fi
+
+mc /tmp/initrd_$$/lib/modules/
+if [ -z "$KVER" ]; then
     echo "Enter kernel version: "
     read KVER
-    depmod $KVER -b .
 fi
+[ "$KVER" ] && depmod $KVER -b .
 
 echo "Building ..."
 
