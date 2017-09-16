@@ -35,3 +35,16 @@ find . | cpio --quiet -o -H newc | lzma -7 > $OUT
 cd $CWD
 echo "Output file $OUT"
 rm -rf /tmp/initrd_$$
+
+if [ ! -z "$KVER" ]; then
+    KBUILDPATH="/mnt/sda4/build/kernel-binary/kernel-$KVER"
+    KPATH="/mnt/sda4/boot"
+    SAVEDIR="/mnt/doc/tmp"
+    FROMDIR="/mnt/sda4/port"
+    mv $KPATH/bzImage $KPATH/bzImage.old
+    cp $KBUILDPATH/bzImage $KPATH/bzImage
+    cp $KBUILDPATH/*$KVER*.xzm $FROMDIR/
+    cp $KBUILDPATH/bzImage $SAVEDIR/bzImage-$KVER
+    cp $KBUILDPATH/*$KVER*.xzm $SAVEDIR/
+fi
+
