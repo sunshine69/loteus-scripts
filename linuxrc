@@ -327,13 +327,13 @@ if [ $CHANGES ]; then
 		  	mount -o bind /mnt/$DEV/$LPTH/changes /memory/changes && touch /memory/changes/._test1 2>/dev/null
 		  else
 		  	if blkid /mnt/$DEV/$LPTH 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
-		  	  losetup /dev/loop2 /mnt/$DEV/$LPTH
-		  	  echo $i"found encrypted image container"
-		  	  if [ ! -f $PASSPHRASE ]; then read -s -p "Enter pass for encrypted .dat: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
-		  	  cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/loop2 crypt
-		  	  if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for encrypted .dat: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/loop2 crypt; fi
-		  	  fsck_dat /dev/mapper/crypt
-		  	  mount /dev/mapper/crypt /memory/changes 2>/dev/null && touch /memory/changes/._test1 2>/dev/null
+		  	  LODEV=$(losetup -f); losetup $LODEV /mnt/$DEV/$LPTH
+		  	  echo $i"found encrypted image container $CHANGES"
+		  	  if [ ! -f $PASSPHRASE ]; then read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
+		  	  cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${CHANGES}.$$
+		  	  if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${CHANGES}.$$; fi
+		  	  fsck_dat /dev/mapper/${CHANGES}.$$
+		  	  mount /dev/mapper/${CHANGES}.$$ /memory/changes 2>/dev/null && touch /memory/changes/._test1 2>/dev/null
 		  	else
 		  	  fsck_dat /mnt/$DEV/$LPTH
 		  	  mount -o loop /mnt/$DEV/$LPTH /memory/changes 2>/dev/null && touch /memory/changes/._test1 2>/dev/null
