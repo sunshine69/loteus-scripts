@@ -58,6 +58,18 @@ KMOD_DETECTED=
 HOSTNAME=`value hostname`;
 UNION_FS_TYPE=`value unionfs`; [ $UNION_FS_TYPE ] || UNION_FS_TYPE='overlay'
 # Device Functions:
+detect_fs_type() { # where blkid does not understand that file system we need this hack
+    echo "detect_fs_type $1"
+    mkdir /tmp/mount_temp >/dev/null 2>&1
+    mount $1 /tmp/mount_temp
+    if [ $? == 0 ]; then 
+        fstype=`mount | grep $1 | cut -f5 -d' '`
+    else
+        fstype=auto
+    fi
+    echo "$1: TYPE=\"$fstype\""
+    umount /tmp/mount_temp
+}
 fstab() { # make fstab, decrypt module, temp mount kernel and load base modules
 # require /tmp/devices with filled with the output of blkid
 param nocd && { egrep -v '/dev/sr' /tmp/devices >/tmp/devices1 ; mv /tmp/devices1 /tmp/devices; }
@@ -88,7 +100,8 @@ for x in $dev; do
 			if [ $? == 0 ]; then
 				x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
 				fsck_dat /dev/$x
-        blkid /dev/$x >> /tmp/devices
+                detect_fs_type /dev/$x >> /tmp/devices
+                #blkid /dev/$x >> /tmp/devices
 			fi
 		fi
   fi
@@ -154,6 +167,7 @@ fi } # end fstab
 
 mount_device() {
 fs=`blkid /dev/$1 | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`
+if [ -z "$fs" ]; then fs=`detect_fs_type /dev/$1 | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`; fi
 if [ "$fs" ]; then
     mkdir "/mnt/$1"
     if [ $fs = vfat ]; then
@@ -199,6 +213,7 @@ fail_chn() { mount -nt tmpfs -o size=$RAMSIZE tmpfs /memory/changes; CHANGES=mem
 draw() { echo "[1;33m""---------------------------------------------------------""[0m"; }
 fsck_dat() { echo $i"checking $1 for errors"
 fs=`blkid $1 | egrep -o ' TYPE=[^ ]+' | cut -b8-10`
+if [ -z "$fs" ]; then fs=`detect_fs_type $1 | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`; fi
 if [ $fs = xfs ]; then
     echo $i"detected xfs - performing fsck at mount time"
 elif [ $fs = ext ]; then
