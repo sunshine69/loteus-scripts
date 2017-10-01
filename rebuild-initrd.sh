@@ -25,9 +25,8 @@ echo "Enter kernel version: "
 read KVER
 
 if [ ! -z "$KVER" ]; then
-    if [ -f $KBUILDDIR/000-$KVER.xzm ]; then
-        KBUILDDIR="/mnt/sda4/build/kernel-binary/kernel-$KVER"
-    else
+    KBUILDDIR=/mnt/sda4/build/kernel-binary/kernel-$KVER
+    if [ ! -f $KBUILDDIR/000-$KVER.xzm ]; then
         KBUILDDIR="/mnt/sda4/port"
     fi
     DESTDIR="/tmp/initrd_$$/lib/modules/$KVER" ; rm -rf $DESTDIR; mkdir -p $DESTDIR
@@ -62,13 +61,14 @@ if [ ! -z "$KVER" ]; then
     KPATH="/mnt/sda4/boot"
     SAVEDIR="/mnt/doc/tmp"
     FROMDIR="/mnt/sda4/port"
-    mv $KPATH/bzImage $KPATH/bzImage.old
-    cp -a $KBUILDPATH/bzImage $KPATH/bzImage
-    cp -a $KBUILDPATH/*$KVER*.xzm $FROMDIR/
+    if [ -f $KBUILDPATH/bzImage ]; then
+        mv $KPATH/bzImage $KPATH/bzImage.old
+        cp -a $KBUILDPATH/bzImage $KPATH/bzImage
+        cp -a $KBUILDPATH/*$KVER*.xzm $FROMDIR/
+    fi
     if [ ! -f $SAVEDIR/bzImage-$KVER ]; then
         echo "Saving new kernel"
         cp -a $KBUILDPATH/bzImage $SAVEDIR/bzImage-$KVER
         cp -a $KBUILDPATH/*$KVER*.xzm $SAVEDIR/
     fi
 fi
-
