@@ -472,7 +472,10 @@ umount /lib/modules 2>/dev/null; umount /opt/000-kernel 2>/dev/null
 if ! grep $UNION_FS_TYPE /proc/filesystems >/dev/null 2>&1; then echo "UNION_FS_TYPE $UNION_FS_TYPE is not supported in kernel. "; debug; fi
 
 for x in `cat /tmp/modules`; do
-    if [ -f ${x}.new ]; then mv ${x}.new $x; fi # will fail from the cdrom but does not matter
+    if [ -f ${x}.new ]; then 
+        if [ "$FACTORYRESET" != '3' ]; then mv $x ${x}.old; fi
+        mv ${x}.new $x
+    fi # will fail from the cdrom but does not matter
     NAME=`basename $x`; mkdir "/memory/images/$NAME"; LODEV=$(losetup -f); losetup $LODEV $x
     if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
 	   if [ ! -f $PASSPHRASE ]; then read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
