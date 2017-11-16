@@ -25,14 +25,17 @@ echo "Enter kernel version: "
 read KVER
 
 if [ ! -z "$KVER" ]; then
-    KBUILDDIR="/mnt/sda4/build/kernel-binary/kernel-$KVER"
+    KBUILDDIR=/mnt/sda4/build/kernel-binary/kernel-$KVER
+    if [ ! -f $KBUILDDIR/000-$KVER.xzm ]; then
+        KBUILDDIR="/mnt/sda4/port"
+    fi
     DESTDIR="/tmp/initrd_$$/lib/modules/$KVER" ; rm -rf $DESTDIR; mkdir -p $DESTDIR
     mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
     SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
     cp -a $SRCDIR/{crypto,lib} $DESTDIR/
     cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc} $DESTDIR/
     cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/
-    cp -a $SRCDIR/fs/{jfs,reiserfs,xfs} $DESTDIR/
+    cp -a $SRCDIR/fs/{jfs,reiserfs,xfs,aufs,btrfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc.ko} $DESTDIR/
     depmod $KVER -b .
     umount $KBUILDDIR/1; rm -rf $KBUILDDIR/1
 fi
@@ -58,13 +61,14 @@ if [ ! -z "$KVER" ]; then
     KPATH="/mnt/sda4/boot"
     SAVEDIR="/mnt/doc/tmp"
     FROMDIR="/mnt/sda4/port"
-    mv $KPATH/bzImage $KPATH/bzImage.old
-    cp -a $KBUILDPATH/bzImage $KPATH/bzImage
-    cp -a $KBUILDPATH/*$KVER*.xzm $FROMDIR/
+    if [ -f $KBUILDPATH/bzImage ]; then
+        mv $KPATH/bzImage $KPATH/bzImage.old
+        cp -a $KBUILDPATH/bzImage $KPATH/bzImage
+        cp -a $KBUILDPATH/*$KVER*.xzm $FROMDIR/
+    fi
     if [ ! -f $SAVEDIR/bzImage-$KVER ]; then
         echo "Saving new kernel"
         cp -a $KBUILDPATH/bzImage $SAVEDIR/bzImage-$KVER
         cp -a $KBUILDPATH/*$KVER*.xzm $SAVEDIR/
     fi
 fi
-
