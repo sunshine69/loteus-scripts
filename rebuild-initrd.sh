@@ -25,9 +25,11 @@ echo "Enter kernel version: "
 read KVER
 
 if [ ! -z "$KVER" ]; then
-    KBUILDDIR=/mnt/sda4/build/kernel-binary/kernel-$KVER
-    if [ ! -f $KBUILDDIR/000-$KVER.xzm ]; then
-        KBUILDDIR="/mnt/sda4/port"
+    if [ -z "$KBUILDDIR" ]; then
+        KBUILDDIR=/mnt/sda4/build/kernel-binary/kernel-$KVER
+        if [ ! -f $KBUILDDIR/000-$KVER.xzm ]; then
+            KBUILDDIR="/mnt/sda4/port"
+        fi
     fi
     DESTDIR="/tmp/initrd_$$/lib/modules/$KVER" ; rm -rf $DESTDIR; mkdir -p $DESTDIR
     mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
