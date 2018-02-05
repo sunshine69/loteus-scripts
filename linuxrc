@@ -51,7 +51,7 @@ RAMMOD=`value rammod | sed 's/;/|/g'`
 ROOTCOPY=`value rootcopy`
 livedbg=/var/log/livedbg
 PASSPHRASE=/tmp/enc_pass
-FACTORYRESET=`value reset`; [ $FACTORYRESET ] || `value factoryreset` || FACTORYRESET='0'
+FACTORYRESET=`value reset`; [ $FACTORYRESET ] || FACTORYRESET=`value factoryreset`; [ $FACTORYRESET ] || FACTORYRESET='0'
 KVER=`uname -r`
 KPATH=`value kpath`; [ $KPATH ] || KPATH=
 KMOD_DETECTED=
