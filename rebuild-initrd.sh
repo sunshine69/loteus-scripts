@@ -29,7 +29,6 @@ read KVER
 
 if [ ! -z "$KVER" ]; then
     if [ -z "$KBUILDDIR" ]; then
-        KBUILDDIR=$TARGET_DIR/kernel-$KVER
         # Install xzm modules
         $TARGET_DIR/porteus-kernel-$KVER.tar.sfx
         KBUILDDIR="$PORT_DIR"
