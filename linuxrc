@@ -649,6 +649,7 @@ EOF
        fi
     fi
     chmod 1777 /union/tmp
+    mkdir /union/mnt/live >/dev/null 2>&1
     debug
     pivot_root /union  /union/mnt/live
     #exec $CHROOT . /mnt/live/bin/init "$@" <dev/console >dev/console 2>&1
