@@ -212,6 +212,9 @@ fail() { echo -e $i"couldn't find $1. Correct your cheatcodes if needed.\n  Pres
 fail_chn() { mount -nt tmpfs -o size=$RAMSIZE tmpfs /memory/changes; CHANGES=memory; CHNDEV=memory; touch /etc/nochanges; }
 draw() { echo "[1;33m""---------------------------------------------------------""[0m"; }
 fsck_dat() { echo $i"checking $1 for errors"
+
+if param nofsck; then return; fi
+
 fs=`blkid $1 | egrep -o ' TYPE=[^ ]+' | cut -b8-10`
 if [ -z "$fs" ]; then fs=`detect_fs_type $1 | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`; fi
 if [ $fs = xfs ]; then
@@ -635,7 +638,7 @@ if [ $? -eq 0 ]; then
 	CHROOT='bin/chroot'
     fi
     rm -rf /union/proc /union/sys /union/run /union/tmp /union/srv /union/media >/dev/null 2>&1
-    mkdir /union/proc /union/sys /union/run /union/tmp /union/srv /union/media  >/dev/null 2>&1
+    mkdir /union/proc /union/sys /union/run /union/tmp /union/srv /union/media /union/snap >/dev/null 2>&1
     debug
     mount -o move /dev /union/dev
     #set hostname file - only for Debian and Centos os. We can even run chroot /union/ lsb_release to find out more.
