@@ -12,9 +12,9 @@ debug() { param debug && { echo -e "\n=====\n: Debugging started. Here is the sh
 if [ -d /m ]; then
     echo "Start to load modules from initrd ..."
     if [ -d /lib/modules/`uname -r` ]; then
-   	  for MODULE in hid_apple hid applesmc input_polldev mbcache aufs overlay exportfs ext4 fat vfat fuse isofs nls_cp437 nls_iso8859-1 nls_utf8 reiserfs squashfs xfs f2fs jfs libata ahci libahci sata_sil24 pdc_adma sata_qstor sata_sx4 ata_piix sata_mv sata_nv sata_promise sata_sil sata_sis sata_svw sata_uli sata_via sata_vsc pata_ali pata_amd pata_artop pata_atiixp pata_atp867x pata_cmd64x pata_cs5520 pata_cs5530 pata_cs5535 pata_cs5536 pata_efar pata_hpt366 pata_hpt37x pata_it8213 pata_it821x pata_jmicron pata_marvell pata_netcell pata_ns87415 pata_oldpiix pata_pdc2027x pata_pdc202xx_old pata_rdc pata_sc1200 pata_sch pata_serverworks pata_sil680 pata_sis pata_triflex pata_via pata_isapnp pata_mpiix pata_ns87410 pata_opti pata_rz1000 ata_generic loop cdrom hid usbhid mptscsih mptspi mptsas tifm_core cb710 mmc_block mmc_core sdhci sdhci-pci wbsd tifm_sd cb710-mmc via-sdmmc vub300 sdhci-pltfm md_mod dm_mod dm_raid cryptd aes aes_generic aes_x86_64 aes_i586 dm_crypt cbc sha256_generic xts scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod usb-common usbcore ehci-hcd ehci-pci ohci-hcd uhci-hcd xhci-hcd usb-storage virtio virtio_blk virtio_pci virtio_net; do
+      for MODULE in hid_apple hid applesmc input_polldev mbcache aufs overlay exportfs ext4 fat vfat fuse isofs nls_cp437 nls_iso8859-1 nls_utf8 reiserfs squashfs xfs f2fs jfs libata ahci libahci sata_sil24 pdc_adma sata_qstor sata_sx4 ata_piix sata_mv sata_nv sata_promise sata_sil sata_sis sata_svw sata_uli sata_via sata_vsc pata_ali pata_amd pata_artop pata_atiixp pata_atp867x pata_cmd64x pata_cs5520 pata_cs5530 pata_cs5535 pata_cs5536 pata_efar pata_hpt366 pata_hpt37x pata_it8213 pata_it821x pata_jmicron pata_marvell pata_netcell pata_ns87415 pata_oldpiix pata_pdc2027x pata_pdc202xx_old pata_rdc pata_sc1200 pata_sch pata_serverworks pata_sil680 pata_sis pata_triflex pata_via pata_isapnp pata_mpiix pata_ns87410 pata_opti pata_rz1000 ata_generic loop cdrom hid usbhid mptscsih mptspi mptsas tifm_core cb710 mmc_block mmc_core sdhci sdhci-pci wbsd tifm_sd cb710-mmc via-sdmmc vub300 sdhci-pltfm md_mod dm_mod dm_raid cryptd aes aes_generic aes_x86_64 aes_i586 dm_crypt cbc sha256_generic xts scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod usb-common usbcore ehci-hcd ehci-pci ohci-hcd uhci-hcd xhci-hcd usb-storage virtio virtio_blk virtio_pci virtio_net; do
    modprobe $MODULE >> /loadmodules.log 2>&1
-	    done
+        done
       echo "Done loading initial module '`uname -r`' from initrd. Log is in /loadmodules.log"
       debug
     fi
@@ -57,6 +57,7 @@ KPATH=`value kpath`; [ $KPATH ] || KPATH=
 KMOD_DETECTED=
 HOSTNAME=`value hostname`;
 UNION_FS_TYPE=`value unionfs`; [ $UNION_FS_TYPE ] || UNION_FS_TYPE='overlay'
+CHANGES_MOUNT=/memory/changes
 # Device Functions:
 detect_fs_type() { # where blkid does not understand that file system we need this hack
     echo "detect_fs_type $1"
@@ -91,77 +92,77 @@ devpts /dev/pts devpts rw,mode=0620,gid=5 0 0
 EOF
 for x in $dev; do
   if blkid /dev/$x 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
-		if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
-			echo "crypt already setup for device $x"
-		else
-			if [ ! -f $PASSPHRASE ]; then read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
-			cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
-			if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC ; fi
-			if [ $? == 0 ]; then
-				x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
-				fsck_dat /dev/$x
+        if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
+            echo "crypt already setup for device $x"
+        else
+            if [ ! -f $PASSPHRASE ]; then read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
+            cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
+            if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC ; fi
+            if [ $? == 0 ]; then
+                x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
+                fsck_dat /dev/$x
                 detect_fs_type /dev/$x >> /tmp/devices
                 #blkid /dev/$x >> /tmp/devices
-			fi
-		fi
+            fi
+        fi
   fi
   fs=`grep -w /dev/$x /tmp/devices | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`
   if [ $fs = vfat ]; then
-		  echo "/dev/$x /mnt/$x $fs $MOPT,umask=0,check=s,utf8 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$x $fs $MOPT,umask=0,check=s,utf8 0 0" >>/etc/fstab
   elif [ $fs = iso9660 ]; then
-		  echo "/dev/$x /mnt/$x $fs $MOPT,ro 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$x $fs $MOPT,ro 0 0" >>/etc/fstab
   else
-		  echo "/dev/$x /mnt/$x $fs $MOPT 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$x $fs $MOPT 0 0" >>/etc/fstab
   fi
   if [ ! -d /mnt/$x ]; then
-	  mkdir "/mnt/$x"
-	  if [ $fs = ntfs ]; then
-	    ntfs-3g /dev/$x /mnt/$x -o $MOPT 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; }
-	    for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
-	        if [ "$KMOD_DETECTED" == "y" ]; then break; fi
-		      KMODS=`find ${_PATH}/000-*.[xgl]zm 2>/dev/null`
+      mkdir "/mnt/$x"
+      if [ $fs = ntfs ]; then
+        ntfs-3g /dev/$x /mnt/$x -o $MOPT 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; }
+        for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
+            if [ "$KMOD_DETECTED" == "y" ]; then break; fi
+              KMODS=`find ${_PATH}/000-*.[xgl]zm 2>/dev/null`
           if [ ! -z "$KMODS" ]; then
             for KMOD in $KMODS; do
-			        if [ -f "${KMOD}.new" ]; then mv "${KMOD}.new" "${KMOD}"; fi
-			        mkdir -p /opt/000-kernel >/dev/null 2>&1
-			        mount -o loop $KMOD /opt/000-kernel  || echo "Can not mount $KMOD"
-			        if [ -d /opt/000-kernel/lib/modules/$KVER ]; then
-			          mount -o bind /opt/000-kernel/lib/modules /lib/modules
-			          for x in aufs overlay md_mod dm_mod dm_raid dm_crypt cryptd cbc sha256_generic aes aes_generic aes_x86_64 aes_i586 scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod jfs ext2 ext4 ext3 squashfs isofs virtio virtio_blk virtio_pci virtio_net; do modprobe $x 2>/dev/null; done
-			          KMOD_DETECTED=y; echo "FOUND $KMOD"; echo "$KMOD" > /tmp/modules; break
-			        else
-			          umount /opt/000-kernel
-			        fi
-		        done
+                    if [ -f "${KMOD}.new" ]; then mv "${KMOD}.new" "${KMOD}"; fi
+                    mkdir -p /opt/000-kernel >/dev/null 2>&1
+                    mount -o loop $KMOD /opt/000-kernel  || echo "Can not mount $KMOD"
+                    if [ -d /opt/000-kernel/lib/modules/$KVER ]; then
+                      mount -o bind /opt/000-kernel/lib/modules /lib/modules
+                      for x in aufs overlay md_mod dm_mod dm_raid dm_crypt cryptd cbc sha256_generic aes aes_generic aes_x86_64 aes_i586 scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod jfs ext2 ext4 ext3 squashfs isofs virtio virtio_blk virtio_pci virtio_net; do modprobe $x 2>/dev/null; done
+                      KMOD_DETECTED=y; echo "FOUND $KMOD"; echo "$KMOD" > /tmp/modules; break
+                    else
+                      umount /opt/000-kernel
+                    fi
+                done
           fi
-	    done
-	  else
-	    mount -n /mnt/$x 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /mnt/$x 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; }; }
-	    for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
-	      if [ "$KMOD_DETECTED" == "y" ]; then break; fi
-	      KMODS=`find ${_PATH}/000-*.[xgl]zm 2>/dev/null`
-		    if [ ! -z "$KMODS" ]; then
-		      for KMOD in $KMODS; do
-			      if [ -f "${KMOD}.new" ]; then mv "${KMOD}.new" "$KMOD"; fi
-			      mkdir -p /opt/000-kernel >/dev/null 2>&1
-			      mount -o loop $KMOD /opt/000-kernel || echo "=> Can not mount $KMOD <="
-			      if [ -d /opt/000-kernel/lib/modules/$KVER ]; then
-			        mount -o bind /opt/000-kernel/lib/modules /lib/modules
-			        for x in aufs overlay md_mod dm_mod dm_raid dm_crypt cryptd cbc sha256_generic aes aes_generic aes_x86_64 aes_i586 scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod jfs ext2 ext4 ext3 squashfs isofs virtio virtio_blk virtio_pci virtio_net; do modprobe $x 2>/dev/null; done
-			        KMOD_DETECTED=y; echo "FOUND $KMOD"; echo "$KMOD" > /tmp/modules; break
-			      else
-			        umount /opt/000-kernel; KMOD=
-			      fi
-		      done
-	      fi
-	    done
-	  fi
+        done
+      else
+        mount -n /mnt/$x 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /mnt/$x 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; }; }
+        for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
+          if [ "$KMOD_DETECTED" == "y" ]; then break; fi
+          KMODS=`find ${_PATH}/000-*.[xgl]zm 2>/dev/null`
+            if [ ! -z "$KMODS" ]; then
+              for KMOD in $KMODS; do
+                  if [ -f "${KMOD}.new" ]; then mv "${KMOD}.new" "$KMOD"; fi
+                  mkdir -p /opt/000-kernel >/dev/null 2>&1
+                  mount -o loop $KMOD /opt/000-kernel || echo "=> Can not mount $KMOD <="
+                  if [ -d /opt/000-kernel/lib/modules/$KVER ]; then
+                    mount -o bind /opt/000-kernel/lib/modules /lib/modules
+                    for x in aufs overlay md_mod dm_mod dm_raid dm_crypt cryptd cbc sha256_generic aes aes_generic aes_x86_64 aes_i586 scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod jfs ext2 ext4 ext3 squashfs isofs virtio virtio_blk virtio_pci virtio_net; do modprobe $x 2>/dev/null; done
+                    KMOD_DETECTED=y; echo "FOUND $KMOD"; echo "$KMOD" > /tmp/modules; break
+                  else
+                    umount /opt/000-kernel; KMOD=
+                  fi
+              done
+          fi
+        done
+      fi
   fi
 done
 
 if [ -z "`egrep -o " noswap( |\$)" /etc/cmdline`" -a -e /tmp/devices ]; then
-	echo -e "\n# Swap partitions:" >>/etc/fstab
-	for x in `grep 'TYPE="swap"' /tmp/devices | cut -d: -f1`; do echo "$x none swap sw,pri=1 0 0" >>/etc/fstab; done
+    echo -e "\n# Swap partitions:" >>/etc/fstab
+    for x in `grep 'TYPE="swap"' /tmp/devices | cut -d: -f1`; do echo "$x none swap sw,pri=1 0 0" >>/etc/fstab; done
   grep -v 'TYPE="crypto_LUKS"' /etc/fstab > /etc/fstab.new; mv /etc/fstab.new /etc/fstab
 fi } # end fstab
 
@@ -171,27 +172,31 @@ if [ -z "$fs" ]; then fs=`detect_fs_type /dev/$1 | egrep -o ' TYPE=[^ ]+' | cut 
 if [ "$fs" ]; then
     mkdir "/mnt/$1"
     if [ $fs = vfat ]; then
-		mount -n /dev/$1 /mnt/$1 -o $MOPT,umask=0,check=s,utf8 2>/dev/null || rmdir /mnt/$1
+        mount -n /dev/$1 /mnt/$1 -o $MOPT,umask=0,check=s,utf8 2>/dev/null || rmdir /mnt/$1
     elif [ $fs = ntfs ]; then
-		ntfs-3g /dev/$1 /mnt/$1 -o $MOPT 2>/dev/null || rmdir /mnt/$1
+        ntfs-3g /dev/$1 /mnt/$1 -o $MOPT 2>/dev/null || rmdir /mnt/$1
     else
-		mount -n /dev/$1 /mnt/$1 -o $MOPT 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /dev/$1 /mnt/$1 -o $MOPT || rmdir /mnt/$1; }
+        mount -n /dev/$1 /mnt/$1 -o $MOPT 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /dev/$1 /mnt/$1 -o $MOPT || rmdir /mnt/$1; }
     fi
 fi }
 
 # Search functions: The blkid does not support f2fs
-search() { FND=none; for x in `ls /mnt`; do
-[ $1 /mnt/$x/$2 ] && { DEV=$x; FND=y; break; }; done
+search() { FND=n; for x in `ls /mnt`; do
+[ $1 "/mnt/$x/$2" ] && { DEV=$x; FND=y; break; }; done
 [ $FND = y ]; }
-lazy() { SLEEP=6; while [ $SLEEP -gt 0 -a $FND = none ]; do nap; let SLEEP=SLEEP-1; fstab; search $*; done }
-locate() { LPATH=`echo $2 | cut -b-5 | sed s@/dev@/mnt@`
+lazy() { SLEEP=6; while [ $SLEEP -gt 0 ] && [ ! "$FND" = "y" ]; do nap; let SLEEP=SLEEP-1; fstab; search $*; done }
+locate() { # locate <-e|-r|-d> PATH ; See the option will be passed to function search above.
+# set the var DEV, LPTH
+  LPATH=`echo $2 | cut -b-5 | sed s@/dev@/mnt@`
   if [ $LPATH = /mnt/ ]; then # $2 started with /dev/<dev>
+    echo "Detect device path /dev/XXX. will try to setup devices"  
     DEV=`echo $2 | cut -d/ -f3`; LPTH=`echo $2 | cut -d/ -f4-`; SLEEP=6
     while [ $SLEEP -gt 0 -a ! -b /dev/$DEV ]; do nap; let SLEEP=SLEEP-1; fstab; done # waiting for device to comeup
-    [ -d /mnt/$DEV ] || mount_device $DEV
+    [ -d "/mnt/$DEV" ] || mount_device $DEV
     if [ $3 = create ]; then mkdir -p "/mnt/$DEV/$LPTH"; fi
     [ $1 /mnt/$DEV/$LPTH ]
   elif [ $LPATH = UUID: -o $LPATH = LABEL ]; then
+    echo "Detect UUID: or LABEL. will try to setup devices"  
     ID=`echo $2 | cut -d: -f2 | cut -d/ -f1`; LPTH=`echo $2 | cut -d/ -f2-`; DEV=`blkid | grep $ID | cut -d: -f1 | cut -d/ -f3`; SLEEP=6
     while [ $SLEEP -gt 0 -a "$DEV" = "" ]; do nap; let SLEEP=SLEEP-1; fstab; DEV=`blkid | grep $ID | cut -d: -f1 | cut -d/ -f3`; done
     [ -d /mnt/$DEV ] || mount_device $DEV
@@ -203,13 +208,15 @@ locate() { LPATH=`echo $2 | cut -b-5 | sed s@/dev@/mnt@`
     dev=`grep $BIGEST_SIZE /tmp/fssize | cut -f5 -d/`; rm -f /tmp/fssize; mkdir -p "/mnt/$dev/$LPTH"; [ $? = 0 ]
     }
   else
-    LPTH=$2; search $* || lazy $*
-  fi } # end locate
+    echo "Direct calling search"
+    LPTH=$2; search $* # || lazy $*
+  fi
+  } # end locate
 
 # Other functions:
 nap() { echo -en $i"device not ready yet? delaying [1;33m$SLEEP[0m seconds \r"; sleep 1; }
 fail() { echo -e $i"couldn't find $1. Correct your cheatcodes if needed.\n  Press 'enter' to continue booting."; read -s; }
-fail_chn() { mount -nt tmpfs -o size=$RAMSIZE tmpfs /memory/changes; CHANGES=memory; CHNDEV=memory; touch /etc/nochanges; }
+fail_chn() { mount -nt tmpfs -o size=$RAMSIZE tmpfs $CHANGES_MOUNT; CHANGES=memory; CHNDEV=memory; touch /etc/nochanges; }
 draw() { echo "[1;33m""---------------------------------------------------------""[0m"; }
 fsck_dat() { echo $i"checking $1 for errors"
 
@@ -232,11 +239,11 @@ for x in `cat $1`; do
     echo -en "[1;33m""  ($NUM modules left)  \r""[0m"; let NUM=NUM-1; NAME=`basename $x`
     if [ -f ${x}.new ]; then cp ${x}.new /memory/copy2ram/${x} 2>/dev/null; mv ${x}.new ${x}; else cp $x /memory/copy2ram 2>/dev/null; fi
     if [ $? -eq 0 ]; then
-	sed -i s@^.*/$NAME@/memory/copy2ram/$NAME@ /tmp/modules
+    sed -i s@^.*/$NAME@/memory/copy2ram/$NAME@ /tmp/modules
     else
-	rm /memory/copy2ram/$NAME; echo -e $i"[1;36m""Not enough memory to copy $NAME""[0m"; echo -e $i"[1;36m""Other modules will be skipped.""[0m"
-	find /memory/copy2ram -name "*.[xgl]zm" | sort >> /tmp/modules
-	break
+    rm /memory/copy2ram/$NAME; echo -e $i"[1;36m""Not enough memory to copy $NAME""[0m"; echo -e $i"[1;36m""Other modules will be skipped.""[0m"
+    find /memory/copy2ram -name "*.[xgl]zm" | sort >> /tmp/modules
+    break
     fi
 done
 echo -en "                       \r"; } # end cpmod
@@ -290,25 +297,25 @@ if [ $IP ]; then BOOTDEV=network; SGNDEV=/mnt/nfs
     mkdir -p /mnt/nfs/porteus /mnt/nfs/storage; udhcpc; modprobe nfsv4; mount -t nfs4 $IP:/srv/pxe/porteus /mnt/nfs/porteus -o ro,nolock 2>/dev/null || { modprobe nfsv3; mount -t nfs $IP:/srv/pxe/porteus /mnt/nfs/porteus -o ro,nolock 2>/dev/null; }
     MAC=`ifconfig | grep eth0 | cut -d: -f5-7 | sed s/://g | cut -d" " -f1`
     if [ "$CHANGES" = /srv/pxe/storage ]; then
-	if lsmod | grep -q nfsv3; then
-	    mount -t nfs $IP:/srv/pxe/storage /mnt/nfs/storage -o rw,nolock 2>/dev/null && { mkdir -p /mnt/nfs/storage/client-$MAC/changes/home; CHANGES="/storage/client-$MAC"; }
-	else
-	    mount -t nfs4 $IP:/srv/pxe/storage /mnt/nfs/storage -o rw,nolock 2>/dev/null && { mkdir -p /mnt/nfs/storage/client-$MAC/changes/home; CHANGES="/storage/client-$MAC"; }
-	fi
+    if lsmod | grep -q nfsv3; then
+        mount -t nfs $IP:/srv/pxe/storage /mnt/nfs/storage -o rw,nolock 2>/dev/null && { mkdir -p /mnt/nfs/storage/client-$MAC/changes/home; CHANGES="/storage/client-$MAC"; }
+    else
+        mount -t nfs4 $IP:/srv/pxe/storage /mnt/nfs/storage -o rw,nolock 2>/dev/null && { mkdir -p /mnt/nfs/storage/client-$MAC/changes/home; CHANGES="/storage/client-$MAC"; }
+    fi
     fi
 elif [ $ISO ]; then SGNDEV=/mnt/isoloop
     locate -e $FROM && { BOOTDEV=/mnt/$DEV; mkdir /mnt/isoloop; mount -o loop /mnt/$DEV/$LPTH /mnt/isoloop; }
 else
     if [ $FROM ]; then
-	    locate -e $FROM/${OSDIR}/$SGN
-		if [ $? -eq 0 ]; then
-		    DIR=`echo $LPTH | rev | cut -d/ -f3- | rev`; [ $DIR ] && OSDIR=$DIR/${OSDIR}
-		else
-		    echo $i"from= cheatcode is incorrect, I am going to search through all devices"
-		    debug; search -e ${OSDIR}/$SGN
-		fi
+        locate -e $FROM/${OSDIR}/$SGN
+        if [ $? -eq 0 ]; then
+            DIR=`echo $LPTH | rev | cut -d/ -f3- | rev`; [ $DIR ] && OSDIR=$DIR/${OSDIR}
+        else
+            echo $i"from= cheatcode is incorrect, I am going to search through all devices"
+            debug; search -e ${OSDIR}/$SGN
+        fi
     else
-		search -e ${OSDIR}/$SGN || lazy -e ${OSDIR}/$SGN
+        search -e ${OSDIR}/$SGN || lazy -e ${OSDIR}/$SGN
     fi
     SGNDEV=/mnt/$DEV
 fi
@@ -323,74 +330,89 @@ ln -sf $PTH/optional /porteus/optional
 echo -e $i"done.\nSetup changes ...\n"
 debug
 if [ $CHANGES ]; then
+# CHANGES_MOUNT - final directory used for overlay, under that there is overlay
+# rootdir/workdir. Default /memory/changes
+# CHANGES_MOUNT_SRC - base directory to mound bind to CHANGES_MOUNT. Under that always has dir 'changes' 'changes.backup' - the changes dir will be mount bind to CHANGES_MOUNT.
     echo $i"setting up directory for changes"
     CHNEXIT=`echo $CHANGES | cut -d: -f1`; [ $CHNEXIT = EXIT ] && CHANGES=`echo $CHANGES | cut -d: -f2-`
-    locate -r $CHANGES create #If the changes starts with device or UUID/LABEL path then we create it if not exists
-    if [ $? -eq 0 ]; then
-		  if [ -d /mnt/$DEV/$LPTH ]; then
-		  	if [ "$FACTORYRESET" == '3' ]; then
-		  	  rm -rf /mnt/$DEV/$LPTH/changes
-		  	elif [ "$FACTORYRESET" == '1' ] || [ "$FACTORYRESET" == 'keephome' ];  then
-              mv /mnt/$DEV/$LPTH/changes/rootdir/home /mnt/$DEV/$LPTH/home_$$
-              rm -rf /mnt/$DEV/$LPTH/changes.backup
-              mv /mnt/$DEV/$LPTH/changes /mnt/$DEV/$LPTH/changes.backup
-		  	  mkdir -p "/mnt/$DEV/$LPTH/changes/rootdir"
-		  	  debug
-		  	  mv /mnt/$DEV/$LPTH/home_$$ /mnt/$DEV/$LPTH/changes/rootdir/home
-		  	elif [ "$FACTORYRESET" == '2' ] || [ "$FACTORYRESET" == 'backup' ];  then
-                rm -rf /mnt/$DEV/$LPTH/changes.backup
-                mv /mnt/$DEV/$LPTH/changes /mnt/$DEV/$LPTH/changes.backup
-		  	fi
-		  	mkdir -p "/mnt/$DEV/$LPTH/changes" 2>/dev/null && \
-		  	mount -o bind /mnt/$DEV/$LPTH/changes /memory/changes && touch /memory/changes/._test1 2>/dev/null
-		  else
-		  	if blkid /mnt/$DEV/$LPTH 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
-		  	  LODEV=$(losetup -f); losetup $LODEV /mnt/$DEV/$LPTH
-		  	  echo $i"found encrypted image container $CHANGES"
-		  	  if [ ! -f $PASSPHRASE ]; then read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
-		  	  cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${CHANGES}.$$
-		  	  if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${CHANGES}.$$; fi
-		  	  fsck_dat /dev/mapper/${CHANGES}.$$
-		  	  mount /dev/mapper/${CHANGES}.$$ /memory/changes 2>/dev/null && touch /memory/changes/._test1 2>/dev/null
-		  	else
-		  	  fsck_dat /mnt/$DEV/$LPTH
-		  	  mount -o loop /mnt/$DEV/$LPTH /memory/changes 2>/dev/null && touch /memory/changes/._test1 2>/dev/null
-		  	fi
-# factory reset handling
-		  	if [ "$FACTORYRESET" == '1' ]; then
-                rm -rf /memory/changes/rootdir.bak; mv /memory/changes/rootdir /memory/changes/rootdir.bak
-                mkdir -p /memory/changes/rootdir; mv /memory/changes/rootdir.bak/home /memory/changes/rootdir/
-		  	elif [ "$FACTORYRESET" == '2' ]; then
-		  		rm -rf /memory/changes/rootdir.bak; mv /memory/changes/rootdir /memory/changes/rootdir.bak
-                mkdir -p /memory/changes/rootdir
-		  	elif [ "$FACTORYRESET" == '3' ]; then
-                rm -rf /memory/changes/rootdir
-		  	fi
-		  fi
-		if [ $? -eq 0 ]; then
-			echo $i"testing filesystem on "$CHANGES" for posix compatibility"
-			ln -s /memory/changes/._test1 /memory/changes/._test2 2>/dev/null && chmod +x /memory/changes/._test1 2>/dev/null && [ -x /memory/changes/._test1 ] && chmod -x /memory/changes/._test1 2>/dev/null && [ ! -x /memory/changes/._test1 ] &&      rm -f /memory/changes/._test1 /memory/changes/._test2
-			if [ $? -ne 0 ]; then
-				rm -f /memory/changes/._test1 /memory/changes/._test2; umount /memory/changes
-				echo && echo -e "[1;33m""A Windows filesystem (FAT, NTFS) or other non-posix compatible filesystem\nhas been detected on $CHANGES.\nYour changes cannot be saved directly to the specified storage media with this\nsetup. Please use the '[1;36mPorteus save file manager[1;33m' to create a .dat container\nand use it for saving your changes after your next reboot.""[0m"
-				echo "press enter to continue in '[1;36mAlways Fresh[0m' mode for this session"
-				read; rmdir /mnt/$DEV/$LPTH/changes; fail_chn
-			else
-				echo $i"filesystem is posix compatible"; CHNDEV=/mnt/$DEV
-				rmdir /memory/changes/mnt/* 2>/dev/null
-				rm -f /memory/changes/var/lock/subsys/* /var/run/laptop-mode-tools/*
-				for x in `find /memory/changes/var/run -name "*pid" 2>/dev/null`; do rm $x; done
-			fi
-		else
-			echo $i"changes not writable, using memory instead"; umount /memory/changes 2>/dev/null; fail_chn
-		fi
+# Test if it is in the format <image-file>/dir
+    IMG_FILE=`echo $CHANGES | cut -d/ -f1`; CPATH=`echo $CHANGES | cut -d/ -f2-`
+    echo "IMG_FILE=$IMG_FILE CPATH=$CPATH" 
+    debug
+    locate -d $CHANGES create #If the changes starts with device or UUID/LABEL path then we create it if not exists
+    if [ ! $? -eq 0 ]; then
+        locate -f $IMG_FILE
+        if [ $? -eq 0 ]; then
+            CIMAGE_FILE=/mnt/$DEV/$LPTH
+            IMAGE_MOUNT_DIR=/memory/images/${IMG_FILE}; mkdir -p $IMAGE_MOUNT_DIR >/dev/null 2>&1
+            if [ ! "$CPATH" == "$IMG_FILE" ]; then 
+                CPATH_EXIST=yes; CHANGES_MOUNT_SRC=$IMAGE_MOUNT_DIR/$CPATH; 
+            else  
+                CHANGES_MOUNT_SRC=$IMAGE_MOUNT_DIR
+            fi
+            if blkid $CIMAGE_FILE 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
+              LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
+              echo $i"found encrypted image container $CIMAGE_FILE"
+              if [ ! -f $PASSPHRASE ]; then read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
+              cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
+              if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
+              fsck_dat /dev/mapper/${IMG_FILE}.$$
+              mount /dev/mapper/${IMG_FILE}.$$ $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
+            else
+              fsck_dat /mnt/$DEV/$LPTH
+              mount -o loop $CIMAGE_FILE $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
+            fi
+        fi    
     else
-		fail $CHANGES; fail_chn
+        CHANGES_MOUNT_SRC=/mnt/$DEV/$LPTH
+    fi
+    if [ ! -z "${CHANGES_MOUNT_SRC}" ]; then 
+# factory reset handling and mount bind to $CHANGES_MOUNT
+        if [ "$FACTORYRESET" == '3' ]; then
+          rm -rf ${CHANGES_MOUNT_SRC}/changes
+        elif [ "$FACTORYRESET" == '1' ] || [ "$FACTORYRESET" == 'keephome' ];  then
+          mv ${CHANGES_MOUNT_SRC}/changes/rootdir/home ${CHANGES_MOUNT_SRC}/home_$$
+          rm -rf ${CHANGES_MOUNT_SRC}/changes.backup
+          mv ${CHANGES_MOUNT_SRC}/changes ${CHANGES_MOUNT_SRC}/changes.backup
+          mkdir -p "${CHANGES_MOUNT_SRC}/changes/rootdir"
+          debug
+          mv ${CHANGES_MOUNT_SRC}/home_$$ ${CHANGES_MOUNT_SRC}/changes/rootdir/home
+        elif [ "$FACTORYRESET" == '2' ] || [ "$FACTORYRESET" == 'backup' ];  then
+            rm -rf ${CHANGES_MOUNT_SRC}/changes.backup
+            mv ${CHANGES_MOUNT_SRC}/changes ${CHANGES_MOUNT_SRC}/changes.backup
+        fi
+        echo "CHANGES_MOUNT_SRC: $CHANGES_MOUNT_SRC - IMAGE_MOUNT_DIR: $IMAGE_MOUNT_DIR"
+        mkdir -p "${CHANGES_MOUNT_SRC}/changes"
+        mount -o bind ${CHANGES_MOUNT_SRC}/changes $CHANGES_MOUNT
+        touch ${CHANGES_MOUNT}/._test1
+        debug
+        if [ -f ${CHANGES_MOUNT}/._test1 ]; then
+            echo $i"testing filesystem on "$CHANGES" for posix compatibility"
+            ln -s ${CHANGES_MOUNT_SRC}/changes/._test1 ${CHANGES_MOUNT_SRC}/changes/._test2 && chmod +x ${CHANGES_MOUNT_SRC}/changes/._test1 && [ -x ${CHANGES_MOUNT_SRC}/changes/._test1 ] && chmod -x ${CHANGES_MOUNT_SRC}/changes/._test1 && [ ! -x ${CHANGES_MOUNT_SRC}/changes/._test1 ] && rm -f ${CHANGES_MOUNT_SRC}/changes/._test1 ${CHANGES_MOUNT_SRC}/changes/._test2
+            if [ $? -ne 0 ]; then
+                rm -f ${CHANGES_MOUNT_SRC}/changes/._test1 ${CHANGES_MOUNT_SRC}/changes/._test2; umount $CHANGES_MOUNT
+                echo && echo -e "[1;33m""A Windows filesystem (FAT, NTFS) or other non-posix compatible filesystem\nhas been detected on $CHANGES.\nYour changes cannot be saved directly to the specified storage media with this\nsetup. Please use the '[1;36mPorteus save file manager[1;33m' to create a .dat container\nand use it for saving your changes after your next reboot.""[0m"
+                echo "press enter to continue in '[1;36mAlways Fresh[0m' mode for this session"
+                read; rmdir /mnt/$DEV/$LPTH/changes; fail_chn
+            else
+                echo $i"filesystem is posix compatible"; CHNDEV=/mnt/$DEV
+                rmdir ${CHANGES_MOUNT_SRC}/changes/mnt/* 2>/dev/null
+                rm -f ${CHANGES_MOUNT_SRC}/changes/var/lock/subsys/* /var/run/laptop-mode-tools/*
+                for x in `find ${CHANGES_MOUNT_SRC}/changes/var/run -name "*pid" 2>/dev/null`; do rm $x; done
+            fi
+            echo "Success setup changes"
+            debug
+        else
+            echo $i"changes not writable, using memory instead"; umount $CHANGES_MOUNT 2>/dev/null; read; fail_chn
+            debug
+        fi
+    else
+        fail $CHANGES; echo "CHANGES_MOUNT_SRC is empty"; read; fail_chn
     fi
 else
      echo $i"changes cheatcode not found, using memory only"; fail_chn
 fi
-mkdir -p /memory/changes/mnt/live
+mkdir -p ${CHANGES_MOUNT}/mnt/live
 echo -e "done setup changes\nSetup overlayfs ...\n"
 debug
 echo $i"creating live filesystem and inserting modules"
@@ -405,8 +427,8 @@ find $PTH/../share -name "[0-9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep
 echo -e "done\nLoad specific settings for a hostname. The file name is <HOSTNAME>-*.sqs ...\n"
 debug
 if [ ! -z "$HOSTNAME" ]; then
-	find $PTH/base $PTH/modules -name "[0-9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
-	if [ -f $PTH/../share/${HOSTNAME}-fstab ]; then cat $PTH/../share/${HOSTNAME}-fstab >> /etc/fstab; fi
+    find $PTH/base $PTH/modules -name "[0-9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
+    if [ -f $PTH/../share/${HOSTNAME}-fstab ]; then cat $PTH/../share/${HOSTNAME}-fstab >> /etc/fstab; fi
 fi
 
 if [ -z "$LOAD" ]; then
@@ -424,21 +446,21 @@ if param vga_detect; then
     debug
     lspci >/tmp/lspci; nv=`grep "0300: 10de:" /tmp/lspci | cut -d":" -f4`; amd=`grep "0300: 1002:" /tmp/lspci | cut -d":" -f4`
     if [ $nv ]; then
-	echo $i"$nv chipset found, checking which nVidia driver supports it"
-	cd /usr/share/pciids/nVidia; NV=`grep $nv * | cut -d: -f1`; cd /
-	if [ $NV ]; then
-	    echo $i"nVidia-$NV.xx driver will be activated -"
-	    echo $i"if present in $PTH/optional folder"
-	    find $PTH/optional -name "nVidia-$NV*" 2>/dev/null >>/tmp/modules
-	else
-	    echo $i"latest nVidia driver will be activated -"
-	    echo $i"if present in $PTH/optional folder"
-	    find $PTH/optional -name "nVidia-*" 2>/dev/null | egrep -v '96.43.|173.14.|304.' >>/tmp/modules
-	fi
+    echo $i"$nv chipset found, checking which nVidia driver supports it"
+    cd /usr/share/pciids/nVidia; NV=`grep $nv * | cut -d: -f1`; cd /
+    if [ $NV ]; then
+        echo $i"nVidia-$NV.xx driver will be activated -"
+        echo $i"if present in $PTH/optional folder"
+        find $PTH/optional -name "nVidia-$NV*" 2>/dev/null >>/tmp/modules
+    else
+        echo $i"latest nVidia driver will be activated -"
+        echo $i"if present in $PTH/optional folder"
+        find $PTH/optional -name "nVidia-*" 2>/dev/null | egrep -v '96.43.|173.14.|304.' >>/tmp/modules
+    fi
     elif [ $amd ]; then
-	echo $i"checking if $amd GPU belongs to 'Radeon HD' series"
-	cd /usr/share/pciids/AMD; HD=`grep $amd * | cut -d: -f1`; cd /
-	if [ $HD ]; then
+    echo $i"checking if $amd GPU belongs to 'Radeon HD' series"
+    cd /usr/share/pciids/AMD; HD=`grep $amd * | cut -d: -f1`; cd /
+    if [ $HD ]; then
             echo $i"AMD proprietary driver will be activated -"
             echo $i"if present in $PTH/optional folder"
             find $PTH/optional -name "$HD-1*" 2>/dev/null >>/tmp/modules
@@ -456,10 +478,10 @@ if param baseonly; then
     mv /tmp/mod /tmp/modules
 else
     if [ "$EXTRAMOD" ]; then
-	for folder in $EXTRAMOD; do
-	    echo $i"searching for additional modules in $folder"
-	    locate -d $folder && { find /mnt/$DEV/$LPTH -name "*.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules; } || fail $folder
-	done
+    for folder in $EXTRAMOD; do
+        echo $i"searching for additional modules in $folder"
+        locate -d $folder && { find /mnt/$DEV/$LPTH -name "*.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules; } || fail $folder
+    done
     fi
 fi
 
@@ -481,8 +503,8 @@ for x in `cat /tmp/modules`; do
     fi # will fail from the cdrom but does not matter
     NAME=`basename $x`; mkdir "/memory/images/$NAME"; LODEV=$(losetup -f); losetup $LODEV $x
     if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
-	   if [ ! -f $PASSPHRASE ]; then read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
-	   cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC
+       if [ ! -f $PASSPHRASE ]; then read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
+       cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC
        if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC; fi
        mount /dev/mapper/${NAME}_DEC /memory/images/$NAME
     else
@@ -492,14 +514,14 @@ for x in `cat /tmp/modules`; do
        if [ "$_M" == "1" ]; then mount $LODEV /memory/images/$NAME 2>/dev/null; fi
     fi
     if [ $? -eq 0 ]; then
-	  echo "  $m  $NAME"
+      echo "  $m  $NAME"
       if [ $UNION_FS_TYPE == 'aufs' ]; then
           LOWERDIR="/memory/images/${NAME}=ro:${LOWERDIR}"
       else    
           LOWERDIR="/memory/images/${NAME}:$LOWERDIR"
       fi    
     else
-	echo $i"[1;36m""Cannot read $NAME - corrupted module?""[0m"; rmdir /memory/images/$NAME
+    echo $i"[1;36m""Cannot read $NAME - corrupted module?""[0m"; rmdir /memory/images/$NAME
         losetup -d $LODEV
     fi
 done
@@ -512,11 +534,11 @@ debug
 if [ -e /tmp/changes-exit ]; then
     mkdir /memory/images/changes-exit
     if [ -d $CHNEXIT ]; then
-	mount -o bind $CHNEXIT/changes /memory/images/changes-exit
+    mount -o bind $CHNEXIT/changes /memory/images/changes-exit
     elif [ -b /dev/mapper/crypt ]; then
-		mount /dev/mapper/crypt /memory/images/changes-exit
+        mount /dev/mapper/crypt /memory/images/changes-exit
     else
-		mount -o loop $CHNEXIT /memory/images/changes-exit
+        mount -o loop $CHNEXIT /memory/images/changes-exit
     fi
 # Not sure if it works with overlay
     echo "  $m  changes-exit"; LOWERDIR="$LOWERDIR /memory/images/changes-exit" 
@@ -526,13 +548,13 @@ fi
 LOWERDIR=`echo $LOWERDIR | sed 's/:$//'` # remove the last :
 echo "Mount $UNION_FS_TYPE fs here at /union option: overlay: '$LOWERDIR'"
 
-rm -rf /memory/changes/workdir >/dev/null 2>&1
-mkdir /memory/changes/workdir /memory/changes/rootdir
-
+rm -rf ${CHANGES_MOUNT}/workdir >/dev/null 2>&1
+mkdir ${CHANGES_MOUNT}/workdir ${CHANGES_MOUNT}/rootdir
+nap
 if [ $UNION_FS_TYPE == 'aufs' ]; then
-    mount -t aufs -o br=/memory/changes/rootdir=rw:${LOWERDIR} none /union
+    mount -t aufs -o br=${CHANGES_MOUNT}/rootdir=rw:${LOWERDIR} none /union
 else
-    mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=/memory/changes/rootdir,workdir=/memory/changes/workdir /union
+    mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=${CHANGES_MOUNT}/rootdir,workdir=${CHANGES_MOUNT}/workdir /union
 
 fi    
 if [ "$?" != 0 ]; then echo "Error mount $UNION_FS_TYPE fs at /union start shell for debugging .."; /bin/sh ; exit 1; fi
@@ -543,12 +565,12 @@ if param norootcopy; then
     echo $i"skipping /rootcopy directory"
 else
     if [ $ROOTCOPY ]; then
-	locate -d $ROOTCOPY
-	if [ $? -eq 0 ]; then echo $i"copying content of $ROOTCOPY directory"; cp -af /mnt/$DEV/$LPTH/. /union/. 2>/dev/null; else fail $ROOTCOPY; ROOTCOPY=none; fi
+    locate -d $ROOTCOPY
+    if [ $? -eq 0 ]; then echo $i"copying content of $ROOTCOPY directory"; cp -af /mnt/$DEV/$LPTH/. /union/. 2>/dev/null; else fail $ROOTCOPY; ROOTCOPY=none; fi
     else
-	ROOTCOPY=none
-	echo $i"copying content of $PTH/rootcopy directory"
-	cp -af $PTH/rootcopy/. /union/. 2>/dev/null
+    ROOTCOPY=none
+    echo $i"copying content of $PTH/rootcopy directory"
+    cp -af $PTH/rootcopy/. /union/. 2>/dev/null
     fi
 fi
 mkdir /union/mnt >/dev/null 2>&1; rm -rf /union/dev >/dev/null 2>&1; mkdir /union/dev >/dev/null 2>&1
@@ -565,9 +587,9 @@ fi
 
 if [ "$IP" -a -x /union/etc/rc.d/rc.networkmanager ]; then
     if [ -z "`egrep -o " copy2ram( |\$)" /etc/cmdline`" -o -d /mnt/nfs/storage/client-$MAC ]; then
-	echo "nameserver $IP" > /union/etc/resolv.conf
-	nmc=/union/etc/NetworkManager/NetworkManager.conf; HW=`ifconfig | grep eth0 | cut -dW -f2 | cut -d" " -f2`
-	! grep -q "unmanaged-devices=mac:$HW" $nmc && sed -i '/\[keyfile\]/ a\unmanaged-devices=mac:'$HW'' $nmc
+    echo "nameserver $IP" > /union/etc/resolv.conf
+    nmc=/union/etc/NetworkManager/NetworkManager.conf; HW=`ifconfig | grep eth0 | cut -dW -f2 | cut -d" " -f2`
+    ! grep -q "unmanaged-devices=mac:$HW" $nmc && sed -i '/\[keyfile\]/ a\unmanaged-devices=mac:'$HW'' $nmc
     fi
 fi
 
@@ -585,18 +607,18 @@ if param copy2ram; then
     [ $SGNDEV = /mnt/isoloop -o $SGNDEV = /mnt/nfs ] && { umount `grep $SGNDEV /etc/mtab | sed -n 1p | cut -d" " -f2`; SGNDEV=$BOOTDEV; }
     CHNDISK=`echo $CHNDEV | cut -b6-8`; SGNDISK=`echo $SGNDEV | cut -b6-8`; REMOVABLE=`cat /sys/block/$SGNDISK*/removable 2>/dev/null`
     if [ -z "`egrep -o " noeject( |\$)" /etc/cmdline`" -a "$CHNDISK" != "$SGNDISK" ]; then
-	if [ "$REMOVABLE" = 1 ]; then
-	    for rdisk in `ls /mnt | grep $SGNDISK`; do
-		umount -n /mnt/$rdisk 2>/dev/null && rmdir /mnt/$rdisk
-		if [ $? -eq 0 ]; then
-		    grep -qw "/dev/$rdisk.*iso9660" /etc/fstab && /union/usr/bin/eject /dev/$rdisk
-		    sed -i "/$rdisk/d" /etc/fstab
-		fi
-	    done
-	    [ `ls /mnt | grep $SGNDISK` ] || echo $i"[1;36m""finished copying to RAM - booting media can be removed safely""[0m"
-	else
-	    if param nohd; then umount $SGNDEV 2>/dev/null; rmdir $SGNDEV 2>/dev/null; fi
-	fi
+    if [ "$REMOVABLE" = 1 ]; then
+        for rdisk in `ls /mnt | grep $SGNDISK`; do
+        umount -n /mnt/$rdisk 2>/dev/null && rmdir /mnt/$rdisk
+        if [ $? -eq 0 ]; then
+            grep -qw "/dev/$rdisk.*iso9660" /etc/fstab && /union/usr/bin/eject /dev/$rdisk
+            sed -i "/$rdisk/d" /etc/fstab
+        fi
+        done
+        [ `ls /mnt | grep $SGNDISK` ] || echo $i"[1;36m""finished copying to RAM - booting media can be removed safely""[0m"
+    else
+        if param nohd; then umount $SGNDEV 2>/dev/null; rmdir $SGNDEV 2>/dev/null; fi
+    fi
     fi
 fi
 
@@ -625,17 +647,17 @@ rm -rf /usr/* >/dev/null 2>&1
 debug
 echo "[1m""live system is ready now - starting ${OSDIR}""[0m"
 if [ -f /union/lib/systemd/systemd ]; then
-	( cd /union/sbin; rm -f init; ln -sf ../lib/systemd/systemd init )
+    ( cd /union/sbin; rm -f init; ln -sf ../lib/systemd/systemd init )
 fi
 if [ $? -eq 0 ]; then
     if [ -f /union/usr/sbin/chroot ]; then
-	CHROOT='usr/sbin/chroot'
+    CHROOT='usr/sbin/chroot'
     elif [ -f /union/sbin/chroot ]; then
-	CHROOT='sbin/chroot'
+    CHROOT='sbin/chroot'
     elif [ -f /union/usr/bin/chroot ]; then
-	CHROOT='usr/bin/chroot'
+    CHROOT='usr/bin/chroot'
     else
-	CHROOT='bin/chroot'
+    CHROOT='bin/chroot'
     fi
     rm -rf /union/proc /union/sys /union/run /union/tmp /union/srv /union/media >/dev/null 2>&1
     mkdir /union/proc /union/sys /union/run /union/tmp /union/srv /union/media /union/snap >/dev/null 2>&1
