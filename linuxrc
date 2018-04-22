@@ -678,6 +678,8 @@ EOF
     debug
     pivot_root /union  /union/mnt/live
     #exec $CHROOT . /mnt/live/bin/init "$@" <dev/console >dev/console 2>&1
+# make symlink portdata for the app to know a fixed name to use non overlayfs file like docker
+    (cd /mnt ; rm -f portdata; ln -sf `basename $SGNDEV` portdata)
     exec $CHROOT . /sbin/init "$@" <dev/console >dev/console 2>&1
 else
     echo -e "[31m""!!ERROR!!\nSomething went wrong and I cannot continue.\nPress Ctrl+Alt+Del to reboot.""[0m"
