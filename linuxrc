@@ -276,14 +276,13 @@ echo "Re-generate again as fstab will mount kernel module and load extra devices
 generate_devices
 echo -e "done\ngenerate hostname ...\n"
 debug
-# generate hostname based on UUID if it is in the format XXX:RAND or no hostname is given at all
-[ -z "$HOSTNAME" ] && HOSTNAME="auto"
-_h1=`echo $HOSTNAME | cut -f1 -d':'` ; _h2=`echo $HOSTNAME | cut -f2 -d':'`
-if [ "$HOSTNAME" == "auto" ] || [ $_h2 == 'RAND' ]; then
-      R=`blkid | egrep -o 'UUID=[^ ]+' | tail -n 1 | cut -f2 -d'=' | cut -f2 -d'"' | cut -b1-8`
-      [ -z "$R" ] && R=`blkid | egrep -o 'LABEL=[^ ]+' | tail -n 1 | cut -f2 -d'=' | cut -f2 -d'"' | cut -b1-16`
-      HOSTNAME="${_h1}-${R}"
+# generate hostname based on ethernet MAC, UUID if no hostname is given at all
+if [ -z "$HOSTNAME" ]; then
+  HOSTNAME=`ifconfig -a|grep 'encap:Ethernet'|egrep -o 'HWaddr [^ ]+'|tail -n1|cut -f2 -d' '|sed 's/:/-/g'`
+  [ -z "$HOSTNAME" ] && HOSTNAME=`blkid | egrep -o 'UUID=[^ ]+' | tail -n 1 | cut -f2 -d'=' | cut -f2 -d'"' | cut -b1-8`
+  [ -z "$HOSTNAME" ] && HOSTNAME=`blkid | egrep -o 'LABEL=[^ ]+' | tail -n 1 | cut -f2 -d'=' | cut -f2 -d'"' | cut -b1-16`
 fi
+
 if ! `echo $HOSTNAME | grep '\.' >/dev/null 2>&1`; then HOSTNAME="${HOSTNAME}.vm"; fi
 echo $HOSTNAME > /proc/sys/kernel/hostname
 echo -e "done\ncreating fstab now ...\n"
@@ -422,13 +421,13 @@ debug
 find $PTH/base $PTH/modules -name "*.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 find $PTH/../share -name "[0-9][0-9][0-9]-*-${arch}.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 find $PTH/../share -name "[0-9][0-9][1-9]-*-noarch.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
-find $PTH/../share -name "[0-9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
+find $PTH/../share -name "[0-9][0-9][0-9]-${HOSTNAME}-*.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 
 echo -e "done\nLoad specific settings for a hostname. The file name is <HOSTNAME>-*.sqs ...\n"
 debug
 if [ ! -z "$HOSTNAME" ]; then
     find $PTH/base $PTH/modules -name "[0-9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
-    if [ -f $PTH/../share/${HOSTNAME}-fstab ]; then cat $PTH/../share/${HOSTNAME}-fstab >> /etc/fstab; fi
+    if [ -f $PTH/../share/${HOSTNAME}.fstab ]; then cat $PTH/../share/${HOSTNAME}.fstab >> /etc/fstab; fi
 fi
 
 if [ -z "$LOAD" ]; then
