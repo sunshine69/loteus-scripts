@@ -28,14 +28,16 @@ echo "Enter kernel version: "
 read KVER
 
 if [ ! -z "$KVER" ]; then
-    if [ -z "$KBUILDDIR" ]; then
-        # Install xzm modules
-        $TARGET_DIR/porteus-kernel-$KVER.tar.sfx
-        KBUILDDIR="$PORT_DIR"
-    fi
     DESTDIR="/tmp/initrd_$$/lib/modules/$KVER" ; rm -rf $DESTDIR; mkdir -p $DESTDIR
-    mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
-    SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
+    if [ -z "$SRCDIR" ]; then
+        if [ -z "$KBUILDDIR" ]; then
+            # Install xzm modules
+            $TARGET_DIR/porteus-kernel-$KVER.tar.sfx
+            KBUILDDIR="$PORT_DIR"
+        fi
+        mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
+        SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
+    fi
     cp -a $SRCDIR/{crypto,lib} $DESTDIR/
     cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc} $DESTDIR/
     cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/
