@@ -35,17 +35,22 @@ if [ ! -z "$KVERS" ]; then
         KBUILDDIR=""
         SRCDIR=""
         DESTDIR="/tmp/initrd_$$/lib/modules/$KVER" ; rm -rf $DESTDIR; mkdir -p $DESTDIR
-        if [ -z "$KMOD_DIR" ]; then
-            if [ -z "$KBUILDDIR" ]; then
-                #Install xzm modules
-                ( cd $CWD ; $TARGET_DIR/porteus-kernel-$KVER.tar.sfx )
-                KBUILDDIR="$CWD/porteus-kernel"
-            fi
+
+        if [ -z "$KBUILDDIR_ENV" ]; then
+            #Install xzm modules
+            ( cd $CWD ; $TARGET_DIR/porteus-kernel-$KVER.tar.sfx )
+            KBUILDDIR="$CWD/porteus-kernel"
+        else
+            KBUILDDIR=$KBUILDDIR_ENV
+        fi
+
+        if [ -z "$SRCDIR_ENV" ]; then
             mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
             SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
         else
-            SRCDIR=$KMOD_DIR
+            SRCDIR=$SRCDIR_ENV
         fi
+
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
         cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc} $DESTDIR/
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/
