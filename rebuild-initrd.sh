@@ -27,8 +27,10 @@ cp -a $SCRIPT_DIR/linuxrc .
 
 echo "Copy modules in - /tmp/initrd_$$/lib/modules/ if needed and then type kernel version in"
 
+if [ -z "$KVERS" ]; then
 echo "Enter kernel version (space separated for a list): "
 read KVERS
+fi
 
 if [ ! -z "$KVERS" ]; then
     for KVER in $KVERS; do
@@ -51,6 +53,9 @@ if [ ! -z "$KVERS" ]; then
             SRCDIR=$SRCDIR_ENV
         fi
 
+        # Clean up old modules
+        rm -rf /tmp/initrd_$$/lib/modules/*
+        # Copy some modules over
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
         cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc} $DESTDIR/
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/
@@ -60,13 +65,6 @@ if [ ! -z "$KVERS" ]; then
         if [ -d "$CWD/porteus-kernel" ]; then rm -rf "$CWD/porteus-kernel"; fi
     done
 fi
-
-mc /tmp/initrd_$$/lib/modules/
-if [ -z "$KVER" ]; then
-    echo "Enter kernel version: "
-    read KVER
-fi
-[ "$KVER" ] && depmod $KVER -b .
 
 echo "Building ..."
 
