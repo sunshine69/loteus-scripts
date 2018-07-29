@@ -25,7 +25,7 @@ cd /tmp/initrd_$$
 xzcat $INF | cpio -id
 cp -a $SCRIPT_DIR/linuxrc .
 
-echo "Copy modules in - /tmp/initrd_$$/lib/modules/ if needed and then type kernel version in"
+echo "Copy modules into - /tmp/initrd_$$/lib/modules/ if needed and then type kernel version in"
 
 if [ -z "$KVERS" ]; then
 echo "Enter kernel version (space separated for a list): "
@@ -53,9 +53,10 @@ if [ ! -z "$KVERS" ]; then
             SRCDIR=$SRCDIR_ENV
         fi
 
-        # Clean up old modules
+        echo Clean up old modules
         rm -rf /tmp/initrd_$$/lib/modules/*
-        # Copy some modules over
+        echo Copy some modules over
+        mkdir -p $DESTDIR
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
         cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc} $DESTDIR/
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/
@@ -69,6 +70,8 @@ fi
 echo "Building ..."
 
 mv $OUT ${OUT}.bak
+echo "Kernel modules file list"
+find ./lib/modules/
 find . | cpio --quiet -o -H newc | lzma -7 > $OUT
 
 cd $CWD
