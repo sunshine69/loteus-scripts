@@ -14,9 +14,6 @@ if [ ! "$ARCH" ]; then
 ARCH=`arch`
 fi
 
-#make -j 4 bzImage modules
-
-#if [ ! "$1" ]; then
 KVER=`cat $CDIR/include/generated/utsrelease.h | perl -ne '/[^"]+"([^"]+)"/ && print $1  '`
 echo "DEBUG '$KVER'"
 if [ "$KVER" = "" ] || [ "$KVER" = "-" ] ; then
