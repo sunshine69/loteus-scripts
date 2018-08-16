@@ -1,5 +1,12 @@
 #!/bin/bash
 
+build_external_module() {
+    export KERNELRELEASE=$KVER
+    cd /home/stevek/src/bcwc_pcie
+    make
+    make install
+}
+
 #KVER=$1
 CDIR=`pwd`
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -34,9 +41,9 @@ exit
 fi
 if [ ! -d /lib/modules/$KVER ]; then
         make modules_install
+        build_external_module
 fi
 
-#fi
 #make menuconfig
 #make -j2 bzImage modules
 #make modules_install
