@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 
 if [ "$(id -u)" != "0" ]; then
-    exec sudo $0
+    exec sudo -E $0
 fi
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -15,7 +15,8 @@ STABLE=17
 
 VERSION=4
 
-[ -z "$MINOR" ] && MINOR="14"
+echo "MINOR: $MINOR"
+if [ -z "$MINOR" ]; then MINOR="14"; fi
 PATCHLEVEL=$MINOR
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
