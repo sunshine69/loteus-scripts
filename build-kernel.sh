@@ -7,6 +7,9 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 KSOURCE_DIR=/mnt/sda4/tmp
 
+pushd .
+cd $KSOURCE_DIR
+
 LONGTERM=14
 STABLE=17
 
@@ -30,10 +33,6 @@ if [ -z "$KVER" ]; then
 fi
 
 if [ "$KVER" == "$OLD_KVER" ]; then echo "No new version. Do nothing"; exit 0; fi
-
-pushd .
-
-cd $KSOURCE_DIR
 
 wget https://cdn.kernel.org/pub/linux/kernel/v4.x/patch-$KVER.xz
 
