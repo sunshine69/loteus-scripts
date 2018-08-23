@@ -128,6 +128,7 @@ for x in $dev; do
                     mkdir -p /opt/000-kernel >/dev/null 2>&1
                     mount -o loop $KMOD /opt/000-kernel  || echo "Can not mount $KMOD"
                     if [ -d /opt/000-kernel/lib/modules/$KVER ]; then
+                      mkdir -p /lib/modules >/dev/null 2>&1  
                       mount -o bind /opt/000-kernel/lib/modules /lib/modules
                       for x in aufs overlay md_mod dm_mod dm_raid dm_crypt cryptd cbc sha256_generic aes aes_generic aes_x86_64 aes_i586 scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod jfs ext2 ext4 ext3 squashfs isofs virtio virtio_blk virtio_pci virtio_net; do modprobe $x 2>/dev/null; done
                       KMOD_DETECTED=y; echo "FOUND $KMOD"; echo "$KMOD" > /tmp/modules; break
@@ -148,6 +149,7 @@ for x in $dev; do
                   mkdir -p /opt/000-kernel >/dev/null 2>&1
                   mount -o loop $KMOD /opt/000-kernel || echo "=> Can not mount $KMOD <="
                   if [ -d /opt/000-kernel/lib/modules/$KVER ]; then
+                    mkdir -p /lib/modules >/dev/null 2>&1
                     mount -o bind /opt/000-kernel/lib/modules /lib/modules
                     for x in aufs overlay md_mod dm_mod dm_raid dm_crypt cryptd cbc sha256_generic aes aes_generic aes_x86_64 aes_i586 scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod jfs ext2 ext4 ext3 squashfs isofs virtio virtio_blk virtio_pci virtio_net; do modprobe $x 2>/dev/null; done
                     KMOD_DETECTED=y; echo "FOUND $KMOD"; echo "$KMOD" > /tmp/modules; break
@@ -496,6 +498,7 @@ umount /lib/modules 2>/dev/null; umount /opt/000-kernel 2>/dev/null
 
 if ! grep $UNION_FS_TYPE /proc/filesystems >/dev/null 2>&1; then echo "UNION_FS_TYPE $UNION_FS_TYPE is not supported in kernel. "; debug; fi
 
+KERNEL_MOD_DETECTED='no'
 for x in `cat /tmp/modules`; do
     if [ -f ${x}.new ]; then 
         if [ "$FACTORYRESET" != '3' ]; then mv $x ${x}.old; fi
@@ -508,20 +511,35 @@ for x in `cat /tmp/modules`; do
        if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC; fi
        mount /dev/mapper/${NAME}_DEC /memory/images/$NAME
     else
-       _M=1 # only mount current kernel ver
+       _MOUNT_MOD=1 # only mount current kernel ver
        echo $NAME | grep '000' >/dev/null 2>&1
-       if [ "$?" == "0" ]; then echo $NAME | grep "$KVER"; if [ "$?" != "0" ]; then _M=0; losetup -d $LODEV; fi; fi
-       if [ "$_M" == "1" ]; then mount $LODEV /memory/images/$NAME 2>/dev/null; fi
+       if [ "$?" == "0" ]; then 
+           echo $NAME | grep "$KVER"
+           if [ "$?" != "0" ]; then 
+               _MOUNT_MOD=0; losetup -d $LODEV
+           else
+               KERNEL_MOD_DETECTED="y"
+               KERNEL_MOD_MOUNT_PATH="/memory/images/${NAME}/lib/modules/${KVER}"
+           fi
+       fi
+       if [ "$_MOUNT_MOD" == "1" ]; then 
+           mount $LODEV /memory/images/$NAME 2>/dev/null
+       fi
     fi
     if [ $? -eq 0 ]; then
       echo "  $m  $NAME"
+      if [ "$KERNEL_MOD_DETECTED" = "y" ]; then 
+          # Kernel setup at last to avoid it being hidden by the other modules in case of symlink 
+          KERNEL_MOD_DETECTED='n' # Set it back to allow other module as normal and then bypass the rest
+          continue
+      fi
       if [ $UNION_FS_TYPE == 'aufs' ]; then
           LOWERDIR="/memory/images/${NAME}=ro:${LOWERDIR}"
       else    
           LOWERDIR="/memory/images/${NAME}:$LOWERDIR"
       fi    
     else
-    echo $i"[1;36m""Cannot read $NAME - corrupted module?""[0m"; rmdir /memory/images/$NAME
+        echo $i"[1;36m""Cannot read $NAME - corrupted module?""[0m"; rmdir /memory/images/$NAME
         losetup -d $LODEV
     fi
 done
@@ -552,12 +570,19 @@ rm -rf ${CHANGES_MOUNT}/workdir >/dev/null 2>&1
 mkdir ${CHANGES_MOUNT}/workdir ${CHANGES_MOUNT}/rootdir
 nap
 if [ $UNION_FS_TYPE == 'aufs' ]; then
+    echo "Going to mount command 'mount -t aufs -o br=${CHANGES_MOUNT}/rootdir=rw:${LOWERDIR} none /union'"
     mount -t aufs -o br=${CHANGES_MOUNT}/rootdir=rw:${LOWERDIR} none /union
 else
+    echo "Going to mount command 'mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=${CHANGES_MOUNT}/rootdir,workdir=${CHANGES_MOUNT}/workdir /union'"
     mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=${CHANGES_MOUNT}/rootdir,workdir=${CHANGES_MOUNT}/workdir /union
 
 fi    
 if [ "$?" != 0 ]; then echo "Error mount $UNION_FS_TYPE fs at /union start shell for debugging .."; /bin/sh ; exit 1; fi
+
+# [clearlinux] If /lib is a symlink in the base module then the kernel dir wont appear on the
+# actual fs because it is hidden so we need to work around that
+mkdir -p /union/lib/modules/$KVER >/dev/null 2>&1
+mount -o bind $KERNEL_MOD_MOUNT_PATH /union/lib/modules/$KVER
 
 echo -e "done\nCopy /rootcopy folder...\n"
 if param norootcopy; then
