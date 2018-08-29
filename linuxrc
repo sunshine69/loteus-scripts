@@ -691,6 +691,9 @@ if [ $? -eq 0 ]; then
     #set hostname file - only for Debian and Centos os. We can even run chroot /union/ lsb_release to find out more.
     if [ ! -z $HOSTNAME ]; then
        echo "$HOSTNAME" > /union/etc/hostname
+       if ! grep "$HOSTNAME" /union/etc/hosts >/dev/null 2>&1; then
+          echo "127.0.0.1 $HOSTNAME localhost" >> /union/etc/hosts
+       fi 
        if [ -f /union/etc/sysconfig/network ]; then
           cat <<EOF > /union/etc/sysconfig/network
 NETWORKING=yes
