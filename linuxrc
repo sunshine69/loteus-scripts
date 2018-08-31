@@ -409,7 +409,7 @@ if [ $CHANGES ]; then
             debug
         fi
     else
-        fail $CHANGES; echo "CHANGES_MOUNT_SRC is empty"; read; fail_chn
+        fail $CHANGES; echo "CHANGES_MOUNT_SRC is empty"; fail_chn
     fi
 else
      echo $i"changes cheatcode not found, using memory only"; fail_chn
