@@ -59,6 +59,8 @@ KMOD_DETECTED=
 HOSTNAME=`value hostname`;
 UNION_FS_TYPE=`value unionfs`; [ $UNION_FS_TYPE ] || UNION_FS_TYPE='overlay'
 CHANGES_MOUNT=/memory/changes
+# kexec=path/to/dir/has/bzImage to load secondary kernel
+KEXEC=`value kexec`; [ $KEXEC ] || KEXEC=
 # Device Functions:
 detect_fs_type() { # where blkid does not understand that file system we need this hack
     echo "detect_fs_type $1"
@@ -251,6 +253,11 @@ for x in `cat $1`; do
 done
 echo -en "                       \r"; } # end cpmod
 
+dirname() {
+    _n=$(basename "$1")
+    echo "$1" | sed "s@/${_n}@@"
+}
+
 echo "start portetus init script - modified by stevek version v1.10"
 # Make all drivers available: stevek move it first so we have module
 debug
@@ -277,6 +284,28 @@ generate_devices
 fstab
 echo "Re-generate again as fstab will mount kernel module and load extra devices in."
 generate_devices
+echo -e "done\ncheck KEXEC ...\n"
+debug
+if [ ! -z "$KEXEC" ]; then
+    KERNEL=$(find /mnt/*/${KEXEC} -name bzImage 2>/dev/null|tail -n1)
+    if [ -f "$KERNEL" ]; then
+        INITRD="$(dirname $KERNEL)/initrd.xz"
+    fi
+    echo "$KERNEL $INITRD"
+    if [ ! -f "$KERNEL" ] && [ ! -f "$INITRD" ]; then
+        cmdline=$(cat /proc/cmdline|sed 's/ kexecdir=[^ ]\+ / /')
+        echo "$cmdline"
+        echo "Found kexec kernel and initrd, prepare to load and boot the new kernel"
+        /bin/kexec -l $KERNEL --initrd $INITRD --command-line="$cmdline"
+        debug
+        if [ $? = 0 ]; then
+            umount /dev/loop*; umount /mnt/* 
+            sync
+            /bin/kexec -e
+        fi    
+    fi    
+fi
+
 echo -e "done\ngenerate hostname ...\n"
 debug
 # generate hostname based on ethernet MAC, UUID if no hostname is given at all
@@ -409,7 +438,7 @@ if [ $CHANGES ]; then
             debug
         fi
     else
-        fail $CHANGES; echo "CHANGES_MOUNT_SRC is empty"; fail_chn
+        fail $CHANGES; echo "CHANGES_MOUNT_SRC is empty"; read; fail_chn
     fi
 else
      echo $i"changes cheatcode not found, using memory only"; fail_chn
