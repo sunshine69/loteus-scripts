@@ -298,10 +298,14 @@ if [ ! -z "$KEXEC" ]; then
         echo "Found kexec kernel and initrd, prepare to load and boot the new kernel"
         /bin/kexec -l $KERNEL --initrd $INITRD --command-line="$cmdline"
         debug
+        echo done loading kexec. some reason kexec has error status but it still works thus need echo here 
         if [ $? = 0 ]; then
             umount /dev/loop*; umount /mnt/* 
             sync
+            echo exec kernel now
             /bin/kexec -e
+        else
+            echo some error with kexec. hit enter to continue old kernel; read junk    
         fi    
     fi    
 fi
