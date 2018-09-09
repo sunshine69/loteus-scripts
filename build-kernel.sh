@@ -16,7 +16,7 @@ STABLE=18
 VERSION=4
 
 echo "MINOR: $MINOR"
-if [ -z "$MINOR" ]; then MINOR="14"; fi
+if [ -z "$MINOR" ]; then MINOR="18"; fi
 PATCHLEVEL=$MINOR
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
