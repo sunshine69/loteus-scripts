@@ -1,10 +1,12 @@
 #!/bin/bash
 
 build_external_module() {
+    pushd .
     export KERNELRELEASE=$KVER
     cd /home/stevek/src/bcwc_pcie
     make
     make install
+    popd
 }
 
 #KVER=$1
