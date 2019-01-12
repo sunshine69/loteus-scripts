@@ -11,12 +11,12 @@ pushd .
 cd $KSOURCE_DIR
 
 LONGTERM=14
-STABLE=18
+STABLE=19
 
 VERSION=4
 
 echo "MINOR: $MINOR"
-if [ -z "$MINOR" ]; then MINOR="14"; fi
+if [ -z "$MINOR" ]; then MINOR="19"; fi
 PATCHLEVEL=$MINOR
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
@@ -29,7 +29,7 @@ KVER="$1"
 
 if [ -z "$KVER" ]; then
     if [ "$PATCHLEVEL" == "$STABLE" ]; then
-        KVER=`curl -Ls http://www.kernel.org | python3 -c 'import sys; from bs4 import BeautifulSoup; s=BeautifulSoup(sys.stdin.read(), "html.parser"); print(s.body.find("td", attrs={"id":"latest_link"}).text.replace("\n","") )'`
+        KVER=`curl -Ls http://www.kernel.org | python3 -c "import sys; from bs4 import BeautifulSoup; s=BeautifulSoup(sys.stdin.read(), 'html.parser'); print([x.next_sibling.next_sibling.text for x in s.body.find('table',attrs={'id':'releases'}).find_all('td',text='stable:') if x.next_sibling.next_sibling.text.split('.')[1] == '$PATCHLEVEL'][0])"`
     elif [ "$PATCHLEVEL" == "$LONGTERM" ]; then
     # Get the longterm
         KVER=`curl -Ls http://www.kernel.org | python3 -c 'import sys; from bs4 import BeautifulSoup; s=BeautifulSoup(sys.stdin.read(), "html.parser"); print(s.body.find("td", text="longterm:").next_sibling.next_sibling.text)'`
