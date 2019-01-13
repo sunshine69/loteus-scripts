@@ -337,7 +337,8 @@ EOF
                         COMP='gzip -c -'
                 fi
 esac
-tar -cf - kernel-$KVER | $COMP > $TARGET
+echo Skipping creating tar ball for now
+#tar -cf - kernel-$KVER | $COMP > $TARGET
 
 echo "generate the xzm modules"
 cd kernel-$KVER
