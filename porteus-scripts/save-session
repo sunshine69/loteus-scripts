@@ -3,9 +3,9 @@
 CHANGES='/mnt/live/memory/changes'
 NAME_PREFIX='save_session'
 # The home of this user will get cleaned
-DEFAULT_USER='port'
+DEFAULT_USER='kodi'
 
-if [ "$3" ]; then WORKDIR="$3"; else WORKDIR=/mnt/live; fi
+if [ "$3" ]; then WORKDIR="$3"; else WORKDIR=/mnt/live/memory; fi
 
 [ -z "$MKSQUASHFS" ] && MKSQUASHFS=`which mksquashfs`
 
@@ -88,11 +88,19 @@ if [ -z "$FILEMGR" ]; then
 	echo "What file manager you want. Hit enter to continue"
 	read FILEMGR
 fi
-if [ "$FILEMGR" ]; then
+if [ "$FILEMGR" ] && [ -z "$NO_PROMPT" ]; then
         echo "start file manager at the mount point $FILEMGR"
 	$FILEMGR ${NAME_PREFIX}3
 fi
 rm -rf ${NAME_PREFIX}3/tmp/* ${NAME_PREFIX}3/tmp/.*
+
+if [[ "$1" =~ "199"  ]]; then
+	ls ${NAME_PREFIX}3/ | grep -v -P "(etc|home|root)" | while read dname; do 
+	rm -rf ${NAME_PREFIX}3/${dname}
+done
+
+fi
+
 rm -f out.sqs
 if [ -z "$SQUASHFS_OPT" ]; then
 	SQUASHFS_OPT="-comp zstd -b 1024K -Xcompression-level 22"
@@ -105,6 +113,7 @@ umount ${NAME_PREFIX}3; sleep 3; umount ${NAME_PREFIX}1 >/dev/null 2>&1
 if `ls /dev/mapper/${NAME_PREFIX}_DEC >/dev/null 2>&1`; then
 	cryptsetup luksClose /dev/mapper/${NAME_PREFIX}_DEC
 fi
+
 if [ "$LODEV" ]; then losetup -d $LODEV; fi
 if [ "$2" == 'enc' ]; then
 	/opt/bin/squash2enc.sh out.sqs $SRCPATH $PASS # Given the existing module so we will use the existing luks
