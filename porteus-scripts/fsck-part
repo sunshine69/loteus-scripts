@@ -1,0 +1,33 @@
+#!/bin/bash
+#########	Check file system of a partition.
+
+#####	Terence Becker		SunBurnt			Jan. 3  2014
+
+#####	No warranty of any kind... Use at your own risk!
+
+
+[ ! "$1" ]&& echo -e "\n>>>  USAGE:  fsck-part (sda1, sdb3, etc...)\n" && exit
+
+
+PART=/dev/${1##*/}
+
+FS=`blkid $PART |sed 's,".$,,;s,^.*",,'`
+
+#echo $FS ;exit
+
+case $FS in
+	ext[2-4]|btrfs)
+		fsck.$FS -y -f $PART
+		ERR=$?
+		echo -e "\n>>>  EXIT VALUE:  $ERR"
+		[ $ERR -eq 0 ]&& echo -e "\n#>  File System is Good.\n" ||
+			echo -e "\n###  ERROR:  Failed File System Check.\n" ;;
+	vfat|fat32)
+		fsck.vfat -a $PART
+		ERR=$? ; echo -e "\n>>>  EXIT VALUE:  $ERR"
+		[ $ERR -eq 0 ]&& echo -e "\n#>  File System is Good.\n" ||
+			echo -e "\n###  ERROR:  Failed File System Check.\n" ;;
+	*)
+		echo -e "\n###  ERROR:  Not a Valid File System Type.\n" ;exit ;;
+esac
+

@@ -1,0 +1,41 @@
+#!/bin/bash
+###########		Click image files to mount & unmount."
+
+#####	Terence Becker		SunBurnt		Jan. 3  2014
+
+#####	No warranty of any kind... Use at your own risk!
+
+
+[ ! "$1" ]&& echo -e "\n>>>  USAGE:  mnt-img (/Path/ImageFile)\n" && exit
+
+[ ! -f "$1" ]&&
+	echo -e "\n###  ERROR:  Bad /Path/ImageFile Argument:  $1\n" && exit
+
+PF="$1"
+
+FS=`blkid $PF |sed 's,".$,,;s,^.*",,'`
+
+[ ! "$FS" ]&& echo -e "\n###  ERROR:  Bad File system Type.\n" && exit
+
+Mnt='/media/'`echo "$PF" |sed "s#/#+#g"`			# replace: / with: +
+   
+#echo "$FS   $Mnt" ;exit
+
+if [ ! "`mount |grep $Mnt`" ];then
+	[ -d $Mnt ]|| mkdir -p $Mnt
+	mount -t $FS -o loop $PF $Mnt
+	if [ $? -eq 0 ];then
+		echo -e "\n>>>  Mount:  $PF\n>>>     On:  $Mnt\n"
+	else
+		echo -e "\n###  ERROR:  Failed Mounting:  $PF\n" ;exit
+	fi
+else
+	umount -d $Mnt 2> /dev/null
+	if [ $? -eq 0 ];then
+		echo -e "\n>>>  UnMount:  $PF\n>>>     From:  $Mnt\n"
+	else
+		echo -e "\n###  ERROR:  Failed UnMounting:  $PF\n" ;exit
+	fi
+	rmdir $Mnt
+fi
+

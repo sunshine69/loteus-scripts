@@ -1,0 +1,118 @@
+#!/bin/bash
+
+CHANGES='/mnt/live/memory/changes'
+NAME_PREFIX='save_session'
+# The home of this user will get cleaned
+DEFAULT_USER='port'
+
+if [ "$3" ]; then WORKDIR="$3"; else WORKDIR=/mnt/live; fi
+
+[ -z "$MKSQUASHFS" ] && MKSQUASHFS=`which mksquashfs`
+
+function realpath {
+	echo "$( cd "$( dirname "$1" )" && pwd )/`basename $1`"
+}
+SRCPATH="`realpath $1`"
+
+CDIR=`pwd`; cd $WORKDIR; rm -rf ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1; mkdir ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1
+
+LODEV=`losetup -f`; losetup $LODEV $SRCPATH
+if [ $? == 0 ]; then
+	if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
+		if [ -z $PASS ]; then read -s -p "Enter pass:" PASS; fi
+		echo "$PASS" | md5sum | cut -f1 -d' ' | cryptsetup --key-file=- luksOpen $LODEV ${NAME_PREFIX}_DEC
+		if [ $? != 0 ]; then echo "Second try .."; cryptsetup luksOpen $LODEV ${NAME_PREFIX}_DEC; fi
+		mount /dev/mapper/${NAME_PREFIX}_DEC ${NAME_PREFIX}1
+	else
+		mount $LODEV ${NAME_PREFIX}1 
+	fi
+else
+  echo "Error mount old changes module. New changes will be saved into new module"
+  LODEV=''
+fi
+#if grep aufs /proc/filesystems >/dev/null 2>&1; then
+#    mount -t aufs none ${NAME_PREFIX}3 -o br=${NAME_PREFIX}2=rw:${CHANGES}/rootdir=ro+wh:${NAME_PREFIX}1=ro 
+#else
+mkdir ${NAME_PREFIX}_wd
+mount -t overlay overlay -o lowerdir=${CHANGES}/rootdir:${NAME_PREFIX}1,upperdir=${NAME_PREFIX}2,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}3
+#fi    
+if [ $? != 0 ]; then echo "Fatal Error mount overlay fs"; umount ${NAME_PREFIX}1; losetup -d $LODEV >/dev/null 2>&1 ;exit 1; fi
+echo "Cleaning..."
+rm -f ${NAME_PREFIX}3/var/lib/alsa/asound.state
+rm -f ${NAME_PREFIX}3/home/${DEFAULT_USER}/.bash_history
+rm -f ${NAME_PREFIX}3/home/${DEFAULT_USER}/.xsession-errors
+rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.cache
+rm -rf ${NAME_PREFIX}3/home/*/.cache
+#rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.config/chromium
+#rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.config/google-chrome
+rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.thumbnails
+rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.ACEStream
+rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.xbmc/temp
+rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.xbmc/userdata/Thumbnails
+rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.Skype/DataRv
+rm -f ${NAME_PREFIX}3/etc/blkid-cache
+#rm -f ${NAME_PREFIX}3/etc/resolv.conf
+rm -rf ${NAME_PREFIX}3/etc/udev/rules.d/70-persistent*
+rm -f ${NAME_PREFIX}3/var/lib/dhcp/dhclient.eth0.leases
+rm -f ${NAME_PREFIX}3/var/lib/dhcpcd/*.lease
+rm -rf ${NAME_PREFIX}3/dev/*
+rm -rf ${NAME_PREFIX}3/var/crash/* ${NAME_PREFIX}3/var/crash/.*
+rm -rf ${NAME_PREFIX}3/root/.cache
+rm -rf ${NAME_PREFIX}3/run/*
+rm -rf ${NAME_PREFIX}3/tmp/* ${NAME_PREFIX}3/tmp/.*
+rm -rf ${NAME_PREFIX}3/var/tmp/*
+rm -rf ${NAME_PREFIX}3/var/backups/*
+rm -rf ${NAME_PREFIX}3/srv/*
+
+ls ${NAME_PREFIX}3/var/lib/apt/lists | grep -v "lock" | grep -v "partial" | xargs -i rm ${NAME_PREFIX}3/var/lib/apt/lists/{} ;
+ls ${NAME_PREFIX}3/var/cache/apt/archives | grep -v "lock" | grep -v "partial" | xargs -i rm ${NAME_PREFIX}3/var/cache/apt/archives/{} ;
+ls ${NAME_PREFIX}3/var/cache/apt | grep -v "archives" | xargs -i rm ${NAME_PREFIX}3/var/cache/apt/{} ;
+find ${NAME_PREFIX}3/var/log -type f -exec rm -f {} \;
+find ${NAME_PREFIX}3/usr/share/doc -type f | while read f; do cp /dev/null $f; done
+
+ls ${NAME_PREFIX}3/home/ | grep -v "$DEFAULT_USER" | while read dname; do 
+	rm -rf ${NAME_PREFIX}3/home/${dname}
+done
+
+echo $SRCPATH | grep 'base/001' >/dev/null 2>&1
+if [ "$?" = "0" ]; then rm -f /etc/setup_complete; fi
+
+for F in pcmanfm thunar mc bash; do
+FILEMGR=`which $F`
+if [ "$?" == "0" ]; then
+	break
+fi
+done
+
+if [ -z "$FILEMGR" ]; then
+	echo "What file manager you want. Hit enter to continue"
+	read FILEMGR
+fi
+if [ "$FILEMGR" ]; then
+        echo "start file manager at the mount point $FILEMGR"
+	$FILEMGR ${NAME_PREFIX}3
+fi
+rm -rf ${NAME_PREFIX}3/tmp/* ${NAME_PREFIX}3/tmp/.*
+rm -f out.sqs
+if [ -z "$SQUASHFS_OPT" ]; then
+	SQUASHFS_OPT="-comp zstd -b 1024K -Xcompression-level 22"
+	#SQUASHFS_OPT="-b 1024K"
+	echo "Default SQUASHFS_OPT is '$SQUASHFS_OPT'"
+fi
+OUTDIR=${NAME_PREFIX}3
+$MKSQUASHFS $OUTDIR out.sqs $SQUASHFS_OPT
+umount ${NAME_PREFIX}3; sleep 3; umount ${NAME_PREFIX}1 >/dev/null 2>&1
+if `ls /dev/mapper/${NAME_PREFIX}_DEC >/dev/null 2>&1`; then
+	cryptsetup luksClose /dev/mapper/${NAME_PREFIX}_DEC
+fi
+if [ "$LODEV" ]; then losetup -d $LODEV; fi
+if [ "$2" == 'enc' ]; then
+	/opt/bin/squash2enc.sh out.sqs $SRCPATH $PASS # Given the existing module so we will use the existing luks
+	mv out.sqs.enc out.sqs
+fi
+
+mv $WORKDIR/out.sqs ${SRCPATH}.new
+if [ "$?" != "0" ]; then echo "Output file is $WORKDIR/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi
+
+rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
+cd $CDIR

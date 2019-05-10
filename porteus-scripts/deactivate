@@ -1,0 +1,8 @@
+#!/bin/bash
+# Looks like it does not work well - aufs error
+RMDIR="$1"
+mount -t aufs none / -o remount,del:${RMDIR}
+if [ "$?" == '0' ]; then 
+	umount $RMDIR
+	ldconfig
+fi

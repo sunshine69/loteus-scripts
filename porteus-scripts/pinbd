@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<pinboard>
+  <backdrop style="Stretched">/root/desktop.jpg</backdrop>
+  <icon x="128" y="224" label="CreateSave">/usr/bin/makepfile.sh</icon>
+  <icon x="32" y="288" label="H3V">/opt/apps/h3v/hv3-linux-nightly-08_0203</icon>
+  <icon x="32" y="32" label="Xterm">/usr/bin/xterm</icon>
+  <icon x="32" y="160" label="Rox">/usr/bin/rox</icon>
+  <icon x="32" y="96" label="Xfe">/usr/bin/xfe</icon>
+  <icon x="128" y="32" label="mtpaint">/usr/bin/mtpaint</icon>
+  <icon x="224" y="32" label="searchmonkey">/usr/bin/searchmonkey</icon>
+  <icon x="128" y="96" label="xfwrite">/usr/bin/xfwrite</icon>
+  <icon x="224" y="96" label="xarchiver">/usr/bin/xarchiver</icon>
+  <icon x="128" y="160" label="galculator">/usr/bin/galculator</icon>
+  <icon x="320" y="32" label="synaptic">/usr/sbin/synaptic</icon>
+  <icon x="32" y="224" label="xhippo">/opt/apps/xhippo/usr/bin/xhippo</icon>
+  <icon x="224" y="160" label="gpicview">/usr/bin/gpicview</icon>
+</pinboard>

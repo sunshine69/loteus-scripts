@@ -1,0 +1,14 @@
+#!/bin/bash
+
+dn=`basename $1`
+rm -rf /mnt/live/memory/images/${dn} >/dev/null 2>&1
+mkdir /mnt/live/memory/images/${dn} >/dev/null 2>&1
+LODEV=`losetup -f`; losetup $LODEV $1
+if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
+	cryptsetup luksOpen $LODEV ${dn}_ENC
+	mount /dev/mapper/${dn}_ENC /mnt/live/memory/images/${dn}
+else
+	mount $LODEV /mnt/live/memory/images/${dn}
+fi
+mount -t aufs none / -o remount,add:1:/mnt/live/memory/images/${dn}
+ldconfig

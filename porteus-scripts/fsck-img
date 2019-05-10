@@ -1,0 +1,39 @@
+#!/bin/bash
+#########	Check file system of an image file.
+
+#####	Terence Becker		SunBurnt			Jan. 3  2014
+
+#####	No warranty of any kind... Use at your own risk!
+
+
+[ ! "$1" ]&& echo -e "\n>>>  USAGE:  fsck-img (/Path/ImageFile)\n" && exit
+
+[ ! -f "$1" ]&&
+	echo -e "\n###  ERROR:  Bad /Path/ImageFile Argument:  $1\n" && exit
+
+[ "`mount |grep $1`" ]&&
+	echo -e "\n###  ERROR:  $1 is Already Mounted.\n" && exit
+
+FS=`blkid $1 |sed 's,".$,,;s,^.*",,'`
+
+LOOP=`losetup -f`
+
+losetup $LOOP $1
+
+#echo "$FS   $LOOP" ;exit
+
+
+case $FS in
+	ext[2-4]|btrfs)
+		fsck.$FS -p -f $LOOP
+		ERR=$?
+		echo -e "\n>>>  EXIT VALUE:  $ERR"
+		[ $ERR -eq 0 ]&& echo -e "\n>>>  File System is Good:  $1\n" ||
+			echo -e "\n###  ERROR:  Failed File System Check:  $1\n" ;;
+	*)
+		echo -e "\n###  ERROR:  Not a Valid File System Type.\n" ;exit ;;
+esac
+
+
+losetup -d $LOOP
+

@@ -51,7 +51,8 @@ fi
 
 if [ ! -z "$CONFIG_FILE" ]; then cp "$CONFIG_FILE" .config; fi
 
-make clean oldconfig
+make clean
+make oldconfig
 make -j 8 bzImage modules
 
 # KVER="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
