@@ -12,8 +12,22 @@ if [ "$3" ]; then WORKDIR="$3"; else WORKDIR=/mnt/live/memory; fi
 function realpath {
 	echo "$( cd "$( dirname "$1" )" && pwd )/`basename $1`"
 }
-SRCPATH="`realpath $1`"
 
+FROM_DIR=$(losetup -a | grep -oP '(?<=\()[^\s]+(?=000)')
+[ -z "$FROM_DIR" ] && echo "Not running in porteus environment" && exit 1
+  
+OS_DIR=$(cat /proc/cmdline | grep -oP '(?<=os=)[^\s]+(?= )')
+
+if [[ "$1" =~ "199" ]]; then
+	EXISTING_LOCAL_PATH=$(losetup -a | grep -oP '(?<=\()[^\s]+199[^\s]+(?=\))')
+fi
+  
+if [ ! -z "$EXISTING_LOCAL_PATH" ]; then
+	SRCPATH="$EXISTING_LOCAL_PATH"
+else      
+	SRCPATH="`realpath $1`"
+fi
+      
 CDIR=`pwd`; cd $WORKDIR; rm -rf ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1; mkdir ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1
 
 LODEV=`losetup -f`; losetup $LODEV $SRCPATH
@@ -121,13 +135,15 @@ if [ "$2" == 'enc' ]; then
 fi
 
 if [[ "$1" =~ "199"  ]]; then
-  FROM_DIR=$(losetup -a | grep -oP '(?<=\()[^\s]+(?=000)')
-  OS_DIR=$(cat /proc/cmdline | grep -oP '(?<=os=)[^\s]+(?= )')
-  mv $WORKDIR/out.sqs ${FROM_DIR}/${OS_DIR}/base/${1}
+  if [ ! -z "$EXISTING_LOCAL_PATH" ]; then
+      mv $WORKDIR/out.sqs ${EXISTING_LOCAL_PATH}.new
+  else    
+  	mv $WORKDIR/out.sqs ${FROM_DIR}/${OS_DIR}/base/${1}
+  fi    
 else
   mv $WORKDIR/out.sqs ${SRCPATH}.new
-  if [ "$?" != "0" ]; then echo "Output file is $WORKDIR/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi
-
-  rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
-  cd $CDIR
+  if [ "$?" != "0" ]; then echo "Output file is $WORKDIR/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi  
 fi
+
+rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
+cd $CDIR
