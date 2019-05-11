@@ -102,10 +102,11 @@ if [ -z "$FILEMGR" ]; then
 	echo "What file manager you want. Hit enter to continue"
 	read FILEMGR
 fi
-if [ "$FILEMGR" ] && [ -z "$NO_PROMPT" ]; then
+if [ "$FILEMGR" ] && [[ ! "$1" =~ "199"  ]]; then
         echo "start file manager at the mount point $FILEMGR"
 	$FILEMGR ${NAME_PREFIX}3
 fi
+
 rm -rf ${NAME_PREFIX}3/tmp/* ${NAME_PREFIX}3/tmp/.*
 
 if [[ "$1" =~ "199"  ]]; then
