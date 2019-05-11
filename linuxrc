@@ -317,8 +317,7 @@ if [ -z "$HOSTNAME" ]; then
   HOSTNAME=`cat /sys/devices/virtual/dmi/id/product_uuid | sed 's/-//g'`
 fi
 
-if ! `echo $HOSTNAME | grep '\.' >/dev/null 2>&1`; then HOSTNAME="${HOSTNAME}.vm"; fi
-echo $HOSTNAME > /proc/sys/kernel/hostname
+echo ${HOSTNAME} > /proc/sys/kernel/hostname
 echo -e "done\ncreating fstab now ...\n"
 debug
 
