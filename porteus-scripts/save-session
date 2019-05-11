@@ -5,6 +5,8 @@ NAME_PREFIX='save_session'
 # The home of this user will get cleaned
 DEFAULT_USER='kodi'
 
+HOSTNAME=$(hostname)
+
 if [ "$3" ]; then WORKDIR="$3"; else WORKDIR=/mnt/live/memory; fi
 
 [ -z "$MKSQUASHFS" ] && MKSQUASHFS=`which mksquashfs`
@@ -18,8 +20,8 @@ FROM_DIR=$(losetup -a | grep -oP '(?<=\()[^\s]+(?=000)')
   
 OS_DIR=$(cat /proc/cmdline | grep -oP '(?<=os=)[^\s]+(?= )')
 
-if [[ "$1" =~ "199" ]]; then
-	EXISTING_LOCAL_PATH=$(losetup -a | grep -oP '(?<=\()[^\s]+199[^\s]+(?=\))')
+if [[ "$1" =~ "999" ]]; then
+	EXISTING_LOCAL_PATH=$(losetup -a | grep -oP '(?<=\()[^\s]+999[^\s]+(?=\))')
 fi
   
 if [ ! -z "$EXISTING_LOCAL_PATH" ]; then
@@ -102,14 +104,14 @@ if [ -z "$FILEMGR" ]; then
 	echo "What file manager you want. Hit enter to continue"
 	read FILEMGR
 fi
-if [ "$FILEMGR" ] && [[ ! "$1" =~ "199"  ]]; then
+if [ "$FILEMGR" ] && [[ ! "$1" =~ "999"  ]]; then
         echo "start file manager at the mount point $FILEMGR"
 	$FILEMGR ${NAME_PREFIX}3
 fi
 
 rm -rf ${NAME_PREFIX}3/tmp/* ${NAME_PREFIX}3/tmp/.*
 
-if [[ "$1" =~ "199"  ]]; then
+if [[ "$1" =~ "999"  ]]; then
 	ls ${NAME_PREFIX}3/ | grep -v -P "(etc|home|root)" | while read dname; do 
 	rm -rf ${NAME_PREFIX}3/${dname}
 done
@@ -135,11 +137,12 @@ if [ "$2" == 'enc' ]; then
 	mv out.sqs.enc out.sqs
 fi
 
-if [[ "$1" =~ "199"  ]]; then
+if [[ "$1" =~ "999"  ]]; then
   if [ ! -z "$EXISTING_LOCAL_PATH" ]; then
       mv $WORKDIR/out.sqs ${EXISTING_LOCAL_PATH}.new
   else    
-  	mv $WORKDIR/out.sqs ${FROM_DIR}/${OS_DIR}/base/${1}
+#linuxrc load pattern as host specific local settings
+  	mv $WORKDIR/out.sqs ${FROM_DIR}/${OS_DIR}/base/999-${HOSTNAME}-$(uname -m).sqs
   fi    
 else
   mv $WORKDIR/out.sqs ${SRCPATH}.new
