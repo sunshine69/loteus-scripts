@@ -10,13 +10,14 @@ KSOURCE_DIR=/mnt/sda4/tmp
 pushd .
 cd $KSOURCE_DIR
 
-LONGTERM=19
-STABLE=20
+LONGTERM=N/A
+STABLE=0
 
-VERSION=4
+VERSION=5
 
 echo "MINOR: $MINOR"
-if [ -z "$MINOR" ]; then MINOR="19"; fi
+if [ -z "$MINOR" ]; then MINOR=$STABLE; fi
+
 PATCHLEVEL=$MINOR
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
@@ -39,8 +40,12 @@ fi
 #if [ "$KVER" == "$OLD_KVER" ]; then echo "No new version. Do nothing"; exit 0; fi
 
 if [ ! -f "patch-$KVER.xz" ]; then
-    wget https://cdn.kernel.org/pub/linux/kernel/v4.x/patch-$KVER.xz
+    wget https://cdn.kernel.org/pub/linux/kernel/v${VERSION}.x/patch-$KVER.xz
 fi
+
+echo "Going to make kernel in linux-${VERSION}.${PATCHLEVEL}"
+
+read junk
 
 cd linux-${VERSION}.${PATCHLEVEL}
 

@@ -454,6 +454,10 @@ echo $i"creating live filesystem and inserting modules"
 echo -e $i"done.\nFind modules ...\n"
 debug
 
+if [ "$FACTORYRESET" == '4' ] || [ "$FACTORYRESET" == 'reset_999' ];  then
+    rm -f $PTH/base/999*
+fi
+
 find $PTH/base $PTH/modules -name "*.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 find $PTH/../share -name "[0-9][0-9][0-9]-*-${arch}.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 find $PTH/../share -name "[0-9][0-9][1-9]-*-noarch.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
@@ -468,9 +472,8 @@ fi
 
 if [ -z "$LOAD" ]; then
   LOAD="199"
-  echo "Load module /mnt/*/${LOAD}*.[xgl]zm, /mnt/*/${LOAD}*.sqs"
+  echo "Load module /mnt/*/${LOAD}*.[xgl]zm"
   ls /mnt/*/${LOAD}*.[xgl]zm | tail -n1 >> /tmp/modules
-  ls /mnt/*/${LOAD}*.sqs | tail -n1 >> /tmp/modules
 else
   ls $LOAD | tail -n1 >> /tmp/modules
 fi
