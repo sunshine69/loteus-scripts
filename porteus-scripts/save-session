@@ -120,8 +120,14 @@ if [ "$2" == 'enc' ]; then
 	mv out.sqs.enc out.sqs
 fi
 
-mv $WORKDIR/out.sqs ${SRCPATH}.new
-if [ "$?" != "0" ]; then echo "Output file is $WORKDIR/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi
+if [[ "$1" =~ "199"  ]]; then
+  FROM_DIR=$(losetup -a | grep -oP '(?<=\()[^\s]+(?=000)')
+  OS_DIR=$(cat /proc/cmdline | grep -oP '(?<=os=)[^\s]+(?= )')
+  mv $WORKDIR/out.sqs ${FROM_DIR}/${OS_DIR}/base/${1}
+else
+  mv $WORKDIR/out.sqs ${SRCPATH}.new
+  if [ "$?" != "0" ]; then echo "Output file is $WORKDIR/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi
 
-rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
-cd $CDIR
+  rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
+  cd $CDIR
+fi
