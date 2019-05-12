@@ -460,10 +460,10 @@ find $PTH/../share -name "[0-9][0-9][0-9]-*-${arch}.[xgl]zm" 2>/dev/null | egrep
 find $PTH/../share -name "[0-9][0-9][1-9]-*-noarch.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 find $PTH/../share -name "[0-9][0-9][0-9]-${HOSTNAME}-*.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 
-echo -e "done\nLoad specific settings for a hostname. The file name is <HOSTNAME>-*.sqs ...\n"
+echo -e "done\nLoad specific settings for a hostname. The file name is 9XX-${HOSTNAME}-*.sqs ...\n"
 debug
 if [ ! -z "$HOSTNAME" ]; then
-    find $PTH/base $PTH/modules -name "[0-9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
+    find $PTH/base $PTH/modules -name "[9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
     if [ -f $PTH/../share/${HOSTNAME}.fstab ]; then cat $PTH/../share/${HOSTNAME}.fstab >> /etc/fstab; fi
 fi
 
@@ -508,8 +508,8 @@ if param vga_detect; then
 fi
 
 if param baseonly; then
-    grep 000 /tmp/modules > /tmp/mod
-    grep ${OSDIR}/base/0 /tmp/modules >> /tmp/mod
+    egrep '^000-' /tmp/modules > /tmp/mod
+    grep "${OSDIR}/base/0" /tmp/modules >> /tmp/mod
     mv /tmp/mod /tmp/modules
 else
     if [ "$EXTRAMOD" ]; then
@@ -545,7 +545,7 @@ for x in `cat /tmp/modules`; do
        mount /dev/mapper/${NAME}_DEC /memory/images/$NAME
     else
        _MOUNT_MOD=1 # only mount current kernel ver
-       echo $NAME | grep '000' >/dev/null 2>&1
+       echo $NAME | egrep '^000-' >/dev/null 2>&1
        if [ "$?" == "0" ]; then 
            echo $NAME | grep "$KVER"
            if [ "$?" != "0" ]; then 
@@ -569,7 +569,7 @@ for x in `cat /tmp/modules`; do
       if [ $UNION_FS_TYPE == 'aufs' ]; then
           LOWERDIR="/memory/images/${NAME}=ro:${LOWERDIR}"
       else    
-          LOWERDIR="/memory/images/${NAME}:$LOWERDIR"
+          LOWERDIR="/memory/images/${NAME}:${LOWERDIR}"
       fi    
     else
         echo $i"[1;36m""Cannot read $NAME - corrupted module?""[0m"; rmdir /memory/images/$NAME
