@@ -230,7 +230,7 @@ if param nofsck; then return; fi
 fs=`blkid $1 | egrep -o ' TYPE=[^ ]+' | cut -b8-10`
 if [ -z "$fs" ]; then fs=`detect_fs_type $1 | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`; fi
 if [ $fs = xfs ]; then
-    echo $i"detected xfs - performing fsck at mount time"
+    echo $i"detected xfs - not performing fsck at mount time"
 elif [ $fs = ext ]; then
     draw; e2fsck -C 0 -p $1; wait; draw
 elif [ $fs = rei ]; then
