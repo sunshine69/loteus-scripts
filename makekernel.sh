@@ -44,6 +44,9 @@ fi
 if [ ! -d /lib/modules/$KVER ]; then
         make modules_install
         build_external_module
+else
+    echo "/lib/modules/$KVER exists. Maybe you are building the kernel version same as current version"
+    read _confirm
 fi
 
 #make menuconfig
@@ -52,18 +55,9 @@ fi
 echo "Done make modules_install"
 echo "Create kernel header ..."
 
-if [ -d $TARGET_DIR/kernel-$KVER ]; then
-echo "Existing $TARGET_DIR/kernel-$KVER, clean it up? y/n"
-read ans
-else
-ans=no
-fi
-
 TDIR=$TARGET_DIR/kernel-$KVER/linux-headers-$KVER
 
-if [ "$ans" == "y" ]; then
-	rm -rf $TARGET_DIR/kernel-$KVER
-fi
+rm -rf $TARGET_DIR/kernel-$KVER
 
 mkdir -p $TARGET_DIR/kernel-$KVER/linux-headers-$KVER
 
@@ -342,6 +336,7 @@ echo Skipping creating tar ball for now
 
 echo "generate the xzm modules"
 cd kernel-$KVER
+rm -rf porteus-kernel
 mkdir porteus-kernel
 
 cp -a $PORTEUS_INSTALL_KERNEL_SCRIPT porteus-kernel/porteus-install-kernel.sh; chmod +x porteus-kernel/porteus-install-kernel.sh

@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 
 if [ "$(id -u)" != "0" ]; then
-    exec sudo -E $0
+    exec sudo -E $0 $*
 fi
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -10,15 +10,12 @@ KSOURCE_DIR=/mnt/sda4/tmp
 pushd .
 cd $KSOURCE_DIR
 
-LONGTERM=N/A
+LONGTERM=19
 STABLE=0
 
 VERSION=5
 
-echo "MINOR: $MINOR"
-if [ -z "$MINOR" ]; then MINOR=$STABLE; fi
-
-PATCHLEVEL=$MINOR
+PATCHLEVEL=0
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
 
