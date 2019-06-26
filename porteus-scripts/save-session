@@ -2,7 +2,8 @@
 
 CHANGES='/mnt/live/memory/changes'
 NAME_PREFIX='save_session'
-# The home of this user will get cleaned
+# The home of this user will get cleaned and preserved changes. All other home
+# folder wont be included. See what cleand and what preserved in the cleanup section below
 DEFAULT_USER='kodi'
 
 HOSTNAME=$(hostname)
@@ -30,7 +31,7 @@ else
 	SRCPATH="`realpath $1`"
 fi
       
-CDIR=`pwd`; cd $WORKDIR; rm -rf ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1; mkdir ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1
+CDIR=`pwd`; cd $WORKDIR; rm -rf ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1; mkdir ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1
 
 LODEV=`losetup -f`; losetup $LODEV $SRCPATH
 if [ $? == 0 ]; then
@@ -50,10 +51,17 @@ fi
 #    mount -t aufs none ${NAME_PREFIX}3 -o br=${NAME_PREFIX}2=rw:${CHANGES}/rootdir=ro+wh:${NAME_PREFIX}1=ro 
 #else
 mkdir ${NAME_PREFIX}_wd
-mount -t overlay overlay -o lowerdir=${CHANGES}/rootdir:${NAME_PREFIX}1,upperdir=${NAME_PREFIX}2,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}3
+
+echo "Copying changes files into ${NAME_PREFIX}0"
+rsync -a ${CHANGES}/rootdir/ ${NAME_PREFIX}0/ --include "/home/$DEFAULT_USER" --exclude '/home/*'
+
+echo starting mount overlay with options lowerdir=${NAME_PREFIX}0:${NAME_PREFIX}1,upperdir=${NAME_PREFIX}2,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}3
+
+mount -t overlay overlay -o lowerdir=${NAME_PREFIX}0:${NAME_PREFIX}1,upperdir=${NAME_PREFIX}2,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}3
 #fi    
 if [ $? != 0 ]; then echo "Fatal Error mount overlay fs"; umount ${NAME_PREFIX}1; losetup -d $LODEV >/dev/null 2>&1 ;exit 1; fi
-echo "Cleaning..."
+
+echo "Cleaning global and default users ${DEFAULT_USER} files..."
 rm -f ${NAME_PREFIX}3/var/lib/alsa/asound.state
 rm -f ${NAME_PREFIX}3/home/${DEFAULT_USER}/.bash_history
 rm -f ${NAME_PREFIX}3/home/${DEFAULT_USER}/.xsession-errors
@@ -149,5 +157,5 @@ else
   if [ "$?" != "0" ]; then echo "Output file is $WORKDIR/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi  
 fi
 
-rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
+rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
 cd $CDIR
