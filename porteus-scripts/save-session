@@ -53,7 +53,7 @@ fi
 mkdir ${NAME_PREFIX}_wd
 
 echo "Copying changes files into ${NAME_PREFIX}0"
-rsync -a ${CHANGES}/rootdir/ ${NAME_PREFIX}0/ --include "/home/$DEFAULT_USER" --exclude '/home/*'
+rsync -a ${CHANGES}/rootdir/ ${NAME_PREFIX}0/ --include "/home/$DEFAULT_USER" --exclude '/home/*' --exclude '/tmp/**' --exclude '/var/tmp/*' --exclude '/var/log/*.log*' --exclude '/var/cache/*' --exclude '/var/crash/*' --exclude '/var/spool/*'
 
 echo starting mount overlay with options lowerdir=${NAME_PREFIX}0:${NAME_PREFIX}1,upperdir=${NAME_PREFIX}2,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}3
 
