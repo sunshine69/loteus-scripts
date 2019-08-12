@@ -1,5 +1,9 @@
 #!/bin/bash -ex
 
+# dependencies
+# pip3 install bs4
+# apt install flex libssl-dev libncurses-dev
+
 if [ "$(id -u)" != "0" ]; then
     exec sudo -E $0 $*
 fi
@@ -10,12 +14,13 @@ KSOURCE_DIR=/mnt/sda4/tmp
 pushd .
 cd $KSOURCE_DIR
 
+# From kernel.org what is longter and stable? Used to detect what version we will build
 LONGTERM=19
 STABLE=0
 
-VERSION=5
-
-PATCHLEVEL=0
+# Kernel we are going to build eg. 5.1
+VERSION=4
+PATCHLEVEL=19
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
 
@@ -53,7 +58,7 @@ fi
 
 if [ ! -z "$CONFIG_FILE" ]; then cp "$CONFIG_FILE" .config; fi
 
-make clean
+#make clean
 make oldconfig
 make -j 8 bzImage modules
 
