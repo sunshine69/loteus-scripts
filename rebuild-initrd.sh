@@ -1,9 +1,12 @@
 #!/bin/bash
 
+echo "Start rebuild initrd.xz"
+
 CWD="$(pwd)"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $SCRIPT_DIR/common.sh
+
 
 if [ -z "$1" ]; then
     INF=$BOOT_DIR/initrd.xz
@@ -17,7 +20,7 @@ else
     OUT=$2
 fi
 
-[ ! -f "$INF" ] && echo "Input file $INF does not exist" && exit 1
+[ ! -f "$INF" ] && echo "Origin initrd.xz as input file $INF does not exist. Aborting..." && exit 1
 
 mkdir /tmp/initrd_$$
 cd /tmp/initrd_$$

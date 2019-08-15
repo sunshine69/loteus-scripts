@@ -1,15 +1,17 @@
-#!/bin/bash -ex
+#!/bin/bash -x
 
 # dependencies
 # pip3 install bs4
 # apt install flex libssl-dev libncurses-dev
 
+export INSTALL_MOD_PATH=/var/tmp/kernel-build
+
 if [ "$(id -u)" != "0" ]; then
     exec sudo -E $0 $*
 fi
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-KSOURCE_DIR=/mnt/sda4/tmp
+export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export KSOURCE_DIR=/mnt/sda4/tmp
 
 pushd .
 cd $KSOURCE_DIR
@@ -19,8 +21,8 @@ LONGTERM=19
 STABLE=0
 
 # Kernel we are going to build eg. 5.1
-VERSION=4
-PATCHLEVEL=19
+export VERSION=4
+export PATCHLEVEL=19
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
 

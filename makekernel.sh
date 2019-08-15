@@ -1,10 +1,11 @@
 #!/bin/bash
 
+export INSTALL_MOD_PATH=/var/tmp/kernel-build
 build_external_module() {
     pushd .
     export KERNELRELEASE=$KVER
     cd /home/stevek/src/bcwc_pcie
-    make
+    KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}" make
     make install
     popd
 }
@@ -41,17 +42,16 @@ if [ "$KVER" = "" ] || [ "$KVER" = '-' ]; then
 echo "Fatal Error. No KVER found!"
 exit
 fi
-if [ ! -d /lib/modules/$KVER ]; then
+if [ ! -d ${INSTALL_MOD_PATH}/$KVER ]; then
         make modules_install
         build_external_module
 else
-    echo "/lib/modules/$KVER exists. Maybe you are building the kernel version same as current version"
+    echo "${INSTALL_MOD_PATH}/$KVER exists. Maybe you are building the kernel version same as current version."
+    echo "Continue? y/n"
     read _confirm
+    if [ $_confirm = 'n' ]; then exit 1; fi
 fi
 
-#make menuconfig
-#make -j2 bzImage modules
-#make modules_install
 echo "Done make modules_install"
 echo "Create kernel header ..."
 
@@ -120,7 +120,9 @@ esac
 #gzip -c .config > $TARGET_DIR/kernel-$KVER/config-${KVER}.gz
 #gzip /boot/config-$KVER
 #mv /boot/config-${KVER} $TARGET_DIR/kernel-$KVER/
-rm -rf $TARGET_DIR/kernel-$KVER/$KVER ; mv /lib/modules/$KVER $TARGET_DIR/kernel-$KVER/
+
+rm -rf $TARGET_DIR/kernel-$KVER/$KVER
+mv ${INSTALL_MOD_PATH}/lib/modules/$KVER $TARGET_DIR/kernel-$KVER/
 rm -f /mnt/live/memory/changes/rootdir/lib/modules/$KVER
 
 echo "Done "
@@ -341,6 +343,8 @@ mkdir porteus-kernel
 
 cp -a $PORTEUS_INSTALL_KERNEL_SCRIPT porteus-kernel/porteus-install-kernel.sh; chmod +x porteus-kernel/porteus-install-kernel.sh
 cp -a $SCRIPT_DIR/common.sh porteus-kernel/common.sh
+echo "export KVER=${KVER}" >> porteus-kernel/common.sh
+
 mv bzImage porteus-kernel/
 
 cd porteus-kernel
@@ -358,7 +362,7 @@ rm -f 000-linux-headers-$KVER.xzm
 mksquashfs 1 000-linux-headers-$KVER.xzm -comp xz -b 1M
 rm -rf 1
 
-# Create new initrd.xz
+echo "Create new initrd.xz"
 KBUILDDIR_ENV=$(pwd) $SCRIPT_DIR/rebuild-initrd.sh $BOOT_DIR/initrd.xz $(pwd)/initrd.xz
 
 cd ..
