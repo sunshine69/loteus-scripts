@@ -24,14 +24,19 @@ if [ $LINE_COUNT -gt 2 ]; then
     echo "$LAST_FILE" | head -n 1 | awk '{print $2}' |  while read fn; do echo "Going to rm '$fn'"; rm -f "$fn"; done
 fi
 
-# Copy new kernel
+echo "BOOT_DIR: $BOOT_DIR"
 
-[ -f $BOOT_DIR/bzImage ] && mv $BOOT_DIR/bzImage $BOOT_DIR/bzImage.old
-[ -f $BOOT_DIR/initrd.xz ] && mv $BOOT_DIR/initrd.xz $BOOT_DIR/initrd.xz.old
+for BD in $(echo $BOOT_DIR); do
+	echo "Backup current kernel in $BD ..."
+	[ -f "$BD/bzImage" ] && mv "$BD/bzImage" "$BD/bzImage.old" 
+	[ -f "$BD/initrd.xz" ] && mv "$BD/initrd.xz" "$BD/initrd.xz.old"
+	
+	echo "Copy new kernel in $BD"
+	cp -a $SCRIPT_DIR/initrd.xz $SCRIPT_DIR/bzImage $BD/
+	cp -a $SCRIPT_DIR/000-*.xzm $PORT_DIR/
 
-cd $SCRIPT_DIR
-mv initrd.xz bzImage $BOOT_DIR/
-mv 000-*.xzm $PORT_DIR/
+done
+
 
 cd $CURRENT_DIR
 echo "Going to remove '$SCRIPT_DIR'"

@@ -30,6 +30,8 @@ OLD_KVER="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
 
 LOCAL_VER=$(grep -Po '(?<=CONFIG_LOCALVERSION=")([^"]+)' linux-${VERSION}.${PATCHLEVEL}/.config)
 
+# To rebuild the current one - not fetching patch and update, just pass $1 with current version defined in makefile. This wont have the custom version string.
+
 KVER="$1"
 
 if [ -z "$KVER" ]; then
@@ -54,7 +56,7 @@ read junk
 cd linux-${VERSION}.${PATCHLEVEL}
 
 if [ "$KVER" != "$OLD_KVER" ]; then
-    xzcat ../patch-${OLD_KVER}.xz | patch -p1 -R
+    [ -f "../patch-${OLD_KVER}.xz" ] && xzcat ../patch-${OLD_KVER}.xz | patch -p1 -R
     xzcat ../patch-${KVER}.xz | patch -p1
 fi
 

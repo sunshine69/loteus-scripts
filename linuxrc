@@ -293,7 +293,7 @@ if [ ! -z "$KEXEC" ]; then
     fi
     echo "$KERNEL $INITRD"
     if [ -f "$KERNEL" ] && [ -f "$INITRD" ]; then
-        cmdline=$(cat /proc/cmdline|sed 's/ kexec=[^ ]\+ / /')
+        cmdline=$(cat /proc/cmdline|sed 's/ kexec=[^ ]\+ / /'|sed 's/BOOT_IMAGE=[^ ]* //g')
         echo "$cmdline"
         echo "Found kexec kernel and initrd, prepare to load and boot the new kernel"
         /bin/kexec -l $KERNEL --initrd $INITRD --command-line="$cmdline"
