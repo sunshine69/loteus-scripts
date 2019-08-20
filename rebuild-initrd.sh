@@ -12,6 +12,7 @@ if [ -z "$1" ]; then
     INF=$BOOT_DIR/initrd.xz
 else
     INF=$1
+    echo "Input: '$1'"
 fi
 
 if [ -z "$2" ]; then

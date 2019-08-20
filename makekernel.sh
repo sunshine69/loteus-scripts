@@ -363,7 +363,10 @@ mksquashfs 1 000-linux-headers-$KVER.xzm -comp xz -b 1M
 rm -rf 1
 
 echo "Create new initrd.xz"
-KBUILDDIR_ENV=$(pwd) $SCRIPT_DIR/rebuild-initrd.sh $BOOT_DIR/initrd.xz $(pwd)/initrd.xz
+
+INITRD_PATH=$(echo $BOOT_DIR|cut -f1 -d' ')
+echo "INITRD_PATH to search for input initrd.xz:  '$INITRD_PATH'"
+KBUILDDIR_ENV=$(pwd) $SCRIPT_DIR/rebuild-initrd.sh "$INITRD_PATH/initrd.xz" "$(pwd)/initrd.xz"
 
 cd ..
 

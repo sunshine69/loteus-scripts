@@ -43,7 +43,7 @@ if [ -z "$KVER" ]; then
     fi
 fi
 
-#if [ "$KVER" == "$OLD_KVER" ]; then echo "No new version. Do nothing"; exit 0; fi
+if [ "$KVER" == "$OLD_KVER" ] && [ -z "$REBUILD" ]; then echo "No new version. Do nothing"; exit 0; fi
 
 if [ ! -f "patch-$KVER.xz" ]; then
     wget https://cdn.kernel.org/pub/linux/kernel/v${VERSION}.x/patch-$KVER.xz
