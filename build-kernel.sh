@@ -17,12 +17,16 @@ pushd .
 cd $KSOURCE_DIR
 
 # From kernel.org what is longter and stable? Used to detect what version we will build
-LONGTERM=19
-STABLE=0
+#LONGTERM=19
+LONGTERM=9
+STABLE=2
 
 # Kernel we are going to build eg. 5.1
-export VERSION=4
-export PATCHLEVEL=19
+#export VERSION=4
+export VERSION=5
+#export PATCHLEVEL=19
+#export PATCHLEVEL=9
+export PATCHLEVEL=2
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
 
