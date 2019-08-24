@@ -59,7 +59,7 @@ KMOD_DETECTED=
 HOSTNAME=`value hostname`;
 UNION_FS_TYPE=`value unionfs`; [ $UNION_FS_TYPE ] || UNION_FS_TYPE='overlay'
 CHANGES_MOUNT=/memory/changes
-# kexec=path/to/dir/has/bzImage to load secondary kernel
+# kexec=/full/path/to/kernel/image to load secondary kernel. Same dir must have initrd.xz
 KEXEC=`value kexec`; [ $KEXEC ] || KEXEC=
 # Device Functions:
 detect_fs_type() { # where blkid does not understand that file system we need this hack
@@ -190,7 +190,7 @@ search() { FND=n; for x in `ls /mnt`; do
 [ $1 "/mnt/$x/$2" ] && { DEV=$x; FND=y; break; }; done
 [ $FND = y ]; }
 lazy() { SLEEP=6; while [ $SLEEP -gt 0 ] && [ ! "$FND" = "y" ]; do nap; let SLEEP=SLEEP-1; fstab; search $*; done }
-locate() { # locate <-e|-r|-d> PATH ; See the option will be passed to function search above.
+locate() { # locate <-e|-r|-d|-f> PATH ; See the option will be passed to function search above.
 # set the var DEV, LPTH
   LPATH=`echo $2 | cut -b-5 | sed s@/dev@/mnt@`
   if [ $LPATH = /mnt/ ]; then # $2 started with /dev/<dev>
@@ -287,7 +287,12 @@ generate_devices
 echo -e "done\ncheck KEXEC ...\n"
 debug
 if [ ! -z "$KEXEC" ]; then
-    KERNEL=$(find /mnt/*/${KEXEC} -name bzImage 2>/dev/null|tail -n1)
+    locate -e $FROM/${OSDIR}/$SGN
+    if [ $? -eq 0 ]; then
+        KERNEL="/mnt/$DEV/$KEXEC"
+    else
+        KERNEL='NOT_FOUND'
+    fi
     if [ -f "$KERNEL" ]; then
         INITRD="$(dirname $KERNEL)/initrd.xz"
     fi
