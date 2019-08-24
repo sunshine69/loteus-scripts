@@ -287,12 +287,13 @@ generate_devices
 echo -e "done\ncheck KEXEC ...\n"
 debug
 if [ ! -z "$KEXEC" ]; then
-    locate -e $FROM/${OSDIR}/$SGN
-    if [ $? -eq 0 ]; then
+    if [ ! -z "$FROM" ]; then 
+        locate -e $FROM/${OSDIR}/$SGN
         KERNEL="/mnt/$DEV/$KEXEC"
     else
-        KERNEL='NOT_FOUND'
-    fi
+        KDIR=$(dirname ${KEXEC}); KNAME=$(basename ${KEXEC})
+        KERNEL=$(find /mnt/*/${KDIR} -name $KNAME 2>/dev/null|tail -n1)
+    fi        
     if [ -f "$KERNEL" ]; then
         INITRD="$(dirname $KERNEL)/initrd.xz"
     fi
