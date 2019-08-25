@@ -298,7 +298,7 @@ if [ ! -z "$KEXEC" ]; then
         KERNEL=$(find /mnt/*/${KDIR} -name $KNAME 2>/dev/null|tail -n1)
     fi        
     if [ -f "$KERNEL" ]; then
-        INITRD="$(dirname $KERNEL)/initrd.xz"
+        INITRD="$(dirname $KERNEL)/${KNAME}-initrd.xz"
     fi
     echo "$KERNEL $INITRD"
     if [ -f "$KERNEL" ] && [ -f "$INITRD" ]; then
