@@ -117,6 +117,9 @@ for x in $dev; do
   else
           echo "/dev/$x /mnt/$x $fs $MOPT 0 0" >>/etc/fstab
   fi
+  
+  if [ -z "$KPATH" ] && [ ! -z "$KEXEC" ]; then KPATH=$(dirname $KEXEC); fi
+
   if [ ! -d /mnt/$x ]; then
       mkdir "/mnt/$x"
       if [ $fs = ntfs ]; then
@@ -302,14 +305,14 @@ if [ ! -z "$KEXEC" ]; then
         cmdline=$(cat /proc/cmdline|sed 's/ kexec=[^ ]\+ / /'|sed 's/BOOT_IMAGE=[^ ]* //g')
         echo "$cmdline"
         echo "Found kexec kernel and initrd, prepare to load and boot the new kernel"
-        /bin/kexec -l $KERNEL --initrd $INITRD --command-line="$cmdline"
+        /usr/bin/kexec -l $KERNEL --initrd $INITRD --command-line="$cmdline"
         debug
         echo done loading kexec. some reason kexec has error status but it still works thus need echo here 
         if [ $? = 0 ]; then
             umount /dev/loop*; umount /mnt/* 
             sync
             echo exec kernel now
-            /bin/kexec -e
+            /usr/bin/kexec -e
         else
             echo some error with kexec. hit enter to continue old kernel; read junk    
         fi    
