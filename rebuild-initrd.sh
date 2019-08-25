@@ -68,13 +68,17 @@ if [ ! -z "$KVERS" ]; then
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/
         cp -a $SRCDIR/fs/{jfs,reiserfs,xfs,aufs,btrfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc.ko} $DESTDIR/
         depmod $KVER -b .
-        umount $KBUILDDIR/1; rm -rf $KBUILDDIR/1
+        echo "Done copying modules over"
+        echo "Going to unmount and clean up ..."
+        umount $KBUILDDIR/1
+        sleep 3 # avoid race condition
+        rm -rf $KBUILDDIR/1
         if [ -d "$CWD/porteus-kernel" ]; then rm -rf "$CWD/porteus-kernel"; fi
     done
 fi
 
 echo "Get into the new initrd root dir /tmp/initrd_$$ and modify things if u need. Then hit enter to build"
-read _junk
+#read _junk
 
 echo "Building ..."
 
