@@ -276,12 +276,12 @@ fi
 generate_devices() {
 echo "Detect block devices, create /etc/fstab and mount devices ..."
 blkid | grep -v /dev/loop > /tmp/devices
-for listd in '/dev/sd??' '/dev/mmcblk?p?' '/dev/vd??'; do
-   for d in $listd; do # add auto to some fs that blkid not know about
-       o=`blkid $d`
-       if [ "$?" != '0' ]; then echo "${d}: TYPE=\"auto\"" >> /tmp/devices; fi
-   done
-done
+#for listd in '/dev/sd??' '/dev/mmcblk?p?' '/dev/vd??'; do
+#   for d in $listd; do # add auto to some fs that blkid not know about
+#       o=`blkid $d`
+#       if [ "$?" != '0' ]; then echo "${d}: TYPE=\"auto\"" >> /tmp/devices; fi
+#   done
+#done
 }
 generate_devices
 fstab
