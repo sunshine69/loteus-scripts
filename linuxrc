@@ -127,6 +127,7 @@ for x in $dev; do
         for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
             if [ "$KMOD_DETECTED" == "y" ]; then break; fi
               KMODS=`find ${_PATH}/000-*.[xgl]zm 2>/dev/null`
+              if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xgl]zm.bak 2>/dev/null`; fi
           if [ ! -z "$KMODS" ]; then
             for KMOD in $KMODS; do
                     if [ -f "${KMOD}.new" ]; then mv "${KMOD}.new" "${KMOD}"; fi
@@ -148,6 +149,7 @@ for x in $dev; do
         for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
           if [ "$KMOD_DETECTED" == "y" ]; then break; fi
           KMODS=`find ${_PATH}/000-*.[xgl]zm 2>/dev/null`
+          if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xgl]zm.bak 2>/dev/null`; fi
             if [ ! -z "$KMODS" ]; then
               for KMOD in $KMODS; do
                   if [ -f "${KMOD}.new" ]; then mv "${KMOD}.new" "$KMOD"; fi

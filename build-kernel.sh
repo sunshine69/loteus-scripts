@@ -17,19 +17,18 @@ pushd .
 cd $KSOURCE_DIR
 
 # From kernel.org what is longter and stable? Used to detect what version we will build
-#LONGTERM=19
-LONGTERM=9
-STABLE=2
+LONGTERM=19
+#LONGTERM=9
+STABLE=4
 
 # Kernel we are going to build eg. 5.1
 #export VERSION=4
 export VERSION=5
 #export PATCHLEVEL=19
 #export PATCHLEVEL=9
-export PATCHLEVEL=2
+export PATCHLEVEL=4
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
-
 OLD_KVER="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
 
 LOCAL_VER=$(grep -Po '(?<=CONFIG_LOCALVERSION=")([^"]+)' linux-${VERSION}.${PATCHLEVEL}/.config)
@@ -69,6 +68,10 @@ if [ ! -z "$CONFIG_FILE" ]; then cp "$CONFIG_FILE" .config; fi
 #make clean
 make oldconfig
 make -j 8 bzImage modules
+if [ $? != "0" ]; then
+    echo "Build bzIMage and modules return error"
+    exit 1
+fi
 
 # KVER="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
 export KVERS="${KVER}${LOCAL_VER}"
