@@ -17,9 +17,9 @@ pushd .
 cd $KSOURCE_DIR
 
 # From kernel.org what is longter and stable? Used to detect what version we will build
-LONGTERM=19
+LONGTERM=4
 #LONGTERM=9
-STABLE=4
+STABLE=5
 
 # Kernel we are going to build eg. 5.1
 #export VERSION=4

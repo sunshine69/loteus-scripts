@@ -126,8 +126,8 @@ for x in $dev; do
         ntfs-3g /dev/$x /mnt/$x -o $MOPT 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; }
         for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
             if [ "$KMOD_DETECTED" == "y" ]; then break; fi
-              KMODS=`find ${_PATH}/000-*.[xgl]zm 2>/dev/null`
-              if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xgl]zm.bak 2>/dev/null`; fi
+              KMODS=`find ${_PATH}/000-*.[xglz]zm 2>/dev/null`
+              if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xglz]zm.bak 2>/dev/null`; fi
           if [ ! -z "$KMODS" ]; then
             for KMOD in $KMODS; do
                     if [ -f "${KMOD}.new" ]; then mv "${KMOD}.new" "${KMOD}"; fi
@@ -148,8 +148,8 @@ for x in $dev; do
         mount -n /mnt/$x 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /mnt/$x 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; }; }
         for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
           if [ "$KMOD_DETECTED" == "y" ]; then break; fi
-          KMODS=`find ${_PATH}/000-*.[xgl]zm 2>/dev/null`
-          if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xgl]zm.bak 2>/dev/null`; fi
+          KMODS=`find ${_PATH}/000-*.[xglz]zm 2>/dev/null`
+          if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xglz]zm.bak 2>/dev/null`; fi
             if [ ! -z "$KMODS" ]; then
               for KMOD in $KMODS; do
                   if [ -f "${KMOD}.new" ]; then mv "${KMOD}.new" "$KMOD"; fi
@@ -252,7 +252,7 @@ for x in `cat $1`; do
     sed -i s@^.*/$NAME@/memory/copy2ram/$NAME@ /tmp/modules
     else
     rm /memory/copy2ram/$NAME; echo -e $i"[1;36m""Not enough memory to copy $NAME""[0m"; echo -e $i"[1;36m""Other modules will be skipped.""[0m"
-    find /memory/copy2ram -name "*.[xgl]zm" | sort >> /tmp/modules
+    find /memory/copy2ram -name "*.[xglz]zm" | sort >> /tmp/modules
     break
     fi
 done
@@ -466,10 +466,10 @@ if [ "$FACTORYRESET" == '4' ] || [ "$FACTORYRESET" == 'reset_999' ];  then
     rm -f $PTH/base/999*
 fi
 
-find $PTH/base $PTH/modules -name "*.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
-find $PTH/../share -name "[0-9][0-9][0-9]-*-${arch}.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
-find $PTH/../share -name "[0-9][0-9][1-9]-*-noarch.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
-find $PTH/../share -name "[0-9][0-9][0-9]-${HOSTNAME}-*.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
+find $PTH/base $PTH/modules -name "*.[xglz]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
+find $PTH/../share -name "[0-9][0-9][0-9]-*-${arch}.[xglz]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
+find $PTH/../share -name "[0-9][0-9][1-9]-*-noarch.[xglz]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
+find $PTH/../share -name "[0-9][0-9][0-9]-${HOSTNAME}-*.[xglz]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 
 echo -e "done\nLoad specific settings for a hostname. The file name is 9XX-${HOSTNAME}-*.sqs ...\n"
 debug
@@ -480,8 +480,8 @@ fi
 
 if [ -z "$LOAD" ]; then
   LOAD="199"
-  echo "Load module /mnt/*/${LOAD}*.[xgl]zm"
-  ls /mnt/*/${LOAD}*.[xgl]zm | tail -n1 >> /tmp/modules
+  echo "Load module /mnt/*/${LOAD}*.[xglz]zm"
+  ls /mnt/*/${LOAD}*.[xglz]zm | tail -n1 >> /tmp/modules
 else
   ls $LOAD | tail -n1 >> /tmp/modules
 fi
@@ -526,7 +526,7 @@ else
     if [ "$EXTRAMOD" ]; then
     for folder in $EXTRAMOD; do
         echo $i"searching for additional modules in $folder"
-        locate -d $folder && { find /mnt/$DEV/$LPTH -name "*.[xgl]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules; } || fail $folder
+        locate -d $folder && { find /mnt/$DEV/$LPTH -name "*.[xglz]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules; } || fail $folder
     done
     fi
 fi
