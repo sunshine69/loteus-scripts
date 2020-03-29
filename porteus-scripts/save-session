@@ -5,6 +5,7 @@ NAME_PREFIX='save_session'
 # The home of this user will get cleaned and preserved changes. All other home
 # folder wont be included. See what cleand and what preserved in the cleanup section below
 DEFAULT_USER='kodi'
+EXCLUDE_USERS='stevek kaycao andrewk'
 
 HOSTNAME=$(hostname)
 
@@ -31,7 +32,7 @@ else
 	SRCPATH="`realpath $1`"
 fi
       
-CDIR=`pwd`; cd $WORKDIR; rm -rf ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1; mkdir ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 >/dev/null 2>&1
+CDIR=`pwd`; cd $WORKDIR; rm -rf ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 >/dev/null 2>&1; mkdir ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 >/dev/null 2>&1
 
 LODEV=`losetup -f`; losetup $LODEV $SRCPATH
 if [ $? == 0 ]; then
@@ -39,74 +40,76 @@ if [ $? == 0 ]; then
 		if [ -z $PASS ]; then read -s -p "Enter pass:" PASS; fi
 		echo "$PASS" | md5sum | cut -f1 -d' ' | cryptsetup --key-file=- luksOpen $LODEV ${NAME_PREFIX}_DEC
 		if [ $? != 0 ]; then echo "Second try .."; cryptsetup luksOpen $LODEV ${NAME_PREFIX}_DEC; fi
-		mount /dev/mapper/${NAME_PREFIX}_DEC ${NAME_PREFIX}1
+		mount /dev/mapper/${NAME_PREFIX}_DEC ${NAME_PREFIX}0
 	else
-		mount $LODEV ${NAME_PREFIX}1 
+		mount $LODEV ${NAME_PREFIX}0 
 	fi
 else
   echo "Error mount old changes module. New changes will be saved into new module"
   LODEV=''
 fi
 #if grep aufs /proc/filesystems >/dev/null 2>&1; then
-#    mount -t aufs none ${NAME_PREFIX}3 -o br=${NAME_PREFIX}2=rw:${CHANGES}/rootdir=ro+wh:${NAME_PREFIX}1=ro 
+#    mount -t aufs none ${NAME_PREFIX}2 -o br=${NAME_PREFIX}2=rw:${CHANGES}/rootdir=ro+wh:${NAME_PREFIX}1=ro 
 #else
 mkdir ${NAME_PREFIX}_wd
 
-echo "Copying changes files into ${NAME_PREFIX}0"
-rsync -a ${CHANGES}/rootdir/ ${NAME_PREFIX}0/ --include "/home/$DEFAULT_USER" --exclude '/home/*' --exclude '/tmp/**' --exclude '/var/tmp/*' --exclude '/var/log/*.log*' --exclude '/var/cache/*' --exclude '/var/crash/*' --exclude '/var/spool/*'
+echo "Copying changes files into ${NAME_PREFIX}1"
+#rsync -a ${CHANGES}/rootdir/ ${NAME_PREFIX}1/ --include "/home/$DEFAULT_USER" --exclude '/home/*' --exclude '/tmp/**' --exclude '/var/tmp/*' --exclude '/var/log/*.log*' --exclude '/var/cache/*' --exclude '/var/crash/*' --exclude '/var/spool/*'
 
-echo starting mount overlay with options lowerdir=${NAME_PREFIX}0:${NAME_PREFIX}1,upperdir=${NAME_PREFIX}2,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}3
+#echo starting mount overlay command: mount -t overlay overlay -o lowerdir=${NAME_PREFIX}0,upperdir=${NAME_PREFIX}1,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}2
 
-mount -t overlay overlay -o lowerdir=${NAME_PREFIX}0:${NAME_PREFIX}1,upperdir=${NAME_PREFIX}2,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}3
-#fi    
-if [ $? != 0 ]; then echo "Fatal Error mount overlay fs"; umount ${NAME_PREFIX}1; losetup -d $LODEV >/dev/null 2>&1 ;exit 1; fi
+# When in doubt check https://www.kernel.org/doc/Documentation/filesystems/overlayfs.txt
+mount -t overlay overlay -o lowerdir=${CHANGES}/rootdir:${NAME_PREFIX}0,upperdir=${NAME_PREFIX}1,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}2
+
+if [ $? != 0 ]; then echo "Fatal Error mount overlay fs"; umount ${NAME_PREFIX}0; losetup -d $LODEV >/dev/null 2>&1 ;exit 1; fi
 
 echo "Cleaning global and default users ${DEFAULT_USER} files..."
-rm -f ${NAME_PREFIX}3/var/lib/alsa/asound.state
-rm -f ${NAME_PREFIX}3/home/${DEFAULT_USER}/.bash_history
-rm -f ${NAME_PREFIX}3/home/${DEFAULT_USER}/.xsession-errors
-rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.cache
-rm -rf ${NAME_PREFIX}3/home/*/.cache
-#rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.config/chromium
-#rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.config/google-chrome
-rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.thumbnails
-rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.ACEStream
-rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.xbmc/temp
-rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.xbmc/userdata/Thumbnails
-rm -rf ${NAME_PREFIX}3/home/${DEFAULT_USER}/.Skype/DataRv
-rm -f ${NAME_PREFIX}3/etc/blkid-cache
-#rm -f ${NAME_PREFIX}3/etc/resolv.conf
-rm -rf ${NAME_PREFIX}3/etc/udev/rules.d/70-persistent*
-rm -f ${NAME_PREFIX}3/var/lib/dhcp/dhclient.eth0.leases
-rm -f ${NAME_PREFIX}3/var/lib/dhcpcd/*.lease
-rm -rf ${NAME_PREFIX}3/dev/*
-rm -rf ${NAME_PREFIX}3/var/crash/* ${NAME_PREFIX}3/var/crash/.*
+rm -f ${NAME_PREFIX}2/var/lib/alsa/asound.state
+rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/.bash_history
+rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xsession-errors
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.cache
+rm -rf ${NAME_PREFIX}2/home/*/.cache
+#rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.config/chromium
+#rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.config/google-chrome
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.thumbnails
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.ACEStream
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xbmc/temp
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xbmc/userdata/Thumbnails
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.Skype/DataRv
+rm -f ${NAME_PREFIX}2/etc/blkid-cache
+#rm -f ${NAME_PREFIX}2/etc/resolv.conf
+rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
+rm -f ${NAME_PREFIX}2/var/lib/dhcp/dhclient.eth0.leases
+rm -f ${NAME_PREFIX}2/var/lib/dhcpcd/*.lease
+rm -rf ${NAME_PREFIX}2/dev/*
+rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
 
-#rm -rf ${NAME_PREFIX}3/root/.cache
-rm -rf ${NAME_PREFIX}3/root
-mkdir ${NAME_PREFIX}3/root
+#rm -rf ${NAME_PREFIX}2/root/.cache
+rm -rf ${NAME_PREFIX}2/root
+mkdir ${NAME_PREFIX}2/root
 for f in .bashrc .bash_history .profile .selected_editor .vimrc; do
-	cp -a /root/$f ${NAME_PREFIX}3/root/
-	mkdir -p ${NAME_PREFIX}3/root/.local/share
-	cp -a /root/.local/share/fish ${NAME_PREFIX}3/root/.local/share/
+	cp -a /root/$f ${NAME_PREFIX}2/root/
+	mkdir -p ${NAME_PREFIX}2/root/.local/share
+	cp -a /root/.local/share/fish ${NAME_PREFIX}2/root/.local/share/
 done
 
-rm -rf ${NAME_PREFIX}3/run/*
-rm -rf ${NAME_PREFIX}3/tmp/* ${NAME_PREFIX}3/tmp/.*
-rm -rf ${NAME_PREFIX}3/var/tmp/*
-rm -rf ${NAME_PREFIX}3/var/backups/*
-rm -rf ${NAME_PREFIX}3/srv/*
-rm -rf ${NAME_PREFIX}3/lib/modules/*
+rm -rf ${NAME_PREFIX}2/run/*
+rm -rf ${NAME_PREFIX}2/tmp/* ${NAME_PREFIX}2/tmp/.*
+rm -rf ${NAME_PREFIX}2/var/tmp/*
+rm -rf ${NAME_PREFIX}2/var/backups/*
+rm -rf ${NAME_PREFIX}2/srv/*
+rm -rf ${NAME_PREFIX}2/lib/modules/*
 
-ls ${NAME_PREFIX}3/var/lib/apt/lists | grep -v "lock" | grep -v "partial" | xargs -i rm ${NAME_PREFIX}3/var/lib/apt/lists/{} ;
-ls ${NAME_PREFIX}3/var/cache/apt/archives | grep -v "lock" | grep -v "partial" | xargs -i rm ${NAME_PREFIX}3/var/cache/apt/archives/{} ;
-ls ${NAME_PREFIX}3/var/cache/apt | grep -v "archives" | xargs -i rm ${NAME_PREFIX}3/var/cache/apt/{} ;
-find ${NAME_PREFIX}3/var/log -type f -exec rm -f {} \;
-find ${NAME_PREFIX}3/usr/share/doc -type f | while read f; do cp /dev/null $f; done
+ls ${NAME_PREFIX}2/var/lib/apt/lists | grep -v "lock" | grep -v "partial" | xargs -i rm ${NAME_PREFIX}2/var/lib/apt/lists/{} ;
+ls ${NAME_PREFIX}2/var/cache/apt/archives | grep -v "lock" | grep -v "partial" | xargs -i rm ${NAME_PREFIX}2/var/cache/apt/archives/{} ;
+ls ${NAME_PREFIX}2/var/cache/apt | grep -v "archives" | xargs -i rm ${NAME_PREFIX}2/var/cache/apt/{} ;
+find ${NAME_PREFIX}2/var/log -type f -exec rm -f {} \;
+find ${NAME_PREFIX}2/usr/share/doc -type f | while read f; do cp /dev/null $f; done
 
-ls ${NAME_PREFIX}3/home/ | grep -v "$DEFAULT_USER" | while read dname; do 
-	rm -rf ${NAME_PREFIX}3/home/${dname}
-done
+# We dont remove home fodler here as it takes long time for big home dir. Instead we exclude them in squashfs exclude
+#ls ${NAME_PREFIX}2/home/ | grep -v "$DEFAULT_USER" | while read dname; do 
+#	rm -rf ${NAME_PREFIX}2/home/${dname}
+#done
 
 echo $SRCPATH | grep 'base/001' >/dev/null 2>&1
 if [ "$?" = "0" ]; then rm -f /etc/setup_complete; fi
@@ -124,33 +127,46 @@ if [ -z "$FILEMGR" ]; then
 fi
 if [ "$FILEMGR" ] && [[ ! "$1" =~ "999"  ]]; then
         echo "start file manager at the mount point $FILEMGR"
-	$FILEMGR ${NAME_PREFIX}3
+	$FILEMGR ${NAME_PREFIX}2
 fi
 
-rm -rf ${NAME_PREFIX}3/tmp/* ${NAME_PREFIX}3/tmp/.*
+rm -rf ${NAME_PREFIX}2/tmp/* ${NAME_PREFIX}2/tmp/.*
 
 if [[ "$1" =~ "999"  ]]; then
-	ls ${NAME_PREFIX}3/ | grep -v -P "(etc|home|root)" | while read dname; do 
-	rm -rf ${NAME_PREFIX}3/${dname}
+	ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root)" | while read dname; do 
+	rm -rf ${NAME_PREFIX}2/${dname}
 done
 
 fi
 
+# Not sure why exclude opt never works for me but test shows mksquashfs actually work
+SQUASHFS_EXCLUDE_OPT="-regex -e 'var/log/.*.log' -e 'usr/src/linux-headers-.*' -e 'var/crash/.*' -e 'var/cache/apt/archives/.*.deb' -e 'boot/.*' -e 'usr/lib/modules/.*' -e 'home/kodi/.cache/.*' -e 'home/kodi/Downloads/.*' -e 'home/kodi/.kodi/temp/.*'"
+
+for ex_user in $EXCLUDE_USERS; do
+	SQUASHFS_EXCLUDE_OPT="$SQUASHFS_EXCLUDE_OPT -e 'home/${ex_user}/.*' -e 'home/${ex_user}/.*.*'"
+done
+
+echo "SQUASHFS_EXCLUDE_OPT=$SQUASHFS_EXCLUDE_OPT"
+
 rm -f out.sqs
 if [ -z "$SQUASHFS_OPT" ]; then
 	# Best balance now seems to be lz4 -Xhc. The zstd is good to built rescue but level 19 is too slow
-	#SQUASHFS_OPT="-comp zstd -b 1024K -Xcompression-level 15"
-	SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K"
+	SQUASHFS_OPT="-comp zstd -b 1024K -Xcompression-level 15"
+	#SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K"
 	#SQUASHFS_OPT="-b 1024K"
-	echo "Default SQUASHFS_OPT is '$SQUASHFS_OPT'"
-	echo "1. -comp zstd -b 1024K -Xcompression-level 15 - good compress but compress slow"
-	echo "2. -comp gzip -b 1M"
+	echo "Default SQUASHFS_OPT is '$SQUASHFS_OPT' - fast enough and good compression"
+	echo "0. -comp lz4 -Xhc -b 1024K - Fast to compress/decompress, size is bugger the zstd. Small memory"
+	echo "1. -comp zstd -b 1024K -Xcompression-level 19 - good compress but compress slow"
+	echo "2. -comp gzip -b 1M - bigger size than zstd"
 	echo "3. -comp xz -b 1M - compress best but slowest"
 	echo "Enter your selection as number or your own option string. Hit enter to choose default"
 	read ans
 	case "$ans" in
+		0)
+			SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K";
+			;;
 		1)
-			SQUASHFS_OPT="-comp zstd -b 1024K -Xcompression-level 15";
+			SQUASHFS_OPT="-comp zstd -b 1024K -Xcompression-level 19";
 			;;
 		2)
 			SQUASHFS_OPT="-comp gzip -b 1M";
@@ -163,9 +179,19 @@ if [ -z "$SQUASHFS_OPT" ]; then
 			echo "Use '$SQUASHFS_OPT'"
 	esac
 fi
-OUTDIR=${NAME_PREFIX}3
-$MKSQUASHFS $OUTDIR out.sqs $SQUASHFS_OPT
-umount ${NAME_PREFIX}3; sleep 3; umount ${NAME_PREFIX}1 >/dev/null 2>&1
+OUTDIR=${NAME_PREFIX}2
+
+echo Current dir is $PWD - going to run $MKSQUASHFS $OUTDIR out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT - Hit enter to continue
+
+#read _junk
+# I dont understand why if not running in a sub shell bash mksquashfs never respect the exclude. 
+
+/bin/bash -c "$MKSQUASHFS $OUTDIR out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT"
+
+#( cd $OUTDIR &&  $MKSQUASHFS . ../out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT )
+
+umount ${NAME_PREFIX}2; sleep 3; umount ${NAME_PREFIX}0 >/dev/null 2>&1
+
 if `ls /dev/mapper/${NAME_PREFIX}_DEC >/dev/null 2>&1`; then
 	cryptsetup luksClose /dev/mapper/${NAME_PREFIX}_DEC
 fi
@@ -188,5 +214,5 @@ else
   if [ "$?" != "0" ]; then echo "Output file is $WORKDIR/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi  
 fi
 
-rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
+rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}2 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
 cd $CDIR
