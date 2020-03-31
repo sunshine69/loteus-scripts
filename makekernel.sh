@@ -366,7 +366,7 @@ echo "Create new initrd.xz"
 
 INITRD_PATH=$(echo $BOOT_DIR|cut -f1 -d' ')
 echo "INITRD_PATH to search for input initrd.xz:  '$INITRD_PATH'"
-KBUILDDIR_ENV=$(pwd) $SCRIPT_DIR/rebuild-initrd.sh "$INITRD_PATH/initrd.xz" "$(pwd)/initrd.xz"
+KBUILDDIR_ENV=$(pwd) KVERS="$KVER" $SCRIPT_DIR/rebuild-initrd.sh "$INITRD_PATH/initrd.xz" "$(pwd)/initrd.xz"
 
 cd ..
 
