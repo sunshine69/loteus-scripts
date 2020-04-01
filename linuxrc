@@ -618,11 +618,8 @@ if [ "$UNION_FS_TYPE" = 'aufs' ]; then
     mount -t aufs -o br=${CHANGES_MOUNT}/rootdir=rw:${LOWERDIR} none /union
 else
     echo "Going to mount command 'mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=${CHANGES_MOUNT}/rootdir,workdir=${CHANGES_MOUNT}/workdir /union'"
-    mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=${CHANGES_MOUNT}/rootdir,workdir=${CHANGES_MOUNT}/workdir,metacopy=on /union
-    if [ "$?" != 0 ]; then 
-        echo "Mount error with option metacopy=on. Try again without it ..."
-        mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=${CHANGES_MOUNT}/rootdir,workdir=${CHANGES_MOUNT}/workdir /union
-    fi
+    echo "overlay option metacopy=on is buggy? Disable it for now. We got lots of error 'overlayfs: failed to look up (.profile) for ino (-5)' ..."
+    mount -t overlay overlay -o lowerdir=$LOWERDIR,upperdir=${CHANGES_MOUNT}/rootdir,workdir=${CHANGES_MOUNT}/workdir /union
 fi    
 if [ "$?" != 0 ]; then echo "Error mount $UNION_FS_TYPE fs at /union start shell for debugging .."; /bin/sh ; exit 1; fi
 
