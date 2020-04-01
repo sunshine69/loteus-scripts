@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# Setup various encryption for a mod
+# Functionality is done using script name - it can be umount.lo, setup.lo and mount.lo or other.
+
+# To create an encrypted from normal mod run setup.lo <path to mod file> <file_size> 
+# If file_size is omited then you will be asked to enter the size in MB
+
+# To mount an mod to some where run mount.lo <mod_file> <mount_point>
+# Same for unmount
+
+# You can use it for normal and encrupted mod file. Used to losetup the mod file and fsck it as well, in that case before running fsck you need to unmount it manually (not using this script umount.lo as it will tear down the loop device and LUKs automatically
+
+
 SRC="$1"
 DST="$2"
 if [ -z "$DST" ]; then DST="/mnt/`basename $1`"; fi
