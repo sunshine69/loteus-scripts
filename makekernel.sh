@@ -1,11 +1,25 @@
 #!/bin/bash
 
 export INSTALL_MOD_PATH=/var/tmp/kernel-build
+
+[ -z "$KSOURCE_DIR" ] && KSOURCE_DIR=$(pwd)
+
+if [ -z "$VERSION" ]; then
+    SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' Makefile)
+    VERSION=$(grep -oP '(?<=VERSION \= )([\d]+)' Makefile)
+    PATCHLEVEL=$(grep -oP '(?<=PATCHLEVEL \= )([\d]+)' Makefile)
+    LOCAL_VER=$(grep -Po '(?<=CONFIG_LOCALVERSION=")([^"]+)' .config)
+    [ -z "$VERSION" ] && echo "Can not detect VERSION. You need to run this script inside the kernel source tree" && exit 1
+fi
+
 build_external_module() {
     pushd .
     export KERNELRELEASE=$KVER
     cd /home/stevek/src/bcwc_pcie
-    KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}" make
+    export KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}"
+    echo "Build bcwc_pcie with KDIR: $KDIR"
+    read _junk
+    make
     make install
     popd
 }

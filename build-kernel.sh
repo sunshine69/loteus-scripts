@@ -90,6 +90,7 @@ fi
 if [ "$_TEST_LAST" = "" ]; then KVERS="${KVER}.0"; fi
 
 export KVERS="${KVER}${LOCAL_VER}"
+export KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}"
 $SCRIPT_DIR/makekernel.sh xz
 
 popd
