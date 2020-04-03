@@ -20,7 +20,7 @@ cd $KSOURCE_DIR
 # This is the first number (version) and minor as now stable and longterm having the same version.
 LONGTERM="5.4"
 #LONGTERM=9
-STABLE="5.5"
+STABLE="5.6"
 MAINLINE="5.6"
 
 # Kernel we are going to build eg. 5.1. The first number (version)
