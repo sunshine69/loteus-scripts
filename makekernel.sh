@@ -2,7 +2,10 @@
 
 export INSTALL_MOD_PATH=/var/tmp/kernel-build
 
-[ -z "$KSOURCE_DIR" ] && KSOURCE_DIR=$(pwd)
+if [ -z "$KSOURCE_DIR" ]; then
+    KSOURCE_DIR=$(pwd)
+    KSOURCE_DIR=$(dirname $KSOURCE_DIR)
+fi
 
 if [ -z "$VERSION" ]; then
     SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' Makefile)
@@ -16,7 +19,11 @@ build_external_module() {
     pushd .
     export KERNELRELEASE=$KVER
     cd /home/stevek/src/bcwc_pcie
-    export KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}"
+    if [ -z "$KDIR" ]; then
+        export KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}"
+    else
+        export KDIR="$KDIR"
+    fi
     echo "Build bcwc_pcie with KDIR: $KDIR"
     read _junk
     make
