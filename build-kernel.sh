@@ -16,21 +16,23 @@ export KSOURCE_DIR=/mnt/sda4/tmp
 pushd .
 cd $KSOURCE_DIR
 
+# Change this to match with what is in the https://kernel.org site
 # From kernel.org what is longer and stable? Used to detect what version we will build
 # This is the first number (version) and minor as now stable and longterm having the same version.
 LONGTERM="5.4"
 #LONGTERM=9
-STABLE="5.6"
+STABLE="5.5"
 MAINLINE="5.6"
 
-# Kernel we are going to build eg. 5.1. The first number (version)
+# Change these to select what kernel we are going to build eg. 5.1. The first number (version)
+# The combination needs to match with one of the above section
 #export VERSION=4
 export VERSION=5
-
 # Minor version (middle number)
 #export PATCHLEVEL=19
 #export PATCHLEVEL=9
-export PATCHLEVEL=6
+export PATCHLEVEL=5
+####
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
 OLD_KVER="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
