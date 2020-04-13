@@ -74,59 +74,8 @@ else
 fi
 
 echo "Done make modules_install"
-echo "Create kernel header ..."
 
-TDIR=$TARGET_DIR/kernel-$KVER/linux-headers-$KVER
-
-rm -rf $TARGET_DIR/kernel-$KVER
-
-mkdir -p $TARGET_DIR/kernel-$KVER/linux-headers-$KVER
-
-if [ "$ans" == "skiprsync" ]; then
-:
-else
-	# find . -type f \( -name "Makefile*" -o -name "Kconfig*" -o -name "*.h" -o  -name "Kbuild*"  -o -name "*.conf" -o -name "*.sh"  -\) | perl -ne '$s=$_; if ($s !~ /^\.\/Documentation/) {if ($s=~/^\.\/arch/) {print $s if ($s =~ /^\.\/arch\/$ARCH/) } else {  if ($s=~/^\.\/drivers/) { print $s if ($s =~ /(Makefile|Kconfig)*$/) } else {print $s}   }  } ' | while read fn; do rsync -aR $fn ${TDIR}/ ; done
-	find . -type f \( -name "Makefile*" -o -name "Kconfig*" -o -name "*.h" -o  -name "Kbuild*"  -o -name "*.conf" -o -name "*.sh"  -\) -print | perl -ne '$s=$_; if ($s !~ /^\.\/Documentation/) {if ($s=~/^\.\/arch/) {print $s if ($s =~ /^\.\/arch\/$ARCH/) } else {  if ($s=~/^\.\/drivers/) { print $s if ($s =~ /(Makefile|Kconfig)*$/) } else {print $s}   }  } ' | tar  c --files-from - | tar xf - -C ${TDIR}/
-
-	# tar -xf /tmp/temp.tar -C ${TDIR}/  # ; rm -f /tmp/temp.tar
-fi
-	#mkdir $TDIR
-	cp -a Module.symvers  .config  ${TDIR}/
-	cp -a arch/Kconfig ${TDIR}/arch/
-	rsync -a  scripts/  ${TDIR}/scripts/
-	if [ ! -f "${TDIR}/arch/x86/include/asm/system.h" ]; then # kernel 3.7.x depricated header make some third party module
-		( cd arch/arm/include/asm/ && cp -a system.h system_info.h system_misc.h compiler.h ${TDIR}/arch/x86/include/asm/ )
-	fi
-
-	cd $TDIR/include/
-	if [ "$OLDKERNEL" = 'no' ]; then
-		mkdir  $TDIR/include/asm-x86
-		if [ `echo $KVER | cut -f 1 -d '.'` == '3' ]; then
-			echo "Kernel 3 detected"
-		else
-			rm -f asm
-			#ln -sf asm-generic asm
-			ln -sf asm-x86 asm
-		fi
-		cd asm-x86
-		rm -f asm-offsets.h
-		ln -sf ../generated/asm-offsets.h asm-offsets.h
-		cd ../linux
-		if [ ! -f "autoconf.h" ]; then
-		ln -sf ../generated/autoconf.h autoconf.h
-		fi
-		if [ ! -f "version.h" ]; then
-		# 3.4.35 still has that file
-		ln -sf ../generated/uapi/linux/version.h version.h # Linux 3.7.x
-		fi
-		if [ ! -f "compile.h" ]; then
-		ln -sf ../generated/compile.h compile.h
-		fi
-	else
-	rm -f asm ; ln -sf asm-x86 asm
-	fi
-	cd $CDIR
-
+cd $CDIR
 
 cp -a System.map $TARGET_DIR/kernel-$KVER/
 case "$ARCH" in
@@ -374,20 +323,17 @@ mv ../$KVER 1/lib/modules/
 ( cd 1/lib/modules/${KVER}/ ; rm -f build ; ln -sf /usr/src/linux-headers-$KVER build )
 rm -f 000-${KVER}.xzm
 mksquashfs 1 000-${KVER}.xzm -comp xz -b 1M
-rm -rf 1
 
-mkdir -p 1/usr/src
-mv ../linux-headers* 1/usr/src/
-mv ../System.map 1/usr/src/linux-headers*/
-rm -f 000-linux-headers-$KVER.xzm
-mksquashfs 1 000-linux-headers-$KVER.xzm -comp xz -b 1M
-rm -rf 1
 
 echo "Create new initrd.xz"
 
 INITRD_PATH=$(echo $BOOT_DIR|cut -f1 -d' ')
 echo "INITRD_PATH to search for input initrd.xz:  '$INITRD_PATH'"
 KBUILDDIR_ENV=$(pwd) KVERS="$KVER" $SCRIPT_DIR/rebuild-initrd.sh "$INITRD_PATH/initrd.xz" "$(pwd)/initrd.xz"
+
+echo "Create kernel source module ..."
+
+( cd $KSOURCE_DIR; ${SCRIPT_DIR}/create-kernel-src.sh linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel )
 
 cd ..
 
