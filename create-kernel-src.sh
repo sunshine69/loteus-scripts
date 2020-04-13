@@ -10,7 +10,7 @@ fi
 
 cd $SOURCE_DIR
 
-find . -type f -name "*.o" -o -name "*.ko" -o -name "*.cmd" -name ".tmp_*" -o -name "vmlinux" -o -name "*.tmp_*" -o -name "vmlinux.bin*" -o -name "bzImage" | while read fn; do rm -f $fn; done
+find . -type f -name "*.o" -o -name "*.ko" -o -name "*.cmd" -o -name ".tmp_*" -o -name "vmlinux" -o -name "*.tmp_*" -o -name "vmlinux.bin*" -o -name "bzImage" -o -name "*.o.cmd" -o -name "*.ko.cmd" -o -name "*.a" | while read fn; do rm -f $fn; done
 
 VERSION=$(grep -oP '(?<=VERSION \= )([\d]+)' Makefile)
 PATCHLEVEL=$(grep -oP '(?<=PATCHLEVEL \= )([\d]+)' Makefile)
@@ -20,6 +20,7 @@ TARGET_FNAME="${TARGET_DIR}/000-linux-src-${VERSION}.${PATCHLEVEL}.${SUBLEVEL}${
 
 cd ../
 
+rm -f ${TARGET_FNAME}
 mksquashfs $SOURCE_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*'
 
 echo "Kernel source image generated ${TARGET_FNAME}"
