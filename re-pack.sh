@@ -40,7 +40,7 @@ if [ "$NOT_RUNNING_KERNEL" = "y" ]; then
     read _junk
 else
     mount -o bind repack3/lib/modules/${KVER} /lib/modules/${KVER}
-    (cd /lib/modules/${KVER} ; ln -sf $KSOURCE_DIR build )
+    (cd /lib/modules/${KVER} ; ln -sf source build )
 fi
 
 echo ""

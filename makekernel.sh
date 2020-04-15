@@ -77,6 +77,8 @@ echo "Done make modules_install"
 
 cd $CDIR
 
+mkdir -p $TARGET_DIR/kernel-$KVER/
+
 cp -a System.map $TARGET_DIR/kernel-$KVER/
 case "$ARCH" in
 'i386'|'i686'|'amd64'|'x86_64')
@@ -333,7 +335,9 @@ KBUILDDIR_ENV=$(pwd) KVERS="$KVER" $SCRIPT_DIR/rebuild-initrd.sh "$INITRD_PATH/i
 
 echo "Create kernel source module ..."
 
-( cd $KSOURCE_DIR; ${SCRIPT_DIR}/create-kernel-src.sh linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel )
+echo "going to run ${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel"
+
+${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel
 
 cd ..
 

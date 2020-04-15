@@ -1,6 +1,7 @@
 #!/bin/sh
 
 SOURCE_DIR="$1"
+KERNEL_DIR=$(basename $SOURCE_DIR)
 TARGET_DIR="$2"
 
 if [ -z "$SOURCE_DIR" ] || [ -z "$TARGET_DIR" ]; then
@@ -21,6 +22,7 @@ TARGET_FNAME="${TARGET_DIR}/000-linux-src-${VERSION}.${PATCHLEVEL}.${SUBLEVEL}${
 cd ../
 
 rm -f ${TARGET_FNAME}
-mksquashfs $SOURCE_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*'
+echo "going to run mksquashfs $SOURCE_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*'"
+mksquashfs $KERNEL_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*'
 
 echo "Kernel source image generated ${TARGET_FNAME}"
