@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Usage: $0 </path/current/porteus/module> <encryption_flag:(y|n)> </path/to/working/dir|auto> [coma,sep,list,of-directory-to-be-selected-4compress]
+
 CHANGES='/mnt/live/memory/changes'
 NAME_PREFIX='save_session'
 # The home of this user will get cleaned and preserved changes. All other home
@@ -9,7 +11,10 @@ EXCLUDE_USERS='stevek kaycao andrewk'
 
 HOSTNAME=$(hostname)
 
-if [ "$3" ]; then WORKDIR="$3"; else WORKDIR=/mnt/live/memory; fi
+# It must be raw FS, non layered file system
+if [ "$3" = "auto" ]; then WORKDIR=/mnt/live/memory; else WORKDIR="$3"; fi
+
+[ -z "$WORKDIR" ] && echo "Work directory arg is missing, aborted." && exit 1
 
 [ -z "$MKSQUASHFS" ] && MKSQUASHFS=`which mksquashfs`
 
@@ -132,11 +137,24 @@ fi
 
 rm -rf ${NAME_PREFIX}2/tmp/* ${NAME_PREFIX}2/tmp/.*
 
+# If startswith 999 that is only config saved in etc and home/root is retained
 if [[ "$1" =~ "999"  ]]; then
 	ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root)" | while read dname; do 
-	rm -rf ${NAME_PREFIX}2/${dname}
-done
+	    rm -rf ${NAME_PREFIX}2/${dname}
+    done
+fi
 
+# If supply the third arg which the folder or coma separated list of folders we wil only compress that folder under a new rootdir. Example to update a specific modules
+
+if [ ! -z "$4" ]; then
+    IFS=', ' read -r -a dir_list <<< "$4"
+    rm -rf ${NAME_PREFIX}2/newroot_1; mkdir -p rm -rf ${NAME_PREFIX}2/newroot_1
+    for dir in "${dir_list[@]}"; do
+        mv "$dir" "${NAME_PREFIX}2/newroot_1/"
+    done
+    OUTDIR="${NAME_PREFIX}2/newroot_1"
+else
+    OUTDIR=${NAME_PREFIX}2
 fi
 
 # Not sure why exclude opt never works for me but test shows mksquashfs actually work
@@ -179,7 +197,6 @@ if [ -z "$SQUASHFS_OPT" ]; then
 			echo "Use '$SQUASHFS_OPT'"
 	esac
 fi
-OUTDIR=${NAME_PREFIX}2
 
 echo Current dir is $PWD - going to run $MKSQUASHFS $OUTDIR out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT - Hit enter to continue
 
@@ -197,7 +214,7 @@ if `ls /dev/mapper/${NAME_PREFIX}_DEC >/dev/null 2>&1`; then
 fi
 
 if [ "$LODEV" ]; then losetup -d $LODEV; fi
-if [ "$2" == 'enc' ]; then
+if [ "$2" == 'y' ]; then
 	/opt/bin/squash2enc.sh out.sqs $SRCPATH $PASS # Given the existing module so we will use the existing luks
 	mv out.sqs.enc out.sqs
 fi
