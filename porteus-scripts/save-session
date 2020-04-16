@@ -1,6 +1,25 @@
 #!/bin/bash
 
-# Usage: $0 </path/current/porteus/module> <encryption_flag:(y|n)> </path/to/working/dir|auto> [coma,sep,list,of-directory-to-be-selected-4compress]
+
+function help() {
+    printf "\nUsage: $0 </path/current/porteus/module> <encryption_flag:(y|n)> </path/to/working/dir|auto> [coma,sep,list,of-directory-to-be-selected-4compress]
+
+If the first arg is 999 then it will find a module started with 999 (only
+config settings in etc, home is saved) and only update these. 
+
+If the first arg point to a non-existant mod file - it will be created as new.
+If it is existing file, it will update the changes from that mod file and
+save it to the same file name with extra extention .new. The porteus system
+after reboot will automatically pick that and rename it as current, the
+current will be renamed as .old
+"
+    exit 0
+}
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ "$1" = "help" ] || [ -z "$1" ]; then
+    help
+fi    
+
 
 CHANGES='/mnt/live/memory/changes'
 NAME_PREFIX='save_session'
@@ -53,9 +72,11 @@ else
   echo "Error mount old changes module. New changes will be saved into new module"
   LODEV=''
 fi
+
 #if grep aufs /proc/filesystems >/dev/null 2>&1; then
 #    mount -t aufs none ${NAME_PREFIX}2 -o br=${NAME_PREFIX}2=rw:${CHANGES}/rootdir=ro+wh:${NAME_PREFIX}1=ro 
 #else
+
 mkdir ${NAME_PREFIX}_wd
 
 echo "Copying changes files into ${NAME_PREFIX}1"
