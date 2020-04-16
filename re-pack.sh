@@ -1,15 +1,29 @@
 #!/bin/bash
 
-# Used to re-pack the current kernel mod dir into
-# When build a new kernel / reboot and we can run this to recompile external modules and re-pack
+function help() {
+printf "
+Used to re-pack the current kernel mod dir into
+When build a new kernel / reboot and we can run this to recompile external modules and re-pack
 
-# Usage: $0 <path_to_kernel_mod_file> <path_to_kernel_source_xzm_mod_file>
+Usage: $0 [path_to_kernel_mod_file] [path_to_kernel_source_xzm_mod_file]
 
-# Argument are options, if not provided it will use current running kernel and default kernel source dir in the symlink `source` in /lib/modules/<kver>/source
+Argument are options, if not provided it will use current running kernel and default kernel source dir in the symlink 'source' in /lib/modules/<kver>/source
+
+The environment vars below is set as default. You can change it as you wish
+
+KBIN_DIR=/mnt/sda4/build/kernel-binary - dir that store the porteus kernel build output.
+WORK_DIR=/mnt/sda4/tmp - script working dir
+"
+exit 0
+}
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ "$1" = "help" ]; then
+    help
+fi
 
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export KBIN_DIR=/mnt/sda4/build/kernel-binary
-export WORK_DIR=/mnt/sda4/tmp
+export KBIN_DIR=${KBIN_DIR:-/mnt/sda4/build/kernel-binary}
+export WORK_DIR=${WORK_DIR:-/mnt/sda4/tmp}
 
 pushd .
 cd $WORK_DIR
