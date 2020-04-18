@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Do nothing') {
             steps {
-                sh 'echo testing 1 2'
+                sh 'echo testing 1 4'
             }
         }
     }
