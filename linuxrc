@@ -191,12 +191,14 @@ if [ "$fs" ]; then
 fi }
 
 # Search functions: The blkid does not support f2fs
+# $1 is the operator (-f -e -d). $2 is the file/folder. Olnly search started
+# from /mnt and one dir level
 search() { FND=n; for x in `ls /mnt`; do
 [ $1 "/mnt/$x/$2" ] && { DEV=$x; FND=y; break; }; done
 [ $FND = y ]; }
 lazy() { SLEEP=6; while [ $SLEEP -gt 0 ] && [ ! "$FND" = "y" ]; do nap; let SLEEP=SLEEP-1; fstab; search $*; done }
 locate() { # locate <-e|-r|-d|-f> PATH ; See the option will be passed to function search above.
-# set the var DEV, LPTH
+# return: set the var DEV, LPTH for the caller to use and return exit code 0 for success otherwise
   LPATH=`echo $2 | cut -b-5 | sed s@/dev@/mnt@`
   if [ "$LPATH" = "/mnt/" ]; then # $2 started with /dev/<dev>
     echo "Detect device path /dev/XXX. will try to setup devices"  
@@ -215,7 +217,7 @@ locate() { # locate <-e|-r|-d|-f> PATH ; See the option will be passed to functi
   elif [ "$LPATH" = "mkdir" -o "$LPATH" = "make:" ]; then #detect bigest size available and create changes dir on it
     LPTH=`echo $2 | cut -d: -f2-`; search $* || lazy $* || {
     df -h > /tmp/fssize; BIGEST_SIZE=`cat /tmp/fssize | cut -dG -f3 | sed 's/ \+//g' | sort -n | tail -n 1`
-    dev=`grep $BIGEST_SIZE /tmp/fssize | cut -f5 -d/`; rm -f /tmp/fssize; mkdir -p "/mnt/$dev/$LPTH"; [ $? = 0 ]
+    DEV=`grep $BIGEST_SIZE /tmp/fssize | cut -f5 -d/`; rm -f /tmp/fssize; mkdir -p "/mnt/$DEV/$LPTH"; [ $? = 0 ]
     }
   else
     echo "Direct calling search"
@@ -291,6 +293,7 @@ echo "Re-generate again as fstab will mount kernel module and load extra devices
 generate_devices
 echo -e "done\ncheck KEXEC ...\n"
 debug
+rm -f /etc/mtab ; ln -sf /proc/mounts /etc/mtab
 if [ ! -z "$KEXEC" ]; then
     if [ ! -z "$FROM" ]; then 
         locate -e $FROM/${OSDIR}/$SGN

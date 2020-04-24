@@ -1,0 +1,380 @@
+#!/bin/bash
+#exit 0
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+# rc.firewall-2.4
+FWVER=0.62
+#IPTABLES=/sbin/iptables
+IPTABLES=`which iptables`
+
+EXTIF=$1
+SIP=`ifconfig $EXTIF | grep 'inet addr' | perl -ne '/[^\d]+([\d\.]+)/ && print $1'`
+
+if [ "$1" == "-h" ] ; then
+cat <<EOF | less ;
+EOF
+exit 1
+fi
+#======================================================================
+#
+
+#Load the main body of the IPTABLES module - "iptable"
+#  - Loaded automatically when the "iptables" command is invoked
+#
+#  - Loaded manually to clean up kernel auto-loading timing issues
+#
+echo -en "ip_tables, "
+/sbin/modprobe ip_tables
+
+#Load the IPTABLES filtering module - "iptable_filter" 
+#  - Loaded automatically when filter policies are activated
+
+#Load the stateful connection tracking framework - "ip_conntrack"
+#
+# The conntrack  module in itself does nothing without other specific 
+# conntrack modules being loaded afterwards such as the "ip_conntrack_ftp"
+# module
+#
+#  - This module is loaded automatically when MASQ functionality is 
+#    enabled 
+#
+#  - Loaded manually to clean up kernel auto-loading timing issues
+#
+echo -en "ip_conntrack, "
+#/sbin/modprobe ip_conntrack
+/sbin/modprobe ip_conntrack
+
+#Load the FTP tracking mechanism for full FTP tracking
+#
+# Enabled by default -- insert a "#" on the next line to deactivate
+#
+echo -en "ip_conntrack_ftp, "
+# /sbin/modprobe ip_conntrack_ftp
+/sbin/modprobe ip_conntrack_ftp
+
+#Load the general IPTABLES NAT code - "iptable_nat"
+#  - Loaded automatically when MASQ functionality is turned on
+# 
+#  - Loaded manually to clean up kernel auto-loading timing issues
+#
+echo -en "iptable_nat, "
+#/sbin/modprobe iptable_nat
+/sbin/modprobe iptable_nat
+#Loads the FTP NAT functionality into the core IPTABLES code
+# Required to support non-PASV FTP.
+#
+# Enabled by default -- insert a "#" on the next line to deactivate
+#
+echo -en "ip_nat_ftp, "
+/sbin/modprobe ip_nat_ftp
+
+# Just to be complete, here is a list of the remaining kernel modules 
+# and their function.  Please note that several modules should be only
+# loaded by the correct master kernel module for proper operation.
+# --------------------------------------------------------------------
+#
+#    ipt_mark       - this target marks a given packet for future action.
+#                     This automatically loads the ipt_MARK module
+#
+#    ipt_tcpmss     - this target allows to manipulate the TCP MSS
+#                     option for braindead remote firewalls.
+#                     This automatically loads the ipt_TCPMSS module
+#
+#    ipt_limit      - this target allows for packets to be limited to
+#                     to many hits per sec/min/hr
+#
+#    ipt_multiport  - this match allows for targets within a range
+#                     of port numbers vs. listing each port individually
+#
+#    ipt_state      - this match allows to catch packets with various
+#                     IP and TCP flags set/unset
+#
+#    ipt_unclean    - this match allows to catch packets that have invalid
+#                     IP/TCP flags set
+#
+#    iptable_filter - this module allows for packets to be DROPped, 
+#                     REJECTed, or LOGged.  This module automatically 
+#                     loads the following modules:
+#
+#                     ipt_LOG - this target allows for packets to be 
+#                               logged
+#
+#                     ipt_REJECT - this target DROPs the packet and returns 
+#                                  a configurable ICMP packet back to the 
+#                                  sender.
+# 
+#    iptable_mangle - this target allows for packets to be manipulated
+#                     for things like the TCPMSS option, etc.
+
+echo ".  Done loading modules."
+
+echo "   enabling forwarding.."
+echo "1" > /proc/sys/net/ipv4/ip_forward
+
+# Dynamic IP users:
+#
+#   If you get your IP address dynamically from SLIP, PPP, or DHCP, 
+#   enable this following option.  This enables dynamic-address hacking
+#   which makes the life with Diald and similar programs much easier.
+#
+#echo "   enabling DynamicAddr.."
+echo "1" > /proc/sys/net/ipv4/ip_dynaddr
+
+function do_forward() {
+echo "External is: $1"
+echo "Internal is: $2"
+$IPTABLES -A INPUT -i $1 -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
+$IPTABLES -A FORWARD -i $1 -o $2 -m state --state ESTABLISHED,RELATED -j ACCEPT
+$IPTABLES -A FORWARD -o $1 -i $2 -j ACCEPT
+}
+
+# This function is called first (except reset)
+function fixed_rules() {
+echo "   clearing any existing rules and setting default policy.."
+# Fixed defined rules. 
+$IPTABLES -P INPUT ACCEPT
+$IPTABLES -F INPUT 
+$IPTABLES -P OUTPUT ACCEPT
+$IPTABLES -F OUTPUT 
+$IPTABLES -P FORWARD ACCEPT
+$IPTABLES -F FORWARD 
+$IPTABLES -t nat -F
+$IPTABLES -t mangle -F
+$IPTABLES -F
+$IPTABLES -X
+marking
+
+$IPTABLES -A INPUT -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
+$IPTABLES -A OUTPUT -p all -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Rules for each interfaces, all apps
+$IPTABLES -A INPUT -i lo -j ACCEPT
+$IPTABLES -A OUTPUT -o lo -j ACCEPT
+
+$IPTABLES -A INPUT -i tap+ -j ACCEPT
+$IPTABLES -A OUTPUT -o tap+ -j ACCEPT
+$IPTABLES -A INPUT -i tun+ -j ACCEPT
+$IPTABLES -A OUTPUT -o tun+ -j ACCEPT
+$IPTABLES -A INPUT -i br+ -j ACCEPT
+$IPTABLES -A OUTPUT -o br+ -j ACCEPT
+
+# provide dansgardian for local
+#$IPTABLES -A INPUT -i eth+ -p tcp -s 169.173.0.0/24 --dport 8080 -j ACCEPT
+#$IPTABLES -A INPUT -i eth+ -p tcp -s 169.173.0.0/24 --dport 8888 -j ACCEPT
+# ssh
+#$IPTABLES -A INPUT -p tcp -s 169.173.0.0/24 --dport 22 -j ACCEPT
+$IPTABLES -A INPUT -p tcp --dport 22 -j ACCEPT
+#$IPTABLES -A INPUT -i eth+ -p tcp -s 169.173.0.0/24 --dport 5901 -j ACCEPT
+#$IPTABLES -A OUTPUT -t nat ! -d 127.0.0.1 -p tcp --dport 80 -m owner --uid-owner an -j REDIRECT --to-ports 8080
+
+#echo "Redirect port 3389 to vnc 5901"
+#iptables -t nat -A PREROUTING -i eth1 -p tcp --dport 3389 -j REDIRECT --to-port 5901
+#
+## samba server
+#SMB_IFS="br1 br0"
+#for SMB_IF in $SMB_IFS; do
+#	for UDPPORT in "137" "138" ; do
+#	$IPTABLES -A INPUT -i $SMB_IF -p udp --dport $UDPPORT -j ACCEPT
+#	$IPTABLES -A INPUT -i $SMB_IF -p udp --sport $UDPPORT -j ACCEPT
+#	done
+#	for TCPPORT in 139 445; do
+#	$IPTABLES -A INPUT -i $SMB_IF -p tcp --dport $TCPPORT  -m state --state NEW -j ACCEPT
+#	done
+#done
+## end samba
+
+# NFS
+#NFS_IFS="br0"
+#NFS_CLIENTS="1.1.1.0/24"
+#for NFS_IF in $NFS_IFS; do
+#	for NFS_CLIENT in $NFS_CLIENTS; do
+#		for udpport in 111 32769 892 875 662; do
+#			$IPTABLES -A INPUT -i $NFS_IF  -s $NFS_CLIENT -m state --state NEW -p udp --dport $udpport -j ACCEPT
+#		done
+#		for tcpport in 111 2049 32803 892 875 662; do
+#			$IPTABLES -A INPUT -i $NFS_IF  -s $NFS_CLIENT -m state --state NEW -p tcp --dport $tcpport -j ACCEPT
+#		done
+#	done
+#done
+
+# end NFS
+
+# Skype incoming con
+#$IPTABLES -A INPUT -i ppp0 -p tcp --dport 2342 -j ACCEPT
+#$IPTABLES -A INPUT -i ppp0 -p udp --dport 2342 -j ACCEPT
+
+# Speakfreely
+#SF="69.73.0.30"
+# $IPTABLES -A INPUT -i ppp0 -p udp --dport 2075 -j ACCEPT
+# $IPTABLES -A INPUT -i ppp0 -p udp --dport 2074 -j ACCEPT
+# $IPTABLES -A FORWARD -i ppp0 -o  -p udp --dport 2074 -j ACCEPT
+# $IPTABLES -A FORWARD -i  -o ppp0 -p udp --dport 2075 -j ACCEPT
+#$IPTABLES -t nat -A PREROUTING -i ppp0 -p udp --dport 2074 -j DNAT --to $SF:2074
+#$IPTABLES -t nat -A PREROUTING -i ppp0 -p udp --dport 2075 -j DNAT --to $SF:2075
+
+# $IPTABLES -A INPUT -i ppp0 -p tcp --dport 4662 -j ACCEPT # donkey
+# $IPTABLES -A INPUT -i ppp0 -p udp --dport 4672 -j ACCEPT 
+# $IPTABLES -A INPUT -i ppp0 -p tcp --sport 4662 -j ACCEPT  
+# $IPTABLES -A INPUT -i ppp0 -p tcp --dport 80 -j ACCEPT # tomcat
+# $IPTABLES -A INPUT -i ppp0 -p tcp --dport 443 -j ACCEPT # tomcat
+
+# vmware server, nagios test run on port 888
+#SF="10.0.0.2";
+#$IPTABLES -t nat -A PREROUTING -i eth+ -p tcp --dport 888 -j DNAT --to $SF:888
+#$IPTABLES -t nat -A PREROUTING -i eth+ -p tcp --dport 888 -j DNAT --to $SF:888
+#$IPTABLES -t nat -A PREROUTING -i eth+ -p tcp --dport 443 -j DNAT --to $SF:443
+#$IPTABLES -t nat -A PREROUTING -i eth+ -p tcp --dport 443 -j DNAT --to $SF:443
+
+# $IPTABLES -t nat -A OUTPUT  ! -d 127.0.0.1 -p tcp --dport 80 -m owner --cmd-owner java_vm -j ACCEPT
+
+#$IPTABLES -t nat -A OUTPUT  ! -d 127.0.0.1 -p tcp --dport 80 -m owner --uid-owner an -j REDIRECT --to-ports 8080
+
+#$IPTABLES -t nat -A OUTPUT  ! -d 127.0.0.1 -p tcp --dport 80 -m owner ! --uid-owner nobody -j REDIRECT --to-ports 8080
+
+#$IPTABLES -A POSTROUTING -t nat -o lo -p tcp --dport 8080 -j SNAT --to 127.0.0.1
+
+# Rules not depend on interfaces, all apps, depend on protocol
+$IPTABLES -N bad_tcp_packets
+$IPTABLES -N icmp_packets
+$IPTABLES -N udp_packets
+$IPTABLES -N allowed
+
+$IPTABLES -A bad_tcp_packets -p tcp --tcp-flags SYN,ACK SYN,ACK -m state \
+--state NEW -j REJECT --reject-with tcp-reset 
+$IPTABLES -A bad_tcp_packets -p tcp ! --syn -m state --state NEW -j REJECT 
+# LOG --log-prefix "New not syn:"
+# Drop dhcp request from outside network why?
+$IPTABLES -A udp_packets -p UDP -d 255.255.255.255 --destination-port 67:68 -j ACCEPT
+$IPTABLES -A udp_packets -p UDP --dport 53 -j ACCEPT
+$IPTABLES -A udp_packets -p UDP --sport 53 -j ACCEPT
+# $IPTABLES -A allowed -p TCP --syn -j ACCEPT
+$IPTABLES -A allowed -p TCP -m state --state ESTABLISHED,RELATED -j ACCEPT
+# ICMP rules
+$IPTABLES -A icmp_packets -p ICMP -s 0/0 --icmp-type 8 -j ACCEPT
+$IPTABLES -A icmp_packets -p ICMP -s 0/0 --icmp-type 11 -j ACCEPT
+$IPTABLES -A icmp_packets -p ICMP -s 0/0 -j DROP
+
+$IPTABLES -A INPUT -p tcp -j bad_tcp_packets
+$IPTABLES -A INPUT -p tcp -j allowed
+$IPTABLES -A INPUT -p icmp -j icmp_packets
+$IPTABLES -A INPUT -p UDP -j udp_packets
+$IPTABLES -A FORWARD -p tcp -j bad_tcp_packets
+$IPTABLES -A FORWARD -p tcp -j allowed
+$IPTABLES -A FORWARD -p udp -j udp_packets
+$IPTABLES -A OUTPUT -p tcp -j bad_tcp_packets
+$IPTABLES -A OUTPUT -p tcp -j allowed
+$IPTABLES -A OUTPUT -p udp -j udp_packets
+
+# Rules for a specific applications
+# VPN server
+# $IPTABLES -A udp_packets -p UDP --dport 1973 -j ACCEPT
+
+# PPTP forwarding sample to 10.0.45.2
+# $IPTABLES -A INPUT -p tcp -i   --dport 1723 -j ACCEPT
+# $IPTABLES -A INPUT -p tcp -i eth1  --dport 1723 -j ACCEPT
+# $IPTABLES -A INPUT -p 47 -i   -j ACCEPT
+# $IPTABLES -A INPUT -p 47 -i eth1  -j ACCEPT
+# $IPTABLES -A FORWARD -p tcp --dport 1723 -i  -o eth1 -j ACCEPT
+# $IPTABLES -A FORWARD -p 47 -i  -o eth1 -j ACCEPT
+# $IPTABLES -t nat -A PREROUTING -p 47 -i  -j DNAT --to 10.0.45.2
+# $IPTABLES -t nat -A PREROUTING -p tcp --dport 1723 -i  -j DNAT --to 10.0.45.2:1723
+
+# Squid transparent proxy
+# $IPTABLES -t nat -A PREROUTING -i  -p tcp --dport 80 -j REDIRECT --to-port 800
+
+# Torrent port 7000 for tracker
+
+#iptables -A FORWARD -p tcp --dport 6881 -j ACCEPT
+#iptables -t nat -A PREROUTING -p tcp --dport 6881 -j DNAT --to 10.0.44.12:6881
+#iptables -A FORWARD -i ppp0 -p tcp --dport 7000 -j ACCEPT
+#iptables -t nat -A PREROUTING -p tcp --dport 7000 -j DNAT --to 10.0.44.12:7000
+# mysql server
+#iptables -A INPUT -p tcp --dport 3306 -j ACCEPT
+#iptables -A FORWARD -p tcp --dport 3306 -j ACCEPT
+#iptables -t nat -A PREROUTING -p tcp --dport 3306 -j DNAT --to 1.1.1.3:3306
+
+# forward to docker registry
+#iptables -A FORWARD -p tcp --dport 5000 -j ACCEPT
+#iptables -t nat -A PREROUTING -p tcp --dport 5000 -j DNAT --to 192.168.2.2:5000
+#iptables -A FORWARD -p tcp --dport 8080 -j ACCEPT
+#iptables -t nat -A PREROUTING -p tcp --dport 8080 -j DNAT --to 192.168.2.3:8080
+
+# gerrit host
+#for p in 8080 29418; do
+#	iptables -A FORWARD -p tcp --dport $p -j ACCEPT
+#	iptables -t nat -A PREROUTING -p tcp --dport $p -j DNAT --to 172.17.0.28:$p
+#done
+
+# qatool forwarding
+# iptables -t nat -A PREROUTING -i br2 -p tcp --dport 9000 -j DNAT --to 192.168.2.2:9000
+}
+
+# Section marking
+function marking() {
+#IHUG_SMTP="203.109.252.42"
+#ICONZ_SMTP="210.48.22.36"
+
+#$IPTABLES -t mangle -A PREROUTING -i  -p tcp --dport 25 -d $IHUG_SMTP -j MARK --set-mark 2
+#$IPTABLES -t mangle -A PREROUTING -i  -p tcp --dport 25 -d $ICONZ_SMTP -j MARK --set-mark 3
+
+#$IPTABLES -t mangle -A PREROUTING -i  -p tcp --sport 80 -s 10.0.44.12 -j MARK --set-mark 4
+#$IPTABLES -t mangle -A PREROUTING -i  -p tcp --sport 443 -s 10.0.44.12 -j MARK --set-mark 4
+
+#$IPTABLES -t mangle -A PREROUTING -p udp --sport 1973 -s 202.37.225.16 -j MARK --set-mark 5
+
+#iptables -t mangle -A PREROUTING -p esp -j MARK --set-mark 1
+#iptables -A FORWARD -m mark --mark 1 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400
+#iptables -A OUTPUT -m mark --mark 1 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400
+:
+}
+
+# Do custom masquerading 
+function custom_forward() {
+#do_forward tun0 wlan0
+#$IPTABLES -t nat -A POSTROUTING -o tun0 -j SNAT --to 172.17.217.177 
+:
+}
+
+if [ "$1" == "reset" ] ; then
+        echo "Reset called"
+        $IPTABLES -P INPUT ACCEPT
+        $IPTABLES -F INPUT 
+        $IPTABLES -P OUTPUT ACCEPT
+        $IPTABLES -F OUTPUT 
+        $IPTABLES -P FORWARD ACCEPT
+        $IPTABLES -F FORWARD 
+        $IPTABLES -t nat -F
+        $IPTABLES -t mangle -F
+        $IPTABLES -F
+        $IPTABLES -X
+        exit 0
+else 
+        echo "   FWD: Allow all connections OUT and only existing and related ones IN"
+        fixed_rules
+        unset EXTIF
+        unset INTIF
+
+        EXTIF="$1"; shift
+
+# Drop all outgoing is source is 2.2.2.2-99
+#$IPTABLES -A OUTPUT -m iprange -o $EXTIF --src-range 2.2.2.2-2.2.2.99 -j DROP
+#$IPTABLES -A FORWARD -m iprange -o $EXTIF --src-range 2.2.2.2-2.2.2.99 -j DROP
+
+        for INTIF in $*; do
+                echo "do_forward for $INTIF"
+                do_forward $EXTIF $INTIF
+                :
+        done
+
+#if [ "$SIP" != "" ]; then
+#$IPTABLES -t nat -A POSTROUTING -o $EXTIF -j  SNAT --to $SIP
+        $IPTABLES -t nat -A POSTROUTING -o $EXTIF -j  MASQUERADE
+#fi
+
+        custom_forward
+
+#marking
+fi
+#/usr/local/bin/loadbalance
+
+echo -e "\nDone.\n"
