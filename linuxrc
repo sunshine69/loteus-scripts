@@ -1,5 +1,6 @@
 #!/bin/sh
 ### linuxc script by fanthom <http://www.porteus.org>
+### Rework to support many features by stevek for his usage
 
 export PATH=/bin:/usr/bin:./
 mount -nt proc proc /proc
@@ -478,6 +479,7 @@ echo -e "done\nLoad specific settings for a hostname. The file name is 9XX-${HOS
 debug
 if [ ! -z "$HOSTNAME" ]; then
     find $PTH/base $PTH/modules -name "[9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
+    if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.fstab" ]; then cat $CHANGES_MOUNT_SRC/${HOSTNAME}.fstab >> /etc/fstab; fi
     if [ -f "$PTH/../share/${HOSTNAME}.fstab" ]; then cat $PTH/../share/${HOSTNAME}.fstab >> /etc/fstab; fi
 fi
 
