@@ -57,7 +57,7 @@ FACTORYRESET=`value reset`; [ $FACTORYRESET ] || FACTORYRESET=`value factoryrese
 KVER=`uname -r`
 KPATH=`value kpath`; [ $KPATH ] || KPATH=
 KMOD_DETECTED=
-HOSTNAME=`value hostname`;
+HOSTNAME=`value h`; [ $HOSTNAME ] || HOSTNAME=`value hn`; [ $HOSTNAME ] || HOSTNAME=`value hostname`
 UNION_FS_TYPE=`value unionfs`; [ $UNION_FS_TYPE ] || UNION_FS_TYPE='overlay'
 CHANGES_MOUNT=/memory/changes
 # kexec=/full/path/to/kernel/image to load secondary kernel. Same dir must have initrd.xz
