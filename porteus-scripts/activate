@@ -10,5 +10,7 @@ if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
 else
 	mount $LODEV /mnt/live/memory/images/${dn}
 fi
-mount -t aufs none / -o remount,add:1:/mnt/live/memory/images/${dn}
+#mount -t aufs none / -o remount,add:1:/mnt/live/memory/images/${dn}
+# not tested yet maybe not work at all
+mount -t overlay overlay / -o remount,lowerdir=/mnt/live/memory/images/${dn}
 ldconfig
