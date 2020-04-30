@@ -86,7 +86,6 @@ cat > /etc/fstab << EOF
 # drive, filesystem or network share.
 
 # System mounts:
-# aufs / aufs defaults 0 0
 proc /proc proc defaults 0 0
 sysfs /sys sysfs defaults 0 0
 devtmpfs /dev devtmpfs defaults 0 0
@@ -392,6 +391,7 @@ if [ "$CHANGES" ]; then
         if [ $? -eq 0 ]; then
             CIMAGE_FILE=/mnt/$DEV/$LPTH
             IMAGE_MOUNT_DIR=/memory/images/${IMG_FILE}; mkdir -p $IMAGE_MOUNT_DIR >/dev/null 2>&1
+            CHANGES_DEV=$DEV
             if [ ! "$CPATH" == "$IMG_FILE" ]; then 
                 CPATH_EXIST=yes; CHANGES_MOUNT_SRC=$IMAGE_MOUNT_DIR/$CPATH; 
             else  
@@ -412,6 +412,7 @@ if [ "$CHANGES" ]; then
         fi    
     else
         CHANGES_MOUNT_SRC=/mnt/$DEV/$LPTH
+        CHANGES_DEV=$DEV
     fi
     if [ ! -z "${CHANGES_MOUNT_SRC}" ]; then 
 # factory reset handling and mount bind to $CHANGES_MOUNT
@@ -480,6 +481,7 @@ debug
 if [ ! -z "$HOSTNAME" ]; then
     find $PTH/base $PTH/modules $CHANGES_MOUNT_SRC  -name "[9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
     if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.fstab" ]; then cat $CHANGES_MOUNT_SRC/${HOSTNAME}.fstab >> /etc/fstab; fi
+    if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh" ]; then ./$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh; fi
     if [ -f "$PTH/../share/${HOSTNAME}.fstab" ]; then cat $PTH/../share/${HOSTNAME}.fstab >> /etc/fstab; fi
 fi
 
@@ -756,7 +758,7 @@ EOF
     pivot_root /union  /union/mnt/live
 # Execute commands in the new root eg. prepare, cleaning up before execting init.
     echo make symlink portdata for the app to know a fixed name to use non overlayfs file like docker
-    (cd /mnt ; rm -f portdata; ln -sf `basename $SGNDEV` portdata)
+    if [ ! -z "$CHANGES_DEV" ]; then (cd /mnt ; rm -f portdata; ln -sf $CHANGES_DEV portdata); fi
     echo clean up systemd journal
     (rm -rf /var/log/journal/* >/dev/null 2>&1)    
     exec $CHROOT . /sbin/init "$@" <dev/console >dev/console 2>&1
