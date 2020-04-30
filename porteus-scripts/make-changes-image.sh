@@ -3,28 +3,58 @@
 FILE_PATH="$1"
 SIZE="${2:-512}"
 
-if [ ! -f $(dirname $FILE_PATH) ]; then
-     echo "Directory does not exist"
-     exit 1
+if [ "$0" = "make-changes-image-enc.sh" ]; then FILE_ENC=yes; fi
+
+# This is from the initrd image to insure compatibility betwwel LUK VERSION
+CRYPTSETUP=$(which cryptsetup)
+
+FILE_NAME=$(basename $FILE_PATH)
+DIR_NAME=$(dirname $FILE_PATH)
+
+if [ ! -d $DIR_NAME ]; then
+     echo "Directory does not exist. Creating .."
+     mkdir -p $DIR_NAME
 fi
 
-OS_DIR=$(losetup -a | grep -Po '[^\/]+(?=\/base\/001)')
-if [ -z "$OS_DIR" ]; then
-    echo "Not running in a porteus env as we can not detect OS_DIR. Abort."
-    exit 1
+DEVICE=""
+
+if [ -b "$FILE_PATH" ]; then
+    echo "Raw block device detected"
+    DEVICE=$FILE_PATH
+elif [ ! -f "$FILE_PATH" ]; then
+    fallocate -l ${SIZE}M $FILE_PATH
+    #dd if=/dev/zero of=$FILE_PATH bs=1M count=$SIZE
 fi
 
-echo "Going to create an image $FILE_PATH with size $SIZE"
-dd if=/dev/zero of=$FILE_PATH bs=1M count $SIZE
+if [ -z "$DEVICE" ]; then
+    LODEV=`losetup -f`; losetup $LODEV $FILE_PATH
+    DEVICE=$LODEV
+    USE_LOOP=yes
+fi
+
+if [ "$FILE_ENC" = "yes" ]; then
+    if [ -z $PASS ]; then read -s -p "Enter Pass: " PASS; fi
+
+    if blkid $DEVICE 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
+        echo "Detected existing LUKS. Wont run luksFormat again"
+    else
+        echo "Will set up new LUKS container"
+        echo $PASS | md5sum | cut -f1 -d' ' | $CRYPTSETUP --key-file=- -q luksFormat --type luks1 $DEVICE
+    fi
+    echo $PASS | md5sum | cut -f1 -d' ' | $CRYPTSETUP --key-file=- luksOpen $DEVICE ${FILE_NAME}_ENC_$$
+    TARGET_DEVICE=/dev/mapper/${FILE_NAME}_ENC_$$
+else
+    TARGET_DEVICE="$DEVICE"
+fi
+
 echo "Create ext4 file system on it"
 
 MKFS="${3:-mkfs.ext4}"
-$MKFS $FILE_PATH
-echo "Mount it under /tmp/$$"
-mkdir /tmp/$$
-mount -o loop $FILE_PATH /tmp/$$
-echo "Make changes directory"
-mkdir -p /tmp/$$/${OS_DIR}
-echo "Umount"
-umount /tmp/$$
+
+$MKFS $TARGET_DEVICE
+
+if [ "$FILE_ENC" = "yes" ]; then $CRYPTSETUP luksClose ${FILE_NAME}_ENC_$$; fi
+
+if [ "$USE_LOOP" = "yes" ]; then losetup -d $DEVICE; fi
+
 echo "Done!"
