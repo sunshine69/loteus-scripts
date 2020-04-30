@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[ -z "$TARGET_DIR" ] && TARGET_DIR=/mnt/sda4/build/kernel-binary
+[ -z "$TARGET_DIR" ] && TARGET_DIR=/mnt/portdata/build/kernel-binary
 
 BZIMAGE_PATH=$(cat /proc/cmdline | grep -oP '(?<=BOOT_IMAGE=)[^\s]+(?=.*)')
 BZIMAGE_NAME=$(basename $BZIMAGE_PATH)

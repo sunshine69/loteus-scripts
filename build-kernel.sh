@@ -11,7 +11,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export KSOURCE_DIR=/mnt/sda4/tmp
+export KSOURCE_DIR=/mnt/portdata/tmp
 
 pushd .
 cd $KSOURCE_DIR

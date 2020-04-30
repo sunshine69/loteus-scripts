@@ -11,8 +11,8 @@ Argument are options, if not provided it will use current running kernel and def
 
 The environment vars below is set as default. You can change it as you wish
 
-KBIN_DIR=/mnt/sda4/build/kernel-binary - dir that store the porteus kernel build output.
-WORK_DIR=/mnt/sda4/tmp - script working dir
+KBIN_DIR=/mnt/portdata/build/kernel-binary - dir that store the porteus kernel build output.
+WORK_DIR=/mnt/portdata/tmp - script working dir
 "
 exit 0
 }
@@ -22,8 +22,8 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ "$1" = "help" ]; then
 fi
 
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export KBIN_DIR=${KBIN_DIR:-/mnt/sda4/build/kernel-binary}
-export WORK_DIR=${WORK_DIR:-/mnt/sda4/tmp}
+export KBIN_DIR=${KBIN_DIR:-/mnt/portdata/build/kernel-binary}
+export WORK_DIR=${WORK_DIR:-/mnt/portdata/tmp}
 
 pushd .
 cd $WORK_DIR
