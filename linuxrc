@@ -13,7 +13,7 @@ debug() { param debug && { echo -e "\n=====\n: Debugging started. Here is the sh
 if [ -d /m ]; then
     echo "Start to load modules from initrd ..."
     if [ -d /lib/modules/`uname -r` ]; then
-      for MODULE in hid_apple hid applesmc input_polldev mbcache aufs overlay exportfs ext4 fat vfat fuse isofs nls_cp437 nls_iso8859-1 nls_utf8 reiserfs squashfs xfs f2fs jfs libata ahci libahci sata_sil24 pdc_adma sata_qstor sata_sx4 ata_piix sata_mv sata_nv sata_promise sata_sil sata_sis sata_svw sata_uli sata_via sata_vsc pata_ali pata_amd pata_artop pata_atiixp pata_atp867x pata_cmd64x pata_cs5520 pata_cs5530 pata_cs5535 pata_cs5536 pata_efar pata_hpt366 pata_hpt37x pata_it8213 pata_it821x pata_jmicron pata_marvell pata_netcell pata_ns87415 pata_oldpiix pata_pdc2027x pata_pdc202xx_old pata_rdc pata_sc1200 pata_sch pata_serverworks pata_sil680 pata_sis pata_triflex pata_via pata_isapnp pata_mpiix pata_ns87410 pata_opti pata_rz1000 ata_generic loop cdrom hid usbhid mptscsih mptspi mptsas tifm_core cb710 mmc_block mmc_core sdhci sdhci-pci wbsd tifm_sd cb710-mmc via-sdmmc vub300 sdhci-pltfm md_mod dm_mod dm_raid cryptd aes aes_generic aes_x86_64 aes_i586 dm_crypt cbc sha256_generic xts scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod usb-common usbcore ehci-hcd ehci-pci ohci-hcd uhci-hcd xhci-hcd usb-storage virtio virtio_blk virtio_pci virtio_net; do
+      for MODULE in hid_apple hid applesmc input_polldev mbcache aufs overlay exportfs ext4 fat vfat fuse isofs nls_cp437 nls_iso8859-1 nls_utf8 reiserfs squashfs xfs f2fs jfs libata ahci libahci sata_sil24 pdc_adma sata_qstor sata_sx4 ata_piix sata_mv sata_nv sata_promise sata_sil sata_sis sata_svw sata_uli sata_via sata_vsc pata_ali pata_amd pata_artop pata_atiixp pata_atp867x pata_cmd64x pata_cs5520 pata_cs5530 pata_cs5535 pata_cs5536 pata_efar pata_hpt366 pata_hpt37x pata_it8213 pata_it821x pata_jmicron pata_marvell pata_netcell pata_ns87415 pata_oldpiix pata_pdc2027x pata_pdc202xx_old pata_rdc pata_sc1200 pata_sch pata_serverworks pata_sil680 pata_sis pata_triflex pata_via pata_isapnp pata_mpiix pata_ns87410 pata_opti pata_rz1000 ata_generic loop cdrom hid usbhid mptscsih mptspi mptsas tifm_core cb710 mmc_block mmc_core sdhci sdhci-pci wbsd tifm_sd cb710-mmc via-sdmmc vub300 sdhci-pltfm md_mod dm_mod dm_raid cryptd aes aes_generic aes_x86_64 aes_i586 dm_crypt cbc sha256_generic xts scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod usb-common usbcore ehci-hcd ehci-pci ohci-hcd uhci-hcd xhci-hcd usb-storage virtio virtio_blk virtio_pci virtio_net vboxvideo; do
    modprobe $MODULE >> /loadmodules.log 2>&1
         done
       echo "Done loading initial module '`uname -r`' from initrd. Log is in /loadmodules.log"
@@ -477,11 +477,17 @@ find $PTH/../share -name "[0-9][0-9][1-9]-*-noarch.[xglz]zm" 2>/dev/null | egrep
 find $PTH/../share -name "[0-9][0-9][0-9]-${HOSTNAME}-*.[xglz]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 
 echo -e "done\nLoad specific settings for a hostname. The file name is 9XX-${HOSTNAME}-*.sqs ...\n"
+
+if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh" ]; then 
+    echo "Source file $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh found. Source it now..."
+    . $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh
+fi
+
 debug
+
 if [ ! -z "$HOSTNAME" ]; then
-    find $PTH/base $PTH/modules $CHANGES_MOUNT_SRC  -name "[9][0-9][0-9]-${HOSTNAME}-*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
+    find $PTH/base $PTH/modules $CHANGES_MOUNT_SRC  -name "[9][0-9][0-9]-${HOSTNAME}*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
     if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.fstab" ]; then cat $CHANGES_MOUNT_SRC/${HOSTNAME}.fstab >> /etc/fstab; fi
-    if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh" ]; then ./$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh; fi
     if [ -f "$PTH/../share/${HOSTNAME}.fstab" ]; then cat $PTH/../share/${HOSTNAME}.fstab >> /etc/fstab; fi
 fi
 
