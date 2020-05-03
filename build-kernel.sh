@@ -54,6 +54,8 @@ if [ -z "$KVER" ]; then
     fi
 fi
 
+KVER=$(echo $KVER | sed 's/ \[EOL\]//g')
+
 if [ "$KVER" == "$OLD_KVER" ] && [ -z "$REBUILD" ]; then echo "No new version. Do nothing"; exit 0; fi
 
 if [ ! -f "patch-$KVER.xz" ]; then
