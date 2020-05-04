@@ -335,12 +335,12 @@ KBUILDDIR_ENV=$(pwd) KVERS="$KVER" $SCRIPT_DIR/rebuild-initrd.sh "$INITRD_PATH/i
 
 echo "Create kernel source module ..."
 
-echo "going to run ${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel"
+echo "going to run ${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/kernel-${KVER}/porteus-kernel"
 
 #echo "TODO temporary disable kernel source generation. Skip run command below. Hit enter to continue"
 echo "Run: ${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel"
 #read _junk
-${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel
+${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/kernel-${KVER}/porteus-kernel
 
 cd ..
 
