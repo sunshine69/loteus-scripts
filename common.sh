@@ -8,7 +8,7 @@ BZIMAGE_DIR=$(dirname $BZIMAGE_PATH)
 
 if ! `touch ${BZIMAGE_DIR}/test-file >/dev/null 2>&1`; then
     echo "${BZIMAGE_DIR} is not writable. Looks like we boot from cdrom. Will use hardcoded path from portdata"
-    export BZIMAGE_FULL_PATH=/mnt/sr0/${BZIMAGE_NAME})
+    export BZIMAGE_FULL_PATH=/mnt/sr0/${BZIMAGE_NAME}
     export PORT_DIR=/mnt/portdata/port
     export BOOT_DIR=/mnt/portdata/boot
 else

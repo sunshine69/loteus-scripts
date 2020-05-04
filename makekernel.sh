@@ -325,7 +325,7 @@ mv ../$KVER 1/lib/modules/
 ( cd 1/lib/modules/${KVER}/ ; rm -f build ; ln -sf /usr/src/linux-headers-$KVER build )
 rm -f 000-${KVER}.xzm
 mksquashfs 1 000-${KVER}.xzm -comp xz -b 1M
-
+rm -rf 1
 
 echo "Create new initrd.xz"
 
@@ -337,6 +337,9 @@ echo "Create kernel source module ..."
 
 echo "going to run ${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel"
 
+#echo "TODO temporary disable kernel source generation. Skip run command below. Hit enter to continue"
+echo "Run: ${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel"
+#read _junk
 ${SCRIPT_DIR}/create-kernel-src.sh ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} ${TARGET_DIR}/porteus-kernel
 
 cd ..
