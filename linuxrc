@@ -468,7 +468,7 @@ echo -e $i"done.\nFind modules ...\n"
 debug
 
 if [ "$FACTORYRESET" == '4' ] || [ "$FACTORYRESET" == 'reset_999' ];  then
-    rm -f $PTH/base/999*
+    rm -f $PTH/base/[9][0-9][0-9]-${HOSTNAME}*.sqs ${CHANGES_MOUNT_SRC}/[9][0-9][0-9]-${HOSTNAME}*.sqs $PTH/../share/[9][0-9][0-9]-${HOSTNAME}*.sqs || true
 fi
 
 find $PTH/base $PTH/modules -name "*.[xglz]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
@@ -486,7 +486,12 @@ fi
 debug
 
 if [ ! -z "$HOSTNAME" ]; then
-    find $PTH/base $PTH/modules $CHANGES_MOUNT_SRC  -name "[9][0-9][0-9]-${HOSTNAME}*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
+    CHANGE_MOD=$(ls ${CHANGES_MOUNT_SRC}/[9][0-9][0-9]-${HOSTNAME}*.sqs)
+    if [ -z "${CHANGE_MOD}" ]; then
+        find $PTH/base $PTH/modules -name "[9][0-9][0-9]-${HOSTNAME}*.sqs" 2>/dev/null | egrep -v "$NOLOAD" | sort >>/tmp/modules
+    else
+        echo "${CHANGE_MOD}" | egrep -v "$NOLOAD" | sort >>/tmp/modules
+    fi    
     if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.fstab" ]; then cat $CHANGES_MOUNT_SRC/${HOSTNAME}.fstab >> /etc/fstab; fi
     if [ -f "$PTH/../share/${HOSTNAME}.fstab" ]; then cat $PTH/../share/${HOSTNAME}.fstab >> /etc/fstab; fi
 fi
