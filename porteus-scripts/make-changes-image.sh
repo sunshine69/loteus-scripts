@@ -36,7 +36,12 @@ if [ "$FILE_ENC" = "yes" ]; then
     if [ -z $PASS ]; then read -s -p "Enter Pass: " PASS; fi
 
     if blkid $DEVICE 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
-        echo "Detected existing LUKS. Wont run luksFormat again"
+        if [ "$FILE_FORMAT" = "yes" ]; then
+            echo "Detected existing LUKS but FILE_FORMAT = yes thus reformatting LUKS"
+            echo $PASS | md5sum | cut -f1 -d' ' | $CRYPTSETUP --key-file=- -q luksFormat --type luks1 $DEVICE
+        else
+            echo "Detected existing LUKS. Wont run luksFormat again"
+        fi
     else
         echo "Will set up new LUKS container"
         echo $PASS | md5sum | cut -f1 -d' ' | $CRYPTSETUP --key-file=- -q luksFormat --type luks1 $DEVICE
