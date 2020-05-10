@@ -13,8 +13,9 @@ debug() { param debug && { echo -e "\n=====\n: Debugging started. Here is the sh
 if [ -d /m ]; then
     echo "Start to load modules from initrd ..."
     if [ -d /lib/modules/`uname -r` ]; then
-      for MODULE in hid_apple hid applesmc input_polldev mbcache aufs overlay exportfs ext4 fat vfat fuse isofs nls_cp437 nls_iso8859-1 nls_utf8 reiserfs squashfs xfs f2fs jfs libata ahci libahci sata_sil24 pdc_adma sata_qstor sata_sx4 ata_piix sata_mv sata_nv sata_promise sata_sil sata_sis sata_svw sata_uli sata_via sata_vsc pata_ali pata_amd pata_artop pata_atiixp pata_atp867x pata_cmd64x pata_cs5520 pata_cs5530 pata_cs5535 pata_cs5536 pata_efar pata_hpt366 pata_hpt37x pata_it8213 pata_it821x pata_jmicron pata_marvell pata_netcell pata_ns87415 pata_oldpiix pata_pdc2027x pata_pdc202xx_old pata_rdc pata_sc1200 pata_sch pata_serverworks pata_sil680 pata_sis pata_triflex pata_via pata_isapnp pata_mpiix pata_ns87410 pata_opti pata_rz1000 ata_generic loop cdrom hid usbhid mptscsih mptspi mptsas tifm_core cb710 mmc_block mmc_core sdhci sdhci-pci wbsd tifm_sd cb710-mmc via-sdmmc vub300 sdhci-pltfm md_mod dm_mod dm_raid cryptd aes aes_generic aes_x86_64 aes_i586 dm_crypt cbc sha256_generic xts scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod usb-common usbcore ehci-hcd ehci-pci ohci-hcd uhci-hcd xhci-hcd usb-storage virtio virtio_blk virtio_pci virtio_net vboxvideo; do
+      for MODULE in hid_apple hid applesmc input_polldev mbcache aufs overlay exportfs ext4 fat vfat fuse isofs nls_cp437 nls_iso8859-1 nls_utf8 reiserfs squashfs xfs f2fs jfs libata ahci libahci sata_sil24 pdc_adma sata_qstor sata_sx4 ata_piix sata_mv sata_nv sata_promise sata_sil sata_sis sata_svw sata_uli sata_via sata_vsc pata_ali pata_amd pata_artop pata_atiixp pata_atp867x pata_cmd64x pata_cs5520 pata_cs5530 pata_cs5535 pata_cs5536 pata_efar pata_hpt366 pata_hpt37x pata_it8213 pata_it821x pata_jmicron pata_marvell pata_netcell pata_ns87415 pata_oldpiix pata_pdc2027x pata_pdc202xx_old pata_rdc pata_sc1200 pata_sch pata_serverworks pata_sil680 pata_sis pata_triflex pata_via pata_isapnp pata_mpiix pata_ns87410 pata_opti pata_rz1000 ata_generic loop cdrom hid usbhid mptscsih mptspi mptsas tifm_core cb710 mmc_block mmc_core sdhci sdhci-pci wbsd tifm_sd cb710-mmc via-sdmmc vub300 sdhci-pltfm md_mod dm_mod dm_raid cryptd aes aes_generic aes_x86_64 aes_i586 dm_crypt cbc sha256_generic xts scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod usb-common usbcore ehci-hcd ehci-pci ohci-hcd uhci-hcd xhci-hcd usb-storage virtio virtio_blk virtio_pci virtio_net virtio_scsi vboxvideo; do
    modprobe $MODULE >> /loadmodules.log 2>&1
+   #if [ "$?" = "0" ]; then rmmod $MODULE || true; fi
         done
       echo "Done loading initial module '`uname -r`' from initrd. Log is in /loadmodules.log"
       debug
@@ -43,7 +44,7 @@ SGN=`value sgnfile`; [ $SGN ] || SGN=${OSDIR}-$arch.sgn
 FROM=`value from`; ISO=`echo $FROM | egrep ".*\.iso( |\$)"`
 IP=`value ip | cut -d: -f2`
 MOPT=`value mopt`; [ $MOPT ] || MOPT="noatime,nodiratime,suid,dev,exec,async"
-CHANGES=`value changes`
+CHANGES=`value changes`; [ $CHANGES ] || CHANGES=`value c`
 RAMSIZE=`value ramsize`; [ $RAMSIZE ] || RAMSIZE=60%
 ZRAMSIZE=`value zramsize`; [ $ZRAMSIZE ] || ZRAMSIZE=256M
 LOAD=`value load | sed 's/;/|/g'`; [ $LOAD ] || LOAD=""
@@ -53,6 +54,7 @@ RAMMOD=`value rammod | sed 's/;/|/g'`
 ROOTCOPY=`value rootcopy`
 livedbg=/var/log/livedbg
 PASSPHRASE=/tmp/enc_pass
+RAW_DEV=`value raw`; [ "$RAW_DEV" ] || RAW_DEV=`value r`
 FACTORYRESET=`value reset`; [ $FACTORYRESET ] || FACTORYRESET=`value factoryreset`; [ $FACTORYRESET ] || FACTORYRESET='0'
 KVER=`uname -r`
 KPATH=`value kpath`; [ $KPATH ] || KPATH=
@@ -95,20 +97,34 @@ devpts /dev/pts devpts rw,mode=0620,gid=5 0 0
 EOF
 for x in $dev; do
   if blkid /dev/$x 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
-        if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
-            echo "crypt already setup for device $x"
-        else
-            if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
-            cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
-            if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC ; fi
-            if [ $? == 0 ]; then
-                x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
-                fsck_dat /dev/$x
-                detect_fs_type /dev/$x >> /tmp/devices
-                #blkid /dev/$x >> /tmp/devices
-            fi
-        fi
+      if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
+          echo "crypt already setup for device $x"
+      else
+          if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
+          cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
+          if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC ; fi
+          if [ $? == 0 ]; then
+              x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
+              fsck_dat /dev/$x
+              detect_fs_type /dev/$x >> /tmp/devices
+              #blkid /dev/$x >> /tmp/devices
+          fi
+      fi
+  elif [ "/dev/${RAW_DEV}" = "/dev/$x" ]; then
+      if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
+          :
+      else
+          if [ ! -f "$PASSPHRASE" ]; then read -s -p "******" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
+          cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen /dev/$x ${x}_DEC
+          if [ $? == 0 ]; then
+              x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
+              fsck_dat /dev/$x
+              detect_fs_type /dev/$x >> /tmp/devices
+              #blkid /dev/$x >> /tmp/devices
+          fi
+      fi
   fi
+
   fs=`grep -w /dev/$x /tmp/devices | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`
   if [ "$fs" = "vfat" ]; then
           echo "/dev/$x /mnt/$x $fs $MOPT,umask=0,check=s,utf8 0 0" >>/etc/fstab
@@ -374,6 +390,7 @@ debug
 ln -sf $PTH/modules  /porteus/modules
 ln -sf $PTH/optional /porteus/optional
 echo -e $i"done.\nSetup changes ...\n"
+echo "INFO RAW_DEV: $RAW_DEV - CHANGES: $CHANGES"
 debug
 if [ "$CHANGES" ]; then
 # CHANGES_MOUNT - final directory used for overlay, under that there is overlay
@@ -400,11 +417,20 @@ if [ "$CHANGES" ]; then
             if blkid $CIMAGE_FILE 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
               LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
               echo $i"found encrypted image container $CIMAGE_FILE"
-              if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
+              if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
               cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
-              if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
+              if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
               fsck_dat /dev/mapper/${IMG_FILE}.$$
               mount /dev/mapper/${IMG_FILE}.$$ $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
+            elif [ ! -z "$RAW_DEV" ]; then
+              _tmp=$(echo $CHANGES | cut -f1 -d/)
+              if [ "$RAW_DEV" = "${_tmp}" ]; then
+                LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
+                if [ ! -f "$PASSPHRASE" ]; then read -s -p "*****" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
+                cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen $LODEV ${IMG_FILE}.$$
+                fsck_dat /dev/mapper/${IMG_FILE}.$$
+                mount /dev/mapper/${IMG_FILE}.$$ $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
+              fi
             else
               fsck_dat /mnt/$DEV/$LPTH
               mount -o loop $CIMAGE_FILE $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
@@ -562,15 +588,19 @@ if ! grep $UNION_FS_TYPE /proc/filesystems >/dev/null 2>&1; then echo "UNION_FS_
 
 KERNEL_MOD_DETECTED='no'
 for x in `cat /tmp/modules`; do
+    if [ -L "$x" ]; then 
+        echo "$x is symlink, trying to resolve to real path"; x=$(readlink -f $x)
+        if [ ! -f "$x" ]; then echo "File $x does not exist, skipping"; continue; fi
+    fi
     if [ -f "${x}.new" ]; then 
         if [ "$FACTORYRESET" != '3' ]; then mv $x ${x}.old; fi
         mv ${x}.new $x
     fi # will fail from the cdrom but does not matter
     NAME=`basename $x`; mkdir "/memory/images/$NAME"; LODEV=$(losetup -f); losetup $LODEV $x
     if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
-       if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; fi
+       if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
        cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC
-       if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | md5sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC; fi
+       if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC; fi
        mount /dev/mapper/${NAME}_DEC /memory/images/$NAME
     else
        _MOUNT_MOD=1 # only mount current kernel ver
@@ -729,7 +759,7 @@ sed -i 's/ ntfs / ntfs-3g /g' /etc/fstab
 echo -e "\n# Hotplugged devices:" >> /etc/fstab
 mv /union/etc/fstab /union/etc/fstab-orig
 cp -f /etc/fstab /union/etc/
-rm -f $PASSPHRASE >/dev/null 2>&1
+shred -f -u $PASSPHRASE >/dev/null 2>&1
 rm -rf /usr/* >/dev/null 2>&1
 debug
 echo "[1m""live system is ready now - starting ${OSDIR}""[0m"
@@ -771,7 +801,14 @@ EOF
     echo make symlink portdata for the app to know a fixed name to use non overlayfs file like docker
     if [ ! -z "$CHANGES_DEV" ]; then (cd /mnt ; rm -f portdata; ln -sf $CHANGES_DEV portdata); fi
     echo clean up systemd journal
-    (rm -rf /var/log/journal/* >/dev/null 2>&1)    
+    (rm -rf /var/log/journal/* >/dev/null 2>&1)
+    echo "clean up /mnt/live to free up memory if possible ..."
+    rm -rf /mnt/live/bin /mnt/live/linuxrc /mnt/live/lib64 || true
+    if ! `ps -ef|grep ntfs-3g >/dev/null 2>&1`; then rm -rf /mnt/live/lib32; fi
+    mkdir /var/log/live >/dev/null 2>&1
+    mv /mnt/live/*.log /var/log/live/
+    mv /mnt/live/var/log/* /var/log/live/
+    echo done
     exec $CHROOT . /sbin/init "$@" <dev/console >dev/console 2>&1
 else
     echo -e "[31m""!!ERROR!!\nSomething went wrong and I cannot continue.\nPress Ctrl+Alt+Del to reboot.""[0m"
