@@ -60,6 +60,7 @@ KVER=`uname -r`
 KPATH=`value kpath`; [ $KPATH ] || KPATH=
 KMOD_DETECTED=
 HOSTNAME=`value h`; [ $HOSTNAME ] || HOSTNAME=`value hn`; [ $HOSTNAME ] || HOSTNAME=`value hostname`
+LUKS_HEAD=`value lh`
 UNION_FS_TYPE=`value unionfs`; [ $UNION_FS_TYPE ] || UNION_FS_TYPE='overlay'
 CHANGES_MOUNT=/memory/changes
 # kexec=/full/path/to/kernel/image to load secondary kernel. Same dir must have initrd.xz
@@ -100,9 +101,9 @@ for x in $dev; do
       if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
           echo "crypt already setup for device $x"
       else
-          if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
+          if [ ! -f "$PASSPHRASE" ]; then read -s -p "$x ..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
           cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
-          if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter passphrase to open disk $x" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC ; fi
+          if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "$x ..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC ; fi
           if [ $? == 0 ]; then
               x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
               fsck_dat /dev/$x
@@ -115,7 +116,13 @@ for x in $dev; do
           :
       else
           if [ ! -f "$PASSPHRASE" ]; then read -s -p "******" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
-          cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen /dev/$x ${x}_DEC
+          if [ -z "$LUKS_HEAD" ]; then
+            cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen /dev/$x ${x}_DEC
+          else
+            echo -e "/dev/$x => '$LUKS_HEAD' .....\n\n"
+            sh 
+            cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- --header=$LUKS_HEAD luksOpen /dev/$x ${x}_DEC
+          fi
           if [ $? == 0 ]; then
               x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
               fsck_dat /dev/$x
@@ -417,9 +424,9 @@ if [ "$CHANGES" ]; then
             if blkid $CIMAGE_FILE 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
               LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
               echo $i"found encrypted image container $CIMAGE_FILE"
-              if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
+              if [ ! -f "$PASSPHRASE" ]; then read -s -p "..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
               cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
-              if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for encrypted container: " PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
+              if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
               fsck_dat /dev/mapper/${IMG_FILE}.$$
               mount /dev/mapper/${IMG_FILE}.$$ $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
             elif [ ! -z "$RAW_DEV" ]; then
@@ -427,7 +434,13 @@ if [ "$CHANGES" ]; then
               if [ "$RAW_DEV" = "${_tmp}" ]; then
                 LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
                 if [ ! -f "$PASSPHRASE" ]; then read -s -p "*****" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
-                cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen $LODEV ${IMG_FILE}.$$
+                if [ -z "$LUKS_HEAD" ]; then
+                    cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen $LODEV ${IMG_FILE}.$$
+                else
+                    echo "$RAW_DEV $LUKS_HEAD ....."
+                    sh
+                    cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- --header=$LUKS_HEAD luksOpen $LODEV ${IMG_FILE}.$$
+                fi    
                 fsck_dat /dev/mapper/${IMG_FILE}.$$
                 mount /dev/mapper/${IMG_FILE}.$$ $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
               fi
