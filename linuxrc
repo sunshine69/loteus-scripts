@@ -510,7 +510,7 @@ if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh" ]; then
 fi
 
 debug
-
+# hostname specific mod must start with 9xx-<HOSTNAME>*.sqs
 if [ ! -z "$HOSTNAME" ]; then
     CHANGE_MOD=$(ls ${CHANGES_MOUNT_SRC}/[9][0-9][0-9]-${HOSTNAME}*.sqs)
     if [ -z "${CHANGE_MOD}" ]; then
