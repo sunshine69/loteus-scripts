@@ -423,7 +423,7 @@ if [ "$CHANGES" ]; then
             fi
             if blkid $CIMAGE_FILE 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
               LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
-              echo $i"found encrypted image container $CIMAGE_FILE"
+              echo $i"sha512 $CIMAGE_FILE"
               if [ ! -f "$PASSPHRASE" ]; then read -s -p "..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
               cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
               if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
