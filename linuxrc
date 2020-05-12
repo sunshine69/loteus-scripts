@@ -816,7 +816,7 @@ EOF
     echo clean up systemd journal
     (rm -rf /var/log/journal/* >/dev/null 2>&1)
     echo "clean up /mnt/live to free up memory if possible ..."
-    rm -rf /mnt/live/bin /mnt/live/linuxrc /mnt/live/lib64 || true
+    rm -rf /mnt/live/bin /mnt/live/linuxrc /mnt/live/lib64 /mnt/live/tmp || true
     if ! `ps -ef|grep ntfs-3g >/dev/null 2>&1`; then rm -rf /mnt/live/lib32; fi
     mkdir /var/log/live >/dev/null 2>&1
     mv /mnt/live/*.log /var/log/live/
