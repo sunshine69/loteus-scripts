@@ -501,10 +501,12 @@ else
 fi
 mkdir -p ${CHANGES_MOUNT}/mnt/live
 echo -e "done setup changes\nSetup overlayfs ...\n"
+echo -e "\nLoad specific settings for a hostname. The file name is 9XX-${HOSTNAME}-*.sqs ...\n"
 debug
-echo $i"creating live filesystem and inserting modules"
-echo -e $i"done.\nFind modules ...\n"
-debug
+if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh" ]; then 
+    echo "Source file $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh found. Source it now..."
+    . $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh
+fi
 
 if [ "$FACTORYRESET" == '4' ] || [ "$FACTORYRESET" == 'reset_999' ];  then
     rm -f $PTH/base/[9][0-9][0-9]-${HOSTNAME}*.sqs ${CHANGES_MOUNT_SRC}/[9][0-9][0-9]-${HOSTNAME}*.sqs $PTH/../share/[9][0-9][0-9]-${HOSTNAME}*.sqs || true
@@ -515,14 +517,6 @@ find $PTH/../share -name "[0-9][0-9][0-9]-*-${arch}.[xglz]zm" 2>/dev/null | egre
 find $PTH/../share -name "[0-9][0-9][1-9]-*-noarch.[xglz]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 find $PTH/../share -name "[0-9][0-9][0-9]-${HOSTNAME}-*.[xglz]zm" 2>/dev/null | egrep -v "$NOLOAD" | sort >> /tmp/modules
 
-echo -e "done\nLoad specific settings for a hostname. The file name is 9XX-${HOSTNAME}-*.sqs ...\n"
-
-if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh" ]; then 
-    echo "Source file $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh found. Source it now..."
-    . $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh
-fi
-
-debug
 # hostname specific mod must start with 9xx-<HOSTNAME>*.sqs
 if [ ! -z "$HOSTNAME" ]; then
     CHANGE_MOD=$(ls ${CHANGES_MOUNT_SRC}/[9][0-9][0-9]-${HOSTNAME}*.sqs)
@@ -543,7 +537,9 @@ else
   ls $LOAD | tail -n1 >> /tmp/modules
 fi
 
-echo "done"
+echo "done loading host specific modules"
+debug
+
 if param vga_detect; then
     echo $i"detecting GPU"
     debug
