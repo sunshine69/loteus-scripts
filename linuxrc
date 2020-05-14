@@ -396,6 +396,8 @@ echo -e $i"done.\nCreate symlinks used often by porteus scripts ...\n"
 debug
 ln -sf $PTH/modules  /porteus/modules
 ln -sf $PTH/optional /porteus/optional
+
+
 echo -e $i"done.\nSetup changes ...\n"
 echo "INFO RAW_DEV: $RAW_DEV - CHANGES: $CHANGES"
 debug
@@ -501,6 +503,10 @@ else
 fi
 mkdir -p ${CHANGES_MOUNT}/mnt/live
 echo -e "done setup changes\nSetup overlayfs ...\n"
+
+echo make symlink portdata for the app to know a fixed name to use non overlayfs file like docker
+if [ ! -z "$CHANGES_DEV" ]; then (cd /mnt ; rm -f portdata; ln -sf $CHANGES_DEV portdata); fi
+
 echo -e "\nLoad specific settings for a hostname. The file name is 9XX-${HOSTNAME}-*.sqs ...\n"
 debug
 if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh" ]; then 
@@ -807,8 +813,6 @@ EOF
     debug
     pivot_root /union  /union/mnt/live
 # Execute commands in the new root eg. prepare, cleaning up before execting init.
-    echo make symlink portdata for the app to know a fixed name to use non overlayfs file like docker
-    if [ ! -z "$CHANGES_DEV" ]; then (cd /mnt ; rm -f portdata; ln -sf $CHANGES_DEV portdata); fi
     echo clean up systemd journal
     (rm -rf /var/log/journal/* >/dev/null 2>&1)
     echo "clean up /mnt/live to free up memory if possible ..."
