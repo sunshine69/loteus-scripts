@@ -499,6 +499,8 @@ if [ "$CHANGES" ]; then
                 rmdir ${CHANGES_MOUNT_SRC}/changes/mnt/* 2>/dev/null
                 rm -f ${CHANGES_MOUNT_SRC}/changes/var/lock/subsys/* /var/run/laptop-mode-tools/*
                 for x in `find ${CHANGES_MOUNT_SRC}/changes/var/run -name "*pid" 2>/dev/null`; do rm $x; done
+                echo make symlink portdata for the app to know a fixed name to use non overlayfs file like docker
+                (cd /mnt ; rm -f portdata; ln -sf $DEV portdata)
             fi
             echo "Success setup changes"
             debug
@@ -514,9 +516,6 @@ else
 fi
 mkdir -p ${CHANGES_MOUNT}/mnt/live
 echo -e "done setup changes\nSetup overlayfs ...\n"
-
-echo make symlink portdata for the app to know a fixed name to use non overlayfs file like docker
-if [ ! -z "$CHANGES_DEV" ]; then (cd /mnt ; rm -f portdata; ln -sf $CHANGES_DEV portdata); fi
 
 echo -e "\nLoad specific settings for a hostname. The file name is 9XX-${HOSTNAME}-*.sqs ...\n"
 debug
