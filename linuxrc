@@ -53,7 +53,7 @@ EXTRAMOD=`value extramod | sed 's/;/ /g'`
 RAMMOD=`value rammod | sed 's/;/|/g'`
 ROOTCOPY=`value rootcopy`
 livedbg=/var/log/livedbg
-PASSPHRASE=/tmp/enc_pass
+PASSPHRASE=
 RAW_DEV=`value raw`; [ "$RAW_DEV" ] || RAW_DEV=`value r`
 FACTORYRESET=`value reset`; [ $FACTORYRESET ] || FACTORYRESET=`value factoryreset`; [ $FACTORYRESET ] || FACTORYRESET='0'
 KVER=`uname -r`
@@ -101,33 +101,44 @@ for x in $dev; do
       if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
           echo "crypt already setup for device $x"
       else
-          if [ ! -f "$PASSPHRASE" ]; then read -s -p "$x ..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
-          cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
-          if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "$x ..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC ; fi
+          if [ -z "$PASSPHRASE" ]; then read -s -p "$x ..." PASSPHRASE
+              PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' ')
+          fi
+          echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
+          if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "$x ..." PASSPHRASE
+              PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' ')
+              echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
+          fi
           if [ $? == 0 ]; then
               x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
               fsck_dat /dev/$x
               detect_fs_type /dev/$x >> /tmp/devices
               #blkid /dev/$x >> /tmp/devices
+          else
+              PASSPHRASE=""; continue
           fi
       fi
   elif [ "/dev/${RAW_DEV}" = "/dev/$x" ]; then
       if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
           :
       else
-          if [ ! -f "$PASSPHRASE" ]; then read -s -p "******" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
+          if [ -z "$PASSPHRASE" ]; then read -s -p "******" PASSPHRASE 
+              PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' ')
+          fi
           if [ -z "$LUKS_HEAD" ]; then
-            cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen /dev/$x ${x}_DEC
+            echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen /dev/$x ${x}_DEC
           else
             echo -e "/dev/$x => '$LUKS_HEAD' .....\n\n"
             sh 
-            cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- --header=$LUKS_HEAD luksOpen /dev/$x ${x}_DEC
+            echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- --header=$LUKS_HEAD luksOpen /dev/$x ${x}_DEC
           fi
           if [ $? == 0 ]; then
               x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
               fsck_dat /dev/$x
               detect_fs_type /dev/$x >> /tmp/devices
               #blkid /dev/$x >> /tmp/devices
+          else
+              PASSPHRASE=""
           fi
       fi
   fi
@@ -426,22 +437,22 @@ if [ "$CHANGES" ]; then
             if blkid $CIMAGE_FILE 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
               LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
               echo $i"sha512 $CIMAGE_FILE"
-              if [ ! -f "$PASSPHRASE" ]; then read -s -p "..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
-              cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
-              if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "..." PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
+              if [ -z "$PASSPHRASE" ]; then read -s -p "..." PASSPHRASE; PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' '); fi
+              echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
+              if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "..." PASSPHRASE; PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' '); echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
               fsck_dat /dev/mapper/${IMG_FILE}.$$
               mount /dev/mapper/${IMG_FILE}.$$ $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
             elif [ ! -z "$RAW_DEV" ]; then
               _tmp=$(echo $CHANGES | cut -f1 -d/)
               if [ "$RAW_DEV" = "${_tmp}" ]; then
                 LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
-                if [ ! -f "$PASSPHRASE" ]; then read -s -p "*****" PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
+                if [ -z "$PASSPHRASE" ]; then read -s -p "*****" PASSPHRASE; PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' '); fi
                 if [ -z "$LUKS_HEAD" ]; then
-                    cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen $LODEV ${IMG_FILE}.$$
+                    echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen $LODEV ${IMG_FILE}.$$
                 else
                     echo "$RAW_DEV $LUKS_HEAD ....."
                     sh
-                    cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- --header=$LUKS_HEAD luksOpen $LODEV ${IMG_FILE}.$$
+                    echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- --header=$LUKS_HEAD luksOpen $LODEV ${IMG_FILE}.$$
                 fi    
                 fsck_dat /dev/mapper/${IMG_FILE}.$$
                 mount /dev/mapper/${IMG_FILE}.$$ $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
@@ -774,9 +785,9 @@ sed -i 's/ ntfs / ntfs-3g /g' /etc/fstab
 echo -e "\n# Hotplugged devices:" >> /etc/fstab
 mv /union/etc/fstab /union/etc/fstab-orig
 cp -f /etc/fstab /union/etc/
-shred -f -u $PASSPHRASE >/dev/null 2>&1
 rm -rf /usr/* >/dev/null 2>&1
 debug
+
 echo "[1m""live system is ready now - starting ${OSDIR}""[0m"
 if [ -f /union/lib/systemd/systemd ]; then
     ( cd /union/sbin; rm -f init; ln -sf ../lib/systemd/systemd init )
