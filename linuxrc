@@ -500,9 +500,9 @@ if [ "$CHANGES" ]; then
                 rm -f ${CHANGES_MOUNT_SRC}/changes/var/lock/subsys/* /var/run/laptop-mode-tools/*
                 for x in `find ${CHANGES_MOUNT_SRC}/changes/var/run -name "*pid" 2>/dev/null`; do rm $x; done
                 echo make symlink portdata for the app to know a fixed name to use non overlayfs file like docker
-                (cd /mnt ; rm -f portdata; ln -sf $DEV portdata)
             fi
-            echo "Success setup changes"
+            echo "Success setup changes on device $DEV"
+            PORTDATA_DEV="$DEV"
             debug
         else
             echo $i"changes not writable, using memory instead"; umount $CHANGES_MOUNT 2>/dev/null; read; fail_chn
@@ -831,7 +831,10 @@ EOF
     mkdir /var/log/live >/dev/null 2>&1
     mv /mnt/live/*.log /var/log/live/
     mv /mnt/live/var/log/* /var/log/live/
+    (cd /mnt ; rm -f portdata ; ln -sf $PORTDATA_DEV portdata)
+    echo "portdata device $PORTDATA_DEV"
     echo done
+    debug
     exec $CHROOT . /sbin/init "$@" <dev/console >dev/console 2>&1
 else
     echo -e "[31m""!!ERROR!!\nSomething went wrong and I cannot continue.\nPress Ctrl+Alt+Del to reboot.""[0m"
