@@ -67,7 +67,7 @@ if [ ! -z "$KVERS" ]; then
         cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc} $DESTDIR/
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/
         cp -a $SRCDIR/fs/{jfs,reiserfs,xfs,aufs,btrfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc.ko} $DESTDIR/
-        cp -a $SRCDIR/vboxvideo $DESTDIR/ || true
+        #cp -a $SRCDIR/misc/vboxvideo $DESTDIR/ || true
         depmod $KVER -b .
         echo "Done copying modules over"
         echo "Going to unmount and clean up ..."
