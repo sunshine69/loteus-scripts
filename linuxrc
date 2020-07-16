@@ -311,9 +311,14 @@ if param fsck; then
     for x in `blkid | grep 'TYPE="reiserfs"' | cut -d: -f1`; do reiserfsck -p $x; wait; done
     draw
 fi
+if param pause; then
+    echo "Start shell ..."
+    /bin/sh
+fi    
 generate_devices() {
 echo "Detect block devices, create /etc/fstab and mount devices ..."
 blkid | grep -v /dev/loop > /tmp/devices
+blkid /dev/nvme* | grep -v 'EFI system partition' | grep -v 'BitLocker' | grep ' TYPE=' >> /tmp/devices
 #for listd in '/dev/sd??' '/dev/mmcblk?p?' '/dev/vd??'; do
 #   for d in $listd; do # add auto to some fs that blkid not know about
 #       o=`blkid $d`
