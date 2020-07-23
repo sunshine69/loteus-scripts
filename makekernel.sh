@@ -331,7 +331,14 @@ echo "Create new initrd.xz"
 
 INITRD_PATH=$(echo $BOOT_DIR|cut -f1 -d' ')
 echo "INITRD_PATH to search for input initrd.xz:  '$INITRD_PATH'"
-KBUILDDIR_ENV=$(pwd) KVERS="$KVER" $SCRIPT_DIR/rebuild-initrd.sh "$INITRD_PATH/initrd.xz" "$(pwd)/initrd.xz"
+
+if [ ! -f $INITRD_PATH/initrd.xz ]; then
+    echo "initrd not found. Enter the path to existing initrd.xz:"
+    read INITRD_FILE_PATH
+else
+    INITRD_FILE_PATH="$INITRD_PATH/initrd.xz"
+fi
+KBUILDDIR_ENV=$(pwd) KVERS="$KVER" $SCRIPT_DIR/rebuild-initrd.sh $INITRD_FILE_PATH "$(pwd)/initrd.xz"
 
 echo "Create kernel source module ..."
 
