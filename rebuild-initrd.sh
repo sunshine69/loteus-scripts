@@ -79,7 +79,7 @@ if [ ! -z "$KVERS" ]; then
 fi
 
 echo "Get into the new initrd root dir /tmp/initrd_$$ and modify things if u need. Then hit enter to build"
-#read _junk
+read _junk
 
 echo "Building ..."
 
