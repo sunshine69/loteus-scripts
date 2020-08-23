@@ -19,20 +19,22 @@ cd $KSOURCE_DIR
 # Change this to match with what is in the https://kernel.org site
 # From kernel.org what is longer and stable? Used to detect what version we will build
 # This is the first number (version) and minor as now stable and longterm having the same version.
-LONGTERM="5.4"
-#LONGTERM="4.19"
-STABLE="5.7"
-MAINLINE="5.8"
+#LONGTERM="5.4"
+LONGTERM="4.19"
+#STABLE="5.7"
+STABLE="5.8"
+MAINLINE="5.9"
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
-VERSION=${VERSION:-5} export VERSION
-#export VERSION=4
+#VERSION=5
+VERSION=4
 export VERSION
 # Minor version (middle number)
-#export PATCHLEVEL=19
-#export PATCHLEVEL=9
-PATCHLEVEL=${PATCHLEVEL:-7} export PATCHLEVEL
+PATCHLEVEL=19
+#PATCHLEVEL=8
+#PATCHLEVEL=9
+PATCHLEVEL=${PATCHLEVEL:-8} export PATCHLEVEL
 ####
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
@@ -75,8 +77,10 @@ if [ "$KVER" != "$OLD_KVER" ]; then
     if [ "$_TEST_LAST" = "" ] || [ "$_TEST_LAST" = "0" ]; then
         echo "Skip patching as this is begin of stream line"
     else
-        [ -f "../patch-${OLD_KVER}.xz" ] && xzcat ../patch-${OLD_KVER}.xz | patch -p1 -R
-        xzcat ../patch-${KVER}.xz | patch -p1
+        if [ -z "$NO_UPGRADE" ]; then
+            [ -f "../patch-${OLD_KVER}.xz" ] && xzcat ../patch-${OLD_KVER}.xz | patch -p1 -R
+            xzcat ../patch-${KVER}.xz | patch -p1
+        fi
     fi
 fi
 
