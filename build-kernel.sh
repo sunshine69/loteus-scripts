@@ -27,12 +27,12 @@ MAINLINE="5.9"
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
-#VERSION=5
-VERSION=4
+VERSION=5
+#VERSION=4
 export VERSION
 # Minor version (middle number)
-PATCHLEVEL=19
-#PATCHLEVEL=8
+#PATCHLEVEL=19
+PATCHLEVEL=8
 #PATCHLEVEL=9
 PATCHLEVEL=${PATCHLEVEL:-8} export PATCHLEVEL
 ####
