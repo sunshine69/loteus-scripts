@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 function help() {
     printf "\nUsage: $0 </path/current/porteus/module> <encryption_flag:(y|n)> </path/to/working/dir|auto> [coma,sep,list,of-directory-to-be-selected-4compress]
 
@@ -26,7 +25,7 @@ NAME_PREFIX='save_session'
 # The home of this user will get cleaned and preserved changes. All other home
 # folder wont be included. See what cleand and what preserved in the cleanup section below
 DEFAULT_USER='kodi'
-EXCLUDE_USERS='stevek kaycao andrewk'
+#EXCLUDE_USERS='stevek kaycao andrewk'
 
 HOSTNAME=$(hostname)
 
@@ -34,6 +33,8 @@ HOSTNAME=$(hostname)
 if [ "$3" = "auto" ]; then WORKDIR=/mnt/live/memory; else WORKDIR="$3"; fi
 
 [ -z "$WORKDIR" ] && echo "Work directory arg is missing, aborted." && exit 1
+
+if [ ! -z "$4" ]; then DESTINATION_DIR=$4; else DESTINATION_DIR=$WORKDIR; fi
 
 [ -z "$MKSQUASHFS" ] && MKSQUASHFS=`which mksquashfs`
 
@@ -55,7 +56,15 @@ if [ ! -z "$EXISTING_LOCAL_PATH" ]; then
 else      
 	SRCPATH="`realpath $1`"
 fi
-      
+ 
+if `ps -ef|grep -v grep | grep '/opt/bin/save-session' >/dev/null 2>&1`; then
+    if [ -f ${DESTINATION_DIR}/out.sqs ] || [ -d ${WORKDIR}/${NAME_PREFIX}0 ]; then
+        echo "Another save session exists using the same ${DESTINATION_DIR} or ${WORKDIR} Aborting"
+        exit 1
+    fi
+fi
+
+     
 CDIR=`pwd`; cd $WORKDIR; rm -rf ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 >/dev/null 2>&1; mkdir ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 >/dev/null 2>&1
 
 LODEV=`losetup -f`; losetup $LODEV $SRCPATH
@@ -151,8 +160,12 @@ if [ -z "$FILEMGR" ]; then
 	echo "What file manager you want. Hit enter to continue"
 	read FILEMGR
 fi
+
+echo "copying root config file"
+(cd /root ; cp -a .vimrc .viminfo .profile .bashrc .bash_history .config/fish ${NAME_PREFIX}2/root/ )
+
 if [ "$FILEMGR" ] && [[ ! "$1" =~ "999"  ]]; then
-        echo "start file manager at the mount point $FILEMGR"
+    echo "start file manager at the mount point $FILEMGR"
 	$FILEMGR ${NAME_PREFIX}2
 fi
 
@@ -160,16 +173,20 @@ rm -rf ${NAME_PREFIX}2/tmp/* ${NAME_PREFIX}2/tmp/.*
 
 # If startswith 999 that is only config saved in etc and home/root is retained
 if [[ "$1" =~ "999"  ]]; then
+    MOD_999=y
 	ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root)" | while read dname; do 
 	    rm -rf ${NAME_PREFIX}2/${dname}
     done
+    rm -rf ${NAME_PREFIX}2/var || true
+else
+    MOD_999=
 fi
 
 # If supply the third arg which the folder or coma separated list of folders we wil only compress that folder under a new rootdir. Example to update a specific modules
 
-if [ ! -z "$4" ]; then
+if [ ! -z "$5" ]; then
     IFS=', ' read -r -a dir_list <<< "$4"
-    rm -rf ${NAME_PREFIX}2/newroot_1; mkdir -p rm -rf ${NAME_PREFIX}2/newroot_1
+    rm -rf ${NAME_PREFIX}2/newroot_1; mkdir -p ${NAME_PREFIX}2/newroot_1
     for dir in "${dir_list[@]}"; do
         mv "$dir" "${NAME_PREFIX}2/newroot_1/"
     done
@@ -181,50 +198,52 @@ fi
 # Not sure why exclude opt never works for me but test shows mksquashfs actually work
 SQUASHFS_EXCLUDE_OPT="-regex -e 'var/log/.*.log' -e 'usr/src/linux-headers-.*' -e 'var/crash/.*' -e 'var/cache/apt/archives/.*.deb' -e 'boot/.*' -e 'usr/lib/modules/.*' -e 'home/kodi/.cache/.*' -e 'home/kodi/Downloads/.*' -e 'home/kodi/.kodi/temp/.*'"
 
-for ex_user in $EXCLUDE_USERS; do
-	SQUASHFS_EXCLUDE_OPT="$SQUASHFS_EXCLUDE_OPT -e 'home/${ex_user}/.*' -e 'home/${ex_user}/.*.*'"
+EXCLUDE_DIRS=$(ls /home/ | grep -v ${DEFAULT_USER})
+for i in $EXCLUDE_DIRS; do
+    SQUASHFS_EXCLUDE_OPT="$SQUASHFS_EXCLUDE_OPT -e 'home/${i}/.*' "
 done
 
 echo "SQUASHFS_EXCLUDE_OPT=$SQUASHFS_EXCLUDE_OPT"
 
-rm -f out.sqs
+rm -f ${DESTINATION_DIR}/out.sqs
+
 if [ -z "$SQUASHFS_OPT" ]; then
-	# Best balance now seems to be lz4 -Xhc. The zstd is good to built rescue but level 19 is too slow
-	SQUASHFS_OPT="-comp zstd -Xcompression-level 15 -b 512K"
-	#SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K"
-	#SQUASHFS_OPT="-b 1024K"
-	echo "Default SQUASHFS_OPT is '$SQUASHFS_OPT' - fast enough and good compression"
-	echo "0. -comp lz4 -Xhc -b 1024K - Fast to compress/decompress, size is bugger the zstd. Small memory"
-	echo "1. -comp zstd -b 1024K -Xcompression-level 19 - good compress but compress slow"
-	echo "2. -comp gzip -b 1M - bigger size than zstd"
-	echo "3. -comp xz -b 1M - compress best but slowest"
-	echo "Enter your selection as number or your own option string. Hit enter to choose default"
-	read ans
-	case "$ans" in
-		0)
-			SQUASHFS_OPT="-comp lz4 -Xhc";
-			;;
-		1)
-			SQUASHFS_OPT="-comp zstd -Xcompression-level 19 -b 512K";
-			;;
-		2)
-			SQUASHFS_OPT="-comp gzip -b 512K";
-			;;
-		3)
-			SQUASHFS_OPT="-comp xz -b 512K";
-			;;
-		*)
-			if [ ! -z "$ans" ]; then SQUASHFS_OPT="$ans"; fi			
-			echo "Use '$SQUASHFS_OPT'"
-	esac
+    if [ "$MOD_999" = "y" ]; then
+        SQUASHFS_OPT="-comp xz -b 512K"
+    else
+	    # Best balance now seems to be lz4 -Xhc. The zstd is good to built rescue but level 19 is too slow
+	    SQUASHFS_OPT="-comp zstd -Xcompression-level 15 -b 512K"
+	    #SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K"
+	    #SQUASHFS_OPT="-b 1024K"
+	    echo "Default SQUASHFS_OPT is '$SQUASHFS_OPT' - fast enough and good compression"
+	    echo "0. -comp lz4 -Xhc -b 512K - Fast to compress/decompress, size is bugger the zstd. Small memory"
+	    echo "1. -comp zstd -b 512K -Xcompression-level 19 - good compress but compress slow"
+	    echo "2. -comp gzip -b 512K - bigger size than zstd"
+	    echo "3. -comp xz -b 512K - compress best but slowest"
+	    echo "Enter your selection as number or your own option string. Hit enter to choose default"
+	    read ans
+	    case "$ans" in
+	    	0)
+	    		SQUASHFS_OPT="-comp lz4 -Xhc -b 512K";
+	    		;;
+	    	1)
+	    		SQUASHFS_OPT="-comp zstd -Xcompression-level 19 -b 512K";
+	    		;;
+	    	2)
+	    		SQUASHFS_OPT="-comp gzip -b 512K";
+	    		;;
+	    	3)
+	    		SQUASHFS_OPT="-comp xz -b 512K";
+	    		;;
+	    	*)
+	    		if [ ! -z "$ans" ]; then SQUASHFS_OPT="$ans"; fi
+	    		echo "Use '$SQUASHFS_OPT'"
+	    esac
+    fi
 fi
 
-echo Current dir is $PWD - going to run $MKSQUASHFS $OUTDIR out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT - Hit enter to continue
-
-#read _junk
 # I dont understand why if not running in a sub shell bash mksquashfs never respect the exclude. 
-
-/bin/bash -c "$MKSQUASHFS $OUTDIR out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT"
+/bin/bash -c "$MKSQUASHFS $OUTDIR ${DESTINATION_DIR}/out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT"
 
 #( cd $OUTDIR &&  $MKSQUASHFS . ../out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT )
 
@@ -236,22 +255,22 @@ fi
 
 if [ "$LODEV" ]; then losetup -d $LODEV; fi
 if [ "$2" == 'y' ]; then
-	/opt/bin/squash2enc.sh out.sqs $SRCPATH $PASS # Given the existing module so we will use the existing luks
-	mv out.sqs.enc out.sqs
+	/opt/bin/squash2enc.sh ${DESTINATION_DIR}/out.sqs $SRCPATH $PASS # Given the existing module so we will use the existing luks
+	mv out.sqs.enc ${DESTINATION_DIR}/out.sqs
 fi
 
 if [[ "$1" =~ "999"  ]]; then
   if [ ! -z "$EXISTING_LOCAL_PATH" ]; then
-      mv $WORKDIR/out.sqs ${EXISTING_LOCAL_PATH}.new
+      mv ${DESTINATION_DIR}/out.sqs ${EXISTING_LOCAL_PATH}.new
   else    
 #linuxrc load pattern as host specific local settings
-      mv $WORKDIR/out.sqs ${FROM_DIR}/${OS_DIR}/base/999-${HOSTNAME}-$(uname -m).sqs
+      mv ${DESTINATION_DIR}/out.sqs ${FROM_DIR}/${OS_DIR}/base/999-${HOSTNAME}-$(uname -m).sqs
   fi    
 else
-  echo "Move WORKDIR/out.sqs to ${SRCPATH}.new? y/n"
+  echo "Move ${DESTINATION_DIR}/out.sqs to ${SRCPATH}.new? y/n"
   read ans
-  if [ "$ans" = "y" ]; then  mv $WORKDIR/out.sqs ${SRCPATH}.new; fi
-  if [ "$?" != "0" ]; then echo "Output file is $WORKDIR/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi  
+  if [ "$ans" = "y" ]; then  mv ${DESTINATION_DIR}/out.sqs ${SRCPATH}.new; fi
+  if [ "$?" != "0" ]; then echo "Output file is ${DESTINATION_DIR}/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi
 fi
 
 rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}2 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1

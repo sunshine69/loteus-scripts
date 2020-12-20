@@ -1,8 +1,11 @@
 #!/bin/bash
-# Looks like it does not work well - aufs error
-RMDIR="$1"
-mount -t aufs none / -o remount,del:${RMDIR}
-if [ "$?" == '0' ]; then 
-	umount $RMDIR
-	ldconfig
+
+MOD_FILE=$1
+dn=`basename ${MOD_FILE}`
+
+if [ -d /mnt/live/memory/images/${dn} ]; then
+    if [ -f /mnt/live/memory/images/${dn}/stop-mod.sh ]; then
+        /mnt/live/memory/images/${dn}/stop-mod.sh
+    fi
+    umount -l /mnt/live/memory/images/${dn}
 fi

@@ -95,7 +95,7 @@ devpts /dev/pts devpts rw,mode=0620,gid=5 0 0
 
 # Device partitions:
 EOF
-dev=`egrep -v 'TYPE="sw|TYPE="LVM|TYPE=".*_raid_member"' /tmp/devices 2>/dev/null | cut -d: -f1 | cut -d/ -f3 | sort | uniq`
+dev=`egrep -v 'TYPE="sw|TYPE="LVM|TYPE=".*_raid_member"' /tmp/devices 2>/dev/null | cut -f 1 -d: | sed 's|/dev/||' | sort | uniq`
 for x in $dev; do
   echo "processing dev $x"
   debug
@@ -152,27 +152,31 @@ for x in $dev; do
       echo "detected fs for $x is '$fs'"
   fi
   debug
+  mountdir=$(basename $x)
   if [ "$fs" = "vfat" ]; then
-          echo "/dev/$x /mnt/$x $fs $MOPT,umask=0,check=s,utf8 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$mountdir $fs $MOPT,umask=0,check=s,utf8 0 0" >>/etc/fstab
   elif [ "$fs" = "iso9660" ]; then
-          echo "/dev/$x /mnt/$x $fs $MOPT,ro 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$mountdir $fs $MOPT,ro 0 0" >>/etc/fstab
+  elif $(echo $x | grep mapper >/dev/null 2>&1);then
+        #echo "/dev/$x /mnt/$mountdir $fs ${MOPT},x-systemd.device-timeout=1 0 0" >>/etc/fstab
+        echo "/dev/$x /mnt/$mountdir $fs ${MOPT} 0 0" >>/etc/fstab
   else
-          echo "/dev/$x /mnt/$x $fs $MOPT 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$mountdir $fs $MOPT 0 0" >>/etc/fstab
   fi
   
   if [ -z "$KPATH" ] && [ ! -z "$KEXEC" ]; then KPATH=$(dirname $KEXEC); fi
   echo "done populating /etc/fstab with detected device entries $x"
   debug
-  if [ ! -d "/mnt/$x" ]; then
-      mkdir "/mnt/$x"
+  if [ ! -d "/mnt/$mountdir" ]; then
+      mkdir "/mnt/$mountdir"
   else
-      echo "/mnt/$x already exists, try unmounting"; umount /mnt/$x || true
+      echo "/mnt/$mountdir already exists, try unmounting"; umount /mnt/$mountdir || true
   fi
   if [ "$fs" = "ntfs" ]; then
     echo "detect ntfs going to mount with -o $MOPT"
-    ntfs-3g /dev/$x /mnt/$x -o $MOPT 
+    ntfs-3g /dev/$x /mnt/$mountdir -o $MOPT 
     if [ $? != 0 ]; then echo "mount error"; sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; fi
-    for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
+    for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${mountdir}/${FROM} /mnt/${mountdir}/${KPATH}; do
       if [ "$KMOD_DETECTED" == "y" ]; then break; fi
       KMODS=`find ${_PATH}/000-*.[xglz]zm 2>/dev/null`
       if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xglz]zm.bak 2>/dev/null`; fi
@@ -193,8 +197,8 @@ for x in $dev; do
       fi
     done
   else
-    mount -n /mnt/$x 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /mnt/$x 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; }; }
-    for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
+    mount -n /mnt/$mountdir 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /mnt/$mountdir 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$mountdir; }; }
+    for _PATH in /mnt/${mountdir}/${FROM}/${OSDIR}/base /mnt/${mountdir}/${FROM} /mnt/${mountdir}/${KPATH}; do
       if [ "$KMOD_DETECTED" == "y" ]; then break; fi
       KMODS=`find ${_PATH}/000-*.[xglz]zm 2>/dev/null`
       if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xglz]zm.bak 2>/dev/null`; fi
@@ -227,13 +231,14 @@ mount_device() {
 fs=`blkid /dev/$1 | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`
 if [ -z "$fs" ]; then fs=`detect_fs_type /dev/$1 | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`; fi
 if [ "$fs" ]; then
-    mkdir "/mnt/$1"
+    mountdir=$(basename $x)
+    mkdir "/mnt/$mountdir"
     if [ "$fs" = "vfat" ]; then
-        mount -n /dev/$1 /mnt/$1 -o $MOPT,umask=0,check=s,utf8 2>/dev/null || rmdir /mnt/$1
+        mount -n /dev/$1 /mnt/$mountdir -o $MOPT,umask=0,check=s,utf8 2>/dev/null || rmdir /mnt/$mountdir
     elif [ "$fs" = "ntfs" ]; then
-        ntfs-3g /dev/$1 /mnt/$1 -o $MOPT 2>/dev/null || rmdir /mnt/$1
+        ntfs-3g /dev/$1 /mnt/${mountdir} -o $MOPT 2>/dev/null || rmdir /mnt/${mountdir}
     else
-        mount -n /dev/$1 /mnt/$1 -o $MOPT 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /dev/$1 /mnt/$1 -o $MOPT || rmdir /mnt/$1; }
+        mount -n /dev/$1 /mnt/${mountdir} -o $MOPT 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /dev/$1 /mnt/${mountdir} -o $MOPT || rmdir /mnt/${mountdir}; }
     fi
 fi }
 

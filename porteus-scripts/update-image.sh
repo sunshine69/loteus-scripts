@@ -49,7 +49,7 @@ cd $WORKDIR
 rm -f out.sqs
 if [ -z "$SQUASHFS_OPT" ]; then
 	# Best balance now seems to be lz4 -Xhc. The zstd is good to built rescue but level 19 is too slow
-	SQUASHFS_OPT="-comp zstd -b 1024K -Xcompression-level 15"
+	SQUASHFS_OPT="-comp zstd -Xcompression-level 15"
 	#SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K"
 	#SQUASHFS_OPT="-b 1024K"
 	echo "Default SQUASHFS_OPT is '$SQUASHFS_OPT' - fast enough and good compression"
@@ -61,16 +61,16 @@ if [ -z "$SQUASHFS_OPT" ]; then
 	read ans
 	case "$ans" in
 		0)
-			SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K";
+			SQUASHFS_OPT="-comp lz4 -Xhc";
 			;;
 		1)
-			SQUASHFS_OPT="-comp zstd -b 1024K -Xcompression-level 19";
+			SQUASHFS_OPT="-comp zstd -Xcompression-level 19";
 			;;
 		2)
-			SQUASHFS_OPT="-comp gzip -b 1M";
+			SQUASHFS_OPT="-comp gzip";
 			;;
 		3)
-			SQUASHFS_OPT="-comp xz -b 1M";
+			SQUASHFS_OPT="-comp xz";
 			;;
 		*)
 			if [ ! -z "$ans" ]; then SQUASHFS_OPT="$ans"; fi
