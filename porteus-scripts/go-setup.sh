@@ -1,15 +1,13 @@
-#!/bin/sh
-# dev having the gocryptfs data
+#!/bin/sh -x
+# dev having the gocryptfs data. The update file source uses this dev. Priority 2
 setup_dev=${1:-sda3}
-# dev used as raw device (enc)
+# dev used as raw device (enc). Also used as source of update. Priority 1
 blk_dev=${2:-sda4}
 # dev contains the port OS folder
 data_dev=${3:-$setup_dev}
 
 
 value() { egrep -o " $1=[^ ]+" /proc/cmdline | cut -d= -f2; }
-
-ls /dev/sd* /dev/nvme*
 
 echo "setup_dev: $setup_dev blk_dev: $blk_dev data_dev: $data_dev"
 
@@ -27,22 +25,28 @@ gocryptfs /mnt/${setup_dev}/goe /mnt/${setup_dev}/goem
 
 PASS_FILE_NAME=$(value hostname)-pass.dat
 if [ ! -f /mnt/${setup_dev}/goem/${PASS_FILE_NAME} ]; then PASS_FILE_NAME=blk.dat; fi
-p=$(cat /mnt/${setup_dev}/goem/${PASS_FILE_NAME} 2>/dev/null)
+[ -f "/mnt/${setup_dev}/goem/$PASS_FILE_NAME" ] && p=$(cat /mnt/${setup_dev}/goem/${PASS_FILE_NAME} 2>/dev/null)
 
-PASSPHRASE=$p setup_disk_output=$(setup-disk.sh $blk_dev)
+export PASSPHRASE=$p
+setup_disk_output=$(setup-disk.sh $blk_dev | tail -n1)
 
-if $(grep mapper $setup_disk_output >/dev/null 2>&1); then
+if $(echo $setup_disk_output | grep mapper >/dev/null 2>&1); then
   mkdir /mnt/$(basename $setup_disk_output)
   mount $setup_disk_output /mnt/$(basename $setup_disk_output)
   if [ "$?" = "0" ]; then
       src_data_dir=/mnt/$(basename $setup_disk_output)
   else
-      src_data_dir=/mnt/$data_dev
+      src_data_dir=/mnt/$setup_dev
       mkdir $src_data_dir
   fi
 else
     src_data_dir=$setup_disk_output
 fi
+
+echo "src_data_dir for update source: $src_data_dir - Enter new value if required otherwise hit enter to accept that value "
+read _ans
+
+[ ! -z "$_ans" ] && src_data_dir=${_ans}
 
 if [ "$src_data_dir" = "/mnt/$data_dev" ]; then echo "src data same as data nothing to do. exiting"; exit 0; fi
 

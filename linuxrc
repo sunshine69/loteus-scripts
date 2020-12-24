@@ -326,6 +326,7 @@ mount -nt devtmpfs none /dev
 sleep 3 # devices settle down
 if param pause; then
     echo "Start shell ..."
+    ls /dev/sd* /dev/nvm* 2>/dev/null
     /bin/sh
 fi    
 generate_devices() {
