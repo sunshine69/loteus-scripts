@@ -9,19 +9,35 @@ data_dev=${3:-$setup_dev}
 
 value() { egrep -o " $1=[^ ]+" /proc/cmdline | cut -d= -f2; }
 
+umount_all() {
+    umount /mnt/${setup_dev}/goem >/dev/null 2>&1 || true
+    if ! $(echo $src_data_dir | grep blkm >/dev/null 2>&1); then umount -l $src_data_dir || true; fi
+    umount -l /mnt/$data_dev|| true
+    umount -l /mnt/$setup_dev || true
+    umount -l /mnt/* >/dev/null 2>&1 || true
+}
+
 echo "setup_dev: $setup_dev blk_dev: $blk_dev data_dev: $data_dev"
 
 if [ ! -d /mnt/$setup_dev ]; then
     mkdir /mnt/$setup_dev
 fi
 
-mount /dev/$setup_dev /mnt/$setup_dev || (echo "error mount setup_dev, aborting" && exit 1)
+if [ "$data_dev" != "$setup_dev" ] && [ ! -d /mnt/$data_dev ]; then
+    mkdir /mnt/$data_dev
+    mount /dev/$data_dev /mnt/$data_dev
+fi
 
-[ ! -d /mnt/${setup_dev}/goe ] && echo "goe dir not found" && ( umount /mnt/${setup_dev}; exit 1 )
+mount /dev/$setup_dev /mnt/$setup_dev || (umount_all ; echo "error mount setup_dev, aborting" && exit 1)
+
+[ ! -d /mnt/${setup_dev}/goe ] && echo "goe dir not found" && ( umount_all; exit 1 )
 
 mkdir /mnt/${setup_dev}/goem >/dev/null 2>&1
 
-gocryptfs /mnt/${setup_dev}/goe /mnt/${setup_dev}/goem
+while [ "$SUCCESS" != "yes" ]; do
+    gocryptfs /mnt/${setup_dev}/goe /mnt/${setup_dev}/goem
+    if [ "$?" = "0" ]; then SUCCESS="yes"; fi
+done
 
 PASS_FILE_NAME=$(value hostname)-pass.dat
 if [ ! -f /mnt/${setup_dev}/goem/${PASS_FILE_NAME} ]; then PASS_FILE_NAME=blk.dat; fi
@@ -48,7 +64,7 @@ read _ans
 
 [ ! -z "$_ans" ] && src_data_dir=${_ans}
 
-if [ "$src_data_dir" = "/mnt/$data_dev" ]; then echo "src data same as data nothing to do. exiting"; exit 0; fi
+if [ "$src_data_dir" = "/mnt/$data_dev" ]; then echo "src data same as data nothing to do. exiting"; umount_all; exit 0; fi
 
 mount /dev/$data_dev /mnt/$data_dev
 
@@ -63,7 +79,7 @@ copyfile() {
             cp -a ${_src} ${_dest}
         fi
     fi
-    if [ "$?" != "0" ]; then echo "ERROR" ; exit 1 ; fi
+    if [ "$?" != "0" ]; then echo "ERROR" ; umount_all; exit 1 ; fi
 }
 
 if [ $(value reset) = "1" ]; then
@@ -88,5 +104,4 @@ if [ $(value reset) = "1" ]; then
       fi
 fi
 
-umount -l /mnt/${setup_dev}/goem
-umount -l /mnt/${setup_dev}
+umount_all
