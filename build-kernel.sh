@@ -20,10 +20,11 @@ cd $KSOURCE_DIR
 # From kernel.org what is longer and stable? Used to detect what version we will build
 # This is the first number (version) and minor as now stable and longterm having the same version.
 #LONGTERM="5.4"
-LONGTERM="4.19"
-#STABLE="5.7"
-STABLE="5.8"
-MAINLINE="5.9"
+#LONGTERM="5.10"
+#LONGTERM="4.9"
+STABLE="5.10"
+#STABLE="5.9"
+MAINLINE="5.10"
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
@@ -32,8 +33,8 @@ VERSION=5
 export VERSION
 # Minor version (middle number)
 #PATCHLEVEL=19
-PATCHLEVEL=8
-#PATCHLEVEL=9
+#PATCHLEVEL=8
+PATCHLEVEL=10
 PATCHLEVEL=${PATCHLEVEL:-8} export PATCHLEVEL
 ####
 
@@ -88,7 +89,11 @@ if [ ! -z "$CONFIG_FILE" ]; then cp "$CONFIG_FILE" .config; fi
 
 #make clean
 make oldconfig
-make -j 8 bzImage modules
+
+CORE=$(lscpu | grep '^CPU(s):' | awk '{print $2}')
+let "CORE=$CORE - 2"
+
+make -j $CORE bzImage modules
 if [ $? != "0" ]; then
     echo "Build bzImage and modules return error"
     exit 1
