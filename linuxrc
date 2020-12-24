@@ -95,7 +95,7 @@ devpts /dev/pts devpts rw,mode=0620,gid=5 0 0
 
 # Device partitions:
 EOF
-dev=`egrep -v 'TYPE="sw|TYPE="LVM|TYPE=".*_raid_member"' /tmp/devices 2>/dev/null | cut -d: -f1 | cut -d/ -f3 | sort | uniq`
+dev=`egrep -v 'TYPE="sw|TYPE="LVM|TYPE=".*_raid_member"' /tmp/devices 2>/dev/null | cut -f 1 -d: | sed 's|/dev/||' | sort | uniq`
 for x in $dev; do
   echo "processing dev $x"
   debug
@@ -152,27 +152,31 @@ for x in $dev; do
       echo "detected fs for $x is '$fs'"
   fi
   debug
+  mountdir=$(basename $x)
   if [ "$fs" = "vfat" ]; then
-          echo "/dev/$x /mnt/$x $fs $MOPT,umask=0,check=s,utf8 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$mountdir $fs $MOPT,umask=0,check=s,utf8 0 0" >>/etc/fstab
   elif [ "$fs" = "iso9660" ]; then
-          echo "/dev/$x /mnt/$x $fs $MOPT,ro 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$mountdir $fs $MOPT,ro 0 0" >>/etc/fstab
+  elif $(echo $x | grep mapper >/dev/null 2>&1);then
+        #echo "/dev/$x /mnt/$mountdir $fs ${MOPT},x-systemd.device-timeout=1 0 0" >>/etc/fstab
+        echo "/dev/$x /mnt/$mountdir $fs ${MOPT} 0 0" >>/etc/fstab
   else
-          echo "/dev/$x /mnt/$x $fs $MOPT 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$mountdir $fs $MOPT 0 0" >>/etc/fstab
   fi
   
   if [ -z "$KPATH" ] && [ ! -z "$KEXEC" ]; then KPATH=$(dirname $KEXEC); fi
   echo "done populating /etc/fstab with detected device entries $x"
   debug
-  if [ ! -d "/mnt/$x" ]; then
-      mkdir "/mnt/$x"
+  if [ ! -d "/mnt/$mountdir" ]; then
+      mkdir "/mnt/$mountdir"
   else
-      echo "/mnt/$x already exists, try unmounting"; umount /mnt/$x || true
+      echo "/mnt/$mountdir already exists, try unmounting"; umount /mnt/$mountdir || true
   fi
   if [ "$fs" = "ntfs" ]; then
     echo "detect ntfs going to mount with -o $MOPT"
-    ntfs-3g /dev/$x /mnt/$x -o $MOPT 
+    ntfs-3g /dev/$x /mnt/$mountdir -o $MOPT 
     if [ $? != 0 ]; then echo "mount error"; sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; fi
-    for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
+    for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${mountdir}/${FROM} /mnt/${mountdir}/${KPATH}; do
       if [ "$KMOD_DETECTED" == "y" ]; then break; fi
       KMODS=`find ${_PATH}/000-*.[xglz]zm 2>/dev/null`
       if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xglz]zm.bak 2>/dev/null`; fi
@@ -193,8 +197,8 @@ for x in $dev; do
       fi
     done
   else
-    mount -n /mnt/$x 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /mnt/$x 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; }; }
-    for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${x}/${FROM} /mnt/${x}/${KPATH}; do
+    mount -n /mnt/$mountdir 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /mnt/$mountdir 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$mountdir; }; }
+    for _PATH in /mnt/${mountdir}/${FROM}/${OSDIR}/base /mnt/${mountdir}/${FROM} /mnt/${mountdir}/${KPATH}; do
       if [ "$KMOD_DETECTED" == "y" ]; then break; fi
       KMODS=`find ${_PATH}/000-*.[xglz]zm 2>/dev/null`
       if [ -z "$KMODS" ]; then KMODS=`find ${_PATH}/000-*.[xglz]zm.bak 2>/dev/null`; fi
@@ -227,13 +231,14 @@ mount_device() {
 fs=`blkid /dev/$1 | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`
 if [ -z "$fs" ]; then fs=`detect_fs_type /dev/$1 | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`; fi
 if [ "$fs" ]; then
-    mkdir "/mnt/$1"
+    mountdir=$(basename $x)
+    mkdir "/mnt/$mountdir"
     if [ "$fs" = "vfat" ]; then
-        mount -n /dev/$1 /mnt/$1 -o $MOPT,umask=0,check=s,utf8 2>/dev/null || rmdir /mnt/$1
+        mount -n /dev/$1 /mnt/$mountdir -o $MOPT,umask=0,check=s,utf8 2>/dev/null || rmdir /mnt/$mountdir
     elif [ "$fs" = "ntfs" ]; then
-        ntfs-3g /dev/$1 /mnt/$1 -o $MOPT 2>/dev/null || rmdir /mnt/$1
+        ntfs-3g /dev/$1 /mnt/${mountdir} -o $MOPT 2>/dev/null || rmdir /mnt/${mountdir}
     else
-        mount -n /dev/$1 /mnt/$1 -o $MOPT 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /dev/$1 /mnt/$1 -o $MOPT || rmdir /mnt/$1; }
+        mount -n /dev/$1 /mnt/${mountdir} -o $MOPT 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /dev/$1 /mnt/${mountdir} -o $MOPT || rmdir /mnt/${mountdir}; }
     fi
 fi }
 
@@ -274,7 +279,7 @@ locate() { # locate <-e|-r|-d|-f> PATH ; See the option will be passed to functi
 
 # Other functions:
 nap() { echo -en $i"device not ready yet? delaying [1;33m$SLEEP[0m seconds \r"; sleep 1; }
-fail() { echo -e $i"couldn't find $1. Correct your cheatcodes if needed.\n  Press 'enter' to continue booting."; read -s; }
+fail() { echo -e $i"couldn't find $1. Correct your cheatcodes if needed.\n  Press 'Ctrl + d' to continue booting after debugging using the shell"; /bin/sh; }
 fail_chn() { mount -nt tmpfs -o size=$RAMSIZE tmpfs $CHANGES_MOUNT; CHANGES=memory; CHNDEV=memory; touch /etc/nochanges; }
 draw() { echo "[1;33m""---------------------------------------------------------""[0m"; }
 fsck_dat() { echo $i"checking $1 for errors"
@@ -438,6 +443,7 @@ if [ "$CHANGES" ]; then
     debug
     locate -d $CHANGES create #If the changes starts with device or UUID/LABEL path then we create it if not exists
     if [ ! $? -eq 0 ]; then
+        echo "locate with create failed. Try to local as an image file"
         locate -f $IMG_FILE
         if [ $? -eq 0 ]; then
             CIMAGE_FILE=/mnt/$DEV/$LPTH
@@ -475,10 +481,13 @@ if [ "$CHANGES" ]; then
               fsck_dat /mnt/$DEV/$LPTH
               mount -o loop $CIMAGE_FILE $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
             fi
+        else
+            echo "can not locate as a image file"
         fi    
     else
         CHANGES_MOUNT_SRC=/mnt/$DEV/$LPTH
         CHANGES_DEV=$DEV
+        echo "locate or create success CHANGES_MOUNT_SRC=$CHANGES_MOUNT_SRC CHANGES_DEV=$CHANGES_DEV"
     fi
     if [ ! -z "${CHANGES_MOUNT_SRC}" ]; then 
 # factory reset handling and mount bind to $CHANGES_MOUNT
@@ -730,9 +739,9 @@ else
     fi
 fi
 mkdir /union/mnt >/dev/null 2>&1; rm -rf /union/dev >/dev/null 2>&1; mkdir /union/dev >/dev/null 2>&1
-echo -e "## Create 7 free loop devices for truecrypt, etc...\n"
-x=`losetup | tail -n1 | cut -d: -f1 | sed 's@/dev/loop@@'`; let y=x+7
-while [ $x -le $y ]; do [ -b /dev/loop$y ] && break || mknod /dev/loop$y b 7 $y; let y=y-1; done
+#echo -e "## Create 7 free loop devices for truecrypt, etc...\n"
+#x=`losetup | tail -n1 | cut -d: -f1 | sed 's@/dev/loop@@'`; let y=x+7
+#while [ $x -le $y ]; do [ -b /dev/loop$y ] && break || mknod /dev/loop$y b 7 $y; let y=y-1; done
 
 if param nonetwork; then
     echo $i"disabling dhcpcd and NetworkManager services"
@@ -792,7 +801,12 @@ nofstab=yes
     for x in `grep ^/dev/ /etc/fstab | cut -d/ -f3`; do mkdir -p "/union/mnt/$x"; umount -n "/mnt/$x" 2>/dev/null && rmdir "/mnt/$x"; done
 else
     grep /dev/ /etc/fstab >> /union/etc/mtab
-    for x in `grep ^/dev/ /etc/fstab | cut -d/ -f3`; do mkdir -p "/union/mnt/$x"; mount -n --move "/mnt/$x" "/union/mnt/$x" && rmdir "/mnt/$x"; done
+    for x in `grep ^/dev/ /etc/fstab | cut -d" " -f1`; do 
+        _mountdir=$(basename $x)
+        echo "creating mount directories in union/mnt/${_mountdir} for newly root"
+        mkdir -p "/union/mnt/${_mountdir}"
+        mount -n --move "/mnt/${_mountdir}" "/union/mnt/${_mountdir}" && rmdir "/mnt/${_mountdir}"
+    done
 fi
 sed -i 's/ ntfs / ntfs-3g /g' /etc/fstab
 echo -e "\n# Hotplugged devices:" >> /etc/fstab

@@ -1,9 +1,22 @@
 #!/bin/bash
 
-dn=`basename $1`
-rm -rf /mnt/live/memory/images/${dn} >/dev/null 2>&1
+MOD_FILE=$1
+dn=`basename ${MOD_FILE}`
+
+if [ -d /mnt/live/memory/images/${dn} ]; then
+    if `mount | grep "/mnt/live/memory/images/${dn}" > /dev/null 2>&1`; then
+        echo "Directory exist and seems to be mounted"
+        exit 1
+    fi
+fi
+
+
+if [ -f ${MOD_FILE}.new ]; then mv ${MOD_FILE}.new ${MOD_FILE} ; fi
+
 mkdir /mnt/live/memory/images/${dn} >/dev/null 2>&1
-LODEV=`losetup -f`; losetup $LODEV $1
+
+LODEV=`losetup -f`; losetup $LODEV $MOD_FILE
+
 if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
 	cryptsetup luksOpen $LODEV ${dn}_ENC
 	mount /dev/mapper/${dn}_ENC /mnt/live/memory/images/${dn}
@@ -11,6 +24,11 @@ else
 	mount $LODEV /mnt/live/memory/images/${dn}
 fi
 #mount -t aufs none / -o remount,add:1:/mnt/live/memory/images/${dn}
-# not tested yet maybe not work at all
-mount -t overlay overlay / -o remount,lowerdir=/mnt/live/memory/images/${dn}
-ldconfig
+# this does not work, overlayfs limitations.
+#mount -t overlay overlay / -o remount,lowerdir=/mnt/live/memory/images/${dn}
+echo "Module mounted at /mnt/live/memory/images/${dn}"
+
+if [ -f /mnt/live/memory/images/${dn}/start-mod.sh ]; then
+    echo run start-mod.sh script
+    bash /mnt/live/memory/images/${dn}/start-mod.sh
+fi

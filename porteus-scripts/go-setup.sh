@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 # dev having the gocryptfs data
 setup_dev=${1:-sda3}
 # dev used as raw device (enc)
@@ -8,6 +8,8 @@ data_dev=${3:-$setup_dev}
 
 
 value() { egrep -o " $1=[^ ]+" /proc/cmdline | cut -d= -f2; }
+
+ls /dev/sd* /dev/nvme*
 
 echo "setup_dev: $setup_dev blk_dev: $blk_dev data_dev: $data_dev"
 
@@ -25,7 +27,7 @@ gocryptfs /mnt/${setup_dev}/goe /mnt/${setup_dev}/goem
 
 PASS_FILE_NAME=$(value hostname)-pass.dat
 if [ ! -f /mnt/${setup_dev}/goem/${PASS_FILE_NAME} ]; then PASS_FILE_NAME=blk.dat; fi
-p=$(cat /mnt/${setup_dev}/goem/${PASS_FILE_NAME})
+p=$(cat /mnt/${setup_dev}/goem/${PASS_FILE_NAME} 2>/dev/null)
 
 PASSPHRASE=$p setup_disk_output=$(setup-disk.sh $blk_dev)
 
