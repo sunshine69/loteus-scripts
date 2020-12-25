@@ -14,7 +14,6 @@ umount_all() {
     if ! $(echo $src_data_dir | grep blkm >/dev/null 2>&1); then umount -l $src_data_dir || true; fi
     umount -l /mnt/$data_dev|| true
     umount -l /mnt/$setup_dev || true
-    umount -l /mnt/* >/dev/null 2>&1 || true
 }
 
 echo "setup_dev: $setup_dev blk_dev: $blk_dev data_dev: $data_dev"
