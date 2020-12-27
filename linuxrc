@@ -862,6 +862,8 @@ EOF
     mv /mnt/live/var/log/* /var/log/live/
     (cd /mnt ; rm -f portdata ; ln -sf $PORTDATA_DEV portdata)
     echo "portdata device $PORTDATA_DEV"
+    echo "remove the systemd mount trouble lines in fstab"
+    sed -i '/mapper/d' /etc/fstab
     echo done
     debug
     exec $CHROOT . /sbin/init "$@" <dev/console >dev/console 2>&1
