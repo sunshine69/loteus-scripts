@@ -26,6 +26,6 @@ if [ "$TYPE" = "BitLocker" ]; then
     ntfs-3g /mnt/blk/dislocker-file /mnt/blkm
     echo /mnt/blkm
 else
-    echo $PASSPHRASE | sha512sum | cut -f 1 -d ' ' | cryptsetup --key-file=- plainOpen /dev/$DEV testme$$
-    echo "/dev/mapper/testme$$"
+    echo $PASSPHRASE | sha512sum | cut -f 1 -d ' ' | cryptsetup --key-file=- plainOpen /dev/$DEV ${DEV}_ENC
+    echo "/dev/mapper/${DEV}_ENC"
 fi

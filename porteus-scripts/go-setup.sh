@@ -12,6 +12,10 @@ value() { egrep -o " $1=[^ ]+" /proc/cmdline | cut -d= -f2; }
 umount_all() {
     umount /mnt/${setup_dev}/goem >/dev/null 2>&1 || true
     if ! $(echo $src_data_dir | grep blkm >/dev/null 2>&1); then umount -l $src_data_dir || true; fi
+    if $(echo $src_data_dir | grep '_ENC' >/dev/null 2>&1); then
+        umount $src_data_dir
+        rmdir $src_data_dir
+    fi
     umount -l /mnt/$data_dev|| true
     umount -l /mnt/$setup_dev || true
 }
