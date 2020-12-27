@@ -70,6 +70,10 @@ if [ ! -z "$KVERS" ]; then
         #cp -a $SRCDIR/misc/vboxvideo $DESTDIR/ || true
         depmod $KVER -b .
         echo "Done copying modules over"
+        echo "update helper scripts"
+        for sname in setup-disk.sh go-setup.sh; do
+            cp -a ${SCRIPT_DIR}/porteus-scripts/${sname} /tmp/initrd_$$/bin/
+        done
         echo "Going to unmount and clean up ..."
         umount $KBUILDDIR/1
         sleep 3 # avoid race condition
