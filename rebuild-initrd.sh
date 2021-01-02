@@ -71,7 +71,7 @@ if [ ! -z "$KVERS" ]; then
         depmod $KVER -b .
         echo "Done copying modules over"
         echo "update helper scripts"
-        for sname in setup-disk.sh go-setup.sh; do
+        for sname in setup-disk.sh go-setup.sh swapcrypt.sh; do
             cp -a ${SCRIPT_DIR}/porteus-scripts/${sname} /tmp/initrd_$$/bin/
         done
         echo "Going to unmount and clean up ..."
