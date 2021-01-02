@@ -1,11 +1,12 @@
 #!/bin/sh
-
+# $0 <device name> <optional - addition Luks option like --header headerfilename>
 if [ -f "$1" ]; then
     LODEV=$(losetup -f)
     losetup $LODEV $1
     DEV=$LODEV
 else
     DEV=$(echo $1 | sed 's/\/dev\///')
+    shift
 fi
 set -x
 if [ -z "$PASSPHRASE" ]; then
@@ -25,7 +26,10 @@ if [ "$TYPE" = "BitLocker" ]; then
     dislocker /dev/$DEV -p$PASSPHRASE -- /mnt/blk
     ntfs-3g /mnt/blk/dislocker-file /mnt/blkm
     echo /mnt/blkm
+elif [ "$TYPE" = "crypto_LUKS" ] || [ "${FORCE_LUKS}" = "y" ]; then
+    echo $PASSPHRASE | sha512sum | cut -f 1 -d ' ' | cryptsetup --key-file=- luksOpen /dev/$DEV ${DEV}_DEC $*
+    echo "/dev/mapper/${DEV}_DEC"
 else
-    echo $PASSPHRASE | sha512sum | cut -f 1 -d ' ' | cryptsetup --key-file=- plainOpen /dev/$DEV ${DEV}_ENC
-    echo "/dev/mapper/${DEV}_ENC"
+    echo $PASSPHRASE | sha512sum | cut -f 1 -d ' ' | cryptsetup --key-file=- plainOpen /dev/$DEV ${DEV}_DEC $*
+    echo "/dev/mapper/${DEV}_DEC"
 fi

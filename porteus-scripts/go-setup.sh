@@ -12,7 +12,7 @@ value() { egrep -o " $1=[^ ]+" /proc/cmdline | cut -d= -f2; }
 umount_all() {
     umount /mnt/${setup_dev}/goem >/dev/null 2>&1 || true
     if ! $(echo $src_data_dir | grep blkm >/dev/null 2>&1); then umount -l $src_data_dir || true; fi
-    if $(echo $src_data_dir | grep '_ENC' >/dev/null 2>&1); then
+    if $(echo $src_data_dir | grep '_DEC' >/dev/null 2>&1); then
         umount $src_data_dir
         rmdir $src_data_dir
     fi
@@ -43,11 +43,17 @@ while [ "$SUCCESS" != "yes" ]; do
 done
 
 PASS_FILE_NAME=$(value hostname)-pass.dat
+LUKS_HEADER_FILE=$(value hostname)-luks.dat
 if [ ! -f /mnt/${setup_dev}/goem/${PASS_FILE_NAME} ]; then PASS_FILE_NAME=blk.dat; fi
 [ -f "/mnt/${setup_dev}/goem/$PASS_FILE_NAME" ] && p=$(cat /mnt/${setup_dev}/goem/${PASS_FILE_NAME} 2>/dev/null)
 
+if [ -f "/mnt/${setup_dev}/goem/${LUKS_HEADER_FILE}" ]; then
+    EXTOPTS="--header /mnt/${setup_dev}/goem/${LUKS_HEADER_FILE}"
+    export FORCE_LUKS=y
+fi
+
 export PASSPHRASE=$p
-setup_disk_output=$(setup-disk.sh $blk_dev | tail -n1)
+setup_disk_output=$(setup-disk.sh $blk_dev ${EXTOPTS} | tail -n1)
 
 if $(echo $setup_disk_output | grep mapper >/dev/null 2>&1); then
   mkdir /mnt/$(basename $setup_disk_output)
@@ -101,9 +107,9 @@ if [ $(value reset) = "1" ]; then
       umount /dev/$data_dev
       # hardcoded section
       outfile=$(find ${src_data_dir}/out.sqs ${src_data_dir}/tmp/out.sqs 2>/dev/null | tail -n1)
-      if [ ! -z "$outfile" ] && [ -f "$outfile" ] && [ $(stat -c %Y $outfile) -gt $(stat -c %Y /mnt/${data_dev}/${from}/${os}/base/001-ubuntu-focal-x86_64.zzm) ]; then
-          echo "Copy out.sqs from ${src_data_dir} to current ${data_dev}.."
-          cp ${outfile} /mnt/${data_dev}/${from}/${os}/base/001-ubuntu-focal-x86_64.zzm
+      if [ ! -z "$outfile" ] && [ -f "$outfile" ] && [ $(stat -c %Y $outfile) -gt $(stat -c %Y $destfile) ]; then
+          echo "Copy out.sqs from ${src_data_dir} to current $destfile .."
+          cp ${outfile} $destfile
       fi
 fi
 
