@@ -13,7 +13,7 @@ if [ -z "$PASSPHRASE" ]; then
     echo "**** "
     read -s PASSPHRASE
     if [ "$?" != "0" ]; then
-        echo "type pass, it will be displaed on the screen"
+        echo "type pass, it will be displayed on the screen"
         read PASSPHRASE
     fi
 fi
@@ -27,9 +27,9 @@ if [ "$TYPE" = "BitLocker" ]; then
     ntfs-3g /mnt/blk/dislocker-file /mnt/blkm
     echo /mnt/blkm
 elif [ "$TYPE" = "crypto_LUKS" ] || [ "${FORCE_LUKS}" = "y" ]; then
-    echo $PASSPHRASE | sha512sum | cut -f 1 -d ' ' | cryptsetup --key-file=- luksOpen /dev/$DEV ${DEV}_DEC $*
+    echo $PASSPHRASE | cryptsetup --key-file=- luksOpen /dev/$DEV ${DEV}_DEC $*
     echo "/dev/mapper/${DEV}_DEC"
 else
-    echo $PASSPHRASE | sha512sum | cut -f 1 -d ' ' | cryptsetup --key-file=- plainOpen /dev/$DEV ${DEV}_DEC $*
+    echo $PASSPHRASE | cryptsetup --key-file=- plainOpen /dev/$DEV ${DEV}_DEC $*
     echo "/dev/mapper/${DEV}_DEC"
 fi

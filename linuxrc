@@ -53,7 +53,7 @@ EXTRAMOD=`value extramod | sed 's/;/ /g'`
 RAMMOD=`value rammod | sed 's/;/|/g'`
 ROOTCOPY=`value rootcopy`
 livedbg=/var/log/livedbg
-PASSPHRASE=
+PASSPHRASE=`value pass`; [ "$PASSPHRASE" ] || PASSPHRASE=
 RAW_DEV=`value raw`; [ "$RAW_DEV" ] || RAW_DEV=`value r`
 FACTORYRESET=`value reset`; [ $FACTORYRESET ] || FACTORYRESET=`value factoryreset`; [ $FACTORYRESET ] || FACTORYRESET='0'
 KVER=`uname -r`
@@ -103,12 +103,9 @@ for x in $dev; do
       if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
           echo "crypt already setup for device $x"
       else
-          if [ -z "$PASSPHRASE" ]; then read -s -p "$x ..." PASSPHRASE
-              PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' ')
-          fi
+          if [ -z "$PASSPHRASE" ]; then read -s -p "$x ..." PASSPHRASE; fi
           echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
           if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "$x ..." PASSPHRASE
-              PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' ')
               echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
           fi
           if [ $? == 0 ]; then
@@ -124,9 +121,7 @@ for x in $dev; do
       if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
           :
       else
-          if [ -z "$PASSPHRASE" ]; then read -s -p "******" PASSPHRASE 
-              PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' ')
-          fi
+          if [ -z "$PASSPHRASE" ]; then read -s -p "******" PASSPHRASE ; fi
           if [ -z "$LUKS_HEAD" ]; then
             echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen /dev/$x ${x}_DEC
           else
@@ -458,16 +453,16 @@ if [ "$CHANGES" ]; then
             if blkid $CIMAGE_FILE 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
               LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
               echo $i"sha512 $CIMAGE_FILE"
-              if [ -z "$PASSPHRASE" ]; then read -s -p "..." PASSPHRASE; PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' '); fi
+              if [ -z "$PASSPHRASE" ]; then read -s -p "..." PASSPHRASE; fi
               echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
-              if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "..." PASSPHRASE; PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' '); echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
+              if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "..." PASSPHRASE; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$; fi
               fsck_dat /dev/mapper/${IMG_FILE}.$$
               mount /dev/mapper/${IMG_FILE}.$$ $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
             elif [ ! -z "$RAW_DEV" ]; then
               _tmp=$(echo $CHANGES | cut -f1 -d/)
               if [ "$RAW_DEV" = "${_tmp}" ]; then
                 LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
-                if [ -z "$PASSPHRASE" ]; then read -s -p "*****" PASSPHRASE; PASSPHRASE=$(echo $PASSPHRASE | sha512sum | cut -f1 -d' '); fi
+                if [ -z "$PASSPHRASE" ]; then read -s -p "*****" PASSPHRASE; fi
                 if [ -z "$LUKS_HEAD" ]; then
                     echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen $LODEV ${IMG_FILE}.$$
                 else
@@ -647,9 +642,9 @@ for x in `cat /tmp/modules`; do
     fi # will fail from the cdrom but does not matter
     NAME=`basename $x`; mkdir "/memory/images/$NAME"; LODEV=$(losetup -f); losetup $LODEV $x
     if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
-       if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; fi
+       if [ ! -f "$PASSPHRASE" ]; then read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE > $PASSPHRASE; fi
        cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC
-       if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE | sha512sum | cut -f1 -d' ' > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC; fi
+       if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "Enter pass for $NAME: " PASSPHRASE; echo $PASSPHRASE > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC; fi
        mount /dev/mapper/${NAME}_DEC /memory/images/$NAME
     else
        _MOUNT_MOD=1 # only mount current kernel ver
