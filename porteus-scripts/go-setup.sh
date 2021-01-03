@@ -1,4 +1,19 @@
 #!/bin/sh -x
+
+# Usage $0 <setup device> <encrypted dev>
+# <setup dev> must have the goe and goem dir contains gocryptfs data
+# in there there is a <host name>-pass.dat and <host name>-luks.dat files. If
+# there finles are not found it will prompt for pass and use the luks plain
+# encryption
+
+# If arg 3 exists then it will use as data dev otherwise it will be setup dev
+# as data dev. data dev is device contains the porteus OS compress image which
+# does not need to be encrypted.
+
+# During the run it will try to update the system images from the <source data dir> to the <data dev> based on timestamp and a exists of the fime out.sqs. <source data dir> is the unencrypted device if it is mountable otherwise it will fall back to the <setup dev>
+###########
+
+
 # dev having the gocryptfs data. The update file source uses this dev. Priority 2
 setup_dev=${1:-sda3}
 # dev used as raw device (enc). Also used as source of update. Priority 1
