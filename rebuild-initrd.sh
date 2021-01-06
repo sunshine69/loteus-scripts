@@ -11,14 +11,14 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ -z "$1" ]; then
     INF=$BOOT_DIR/initrd.xz
 else
-    INF=$1
-    echo "Input: '$1'"
+    INF=$(readlink -f $1)
+    echo "Input: '$INF'"
 fi
 
 if [ -z "$2" ]; then
     OUT=$INF
 else
-    OUT=$2
+    OUT=$(readlink -f $2)
 fi
 
 [ ! -f "$INF" ] && echo "Origin initrd.xz as input file $INF does not exist. Aborting..." && exit 1
@@ -38,6 +38,9 @@ else
     echo "Kernel version from KVERS: $KVERS"
 fi
 
+TEMP_KDIR=/tmp/tempkdir$$
+mkdir -p $TEMP_KDIR >/dev/null 2>&1
+
 if [ ! -z "$KVERS" ]; then
     for KVER in $KVERS; do
         KBUILDDIR=""
@@ -46,8 +49,8 @@ if [ ! -z "$KVERS" ]; then
 
         if [ -z "$KBUILDDIR_ENV" ]; then
             #Install xzm modules
-            ( cd $CWD ; $TARGET_DIR/porteus-kernel-$KVER.tar.sfx )
-            KBUILDDIR="$CWD/porteus-kernel"
+            ( cd $TEMP_KDIR ; $TARGET_DIR/porteus-kernel-$KVER.tar.sfx )
+            KBUILDDIR="$TEMP_KDIR/porteus-kernel"
         else
             KBUILDDIR=$KBUILDDIR_ENV
         fi
@@ -77,8 +80,7 @@ if [ ! -z "$KVERS" ]; then
         echo "Going to unmount and clean up ..."
         umount $KBUILDDIR/1
         sleep 3 # avoid race condition
-        rm -rf $KBUILDDIR/1
-        if [ -d "$CWD/porteus-kernel" ]; then rm -rf "$CWD/porteus-kernel"; fi
+        rm -rf $KBUILDDIR/1 $TEMP_KDIR
     done
 fi
 
@@ -90,7 +92,7 @@ echo "Building ..."
 mv $OUT ${OUT}.bak
 echo "Kernel modules file list"
 find ./lib/modules/
-find . | cpio --quiet -o -H newc | lzma -7 > $OUT
+find . | cpio --quiet -o -H newc | pixz -9 > $OUT
 
 cd $CWD
 echo "Output file $OUT"
