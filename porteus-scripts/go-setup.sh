@@ -100,6 +100,7 @@ copyfile() {
         cp -a ${_src} ${_dest}
     else
         if [ $(stat -c %Y $_src) -gt $(stat -c %Y $_dest) ]; then
+            rm -f $_dest
             cp -a ${_src} ${_dest}
         fi
     fi
