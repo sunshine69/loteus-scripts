@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 
 # Usage $0 <setup device> <encrypted dev>
 # <setup dev> must have the goe and goem dir contains gocryptfs data
@@ -13,6 +13,10 @@
 # During the run it will try to update the system images from the <source data dir> to the <data dev> based on timestamp and a exists of the fime out.sqs. <source data dir> is the unencrypted device if it is mountable otherwise it will fall back to the <setup dev>
 ###########
 
+value() { egrep -o " $1=[^ ]+" /proc/cmdline | cut -d= -f2; }
+param() { egrep -qo " $1( |\$)" /etc/cmdline; }
+
+if param debug; then set -x; fi
 
 # dev having the gocryptfs data. The update file source uses this dev. Priority 2
 setup_dev=${1:-sda3}
@@ -21,8 +25,6 @@ blk_dev=${2:-sda4}
 # dev contains the port OS folder
 data_dev=${3:-$setup_dev}
 
-
-value() { egrep -o " $1=[^ ]+" /proc/cmdline | cut -d= -f2; }
 
 umount_all() {
     umount /mnt/${setup_dev}/goem >/dev/null 2>&1 || true

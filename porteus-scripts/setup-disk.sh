@@ -8,7 +8,6 @@ else
     DEV=$(echo $1 | sed 's/\/dev\///')
     shift
 fi
-set -x
 if [ -z "$PASSPHRASE" ]; then
     echo "**** "
     read -s PASSPHRASE

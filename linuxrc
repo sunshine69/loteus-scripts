@@ -103,6 +103,10 @@ for x in $dev; do
       if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
           echo "crypt already setup for device $x"
       else
+          if blkid /dev/$x 2>/dev/null | grep -q "Linux swap"; then
+            swapcrypt.sh $x
+            continue
+          fi
           if [ -z "$PASSPHRASE" ]; then read -s -p "$x ..." PASSPHRASE; fi
           echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
           if [ $? != 0 ]; then echo "Failed, second try .."; read -s -p "$x ..." PASSPHRASE
