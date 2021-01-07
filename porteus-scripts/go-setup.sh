@@ -113,14 +113,14 @@ if [ $(value reset) = "1" ]; then
       from=$(value from)
       os=$(value os)
       kver=$(uname -r)
-      srckmodfile=$(find ${src_data_dir}/*/000-${kver}.xzm)
-      destkmodfile=$(find /mnt/${data_dev}/${from}/000-${kver}.xzm)
+      srckmodfile=$(find ${src_data_dir}/*/000-${kver}.??m)
+      destkmodfile=$(find /mnt/${data_dev}/${from}/000-${kver}.??m)
       copyfile $srckmodfile $destkmodfile
-      srcfile=$(find ${src_data_dir}/*/${os}/base/001-*${os}-x86_64.zzm)
+      srcfile=$(find ${src_data_dir}/*/${os}/base/001-*-x86_64.??m)
       destfile=/mnt/${data_dev}/${from}/${os}/base/$(basename ${srcfile})
       copyfile $srcfile $destfile
-      src_share_file=$(find /mnt/${setup_dev}/*/share/002-*${os}-*x86_64.zzm)
-      dest_share_file=$(find /mnt/${data_dev}/${from}/share/002-*${os}-*x86_64.zzm)
+      src_share_file=$(find /mnt/${setup_dev}/*/share/002-*${os}-*x86_64.??m)
+      dest_share_file=$(find /mnt/${data_dev}/${from}/share/002-*${os}-*x86_64.??m)
       copyfile $src_share_file $dest_share_file
       umount /dev/$data_dev
       # hardcoded section
