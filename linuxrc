@@ -152,8 +152,8 @@ for x in $dev; do
   fi
   debug
   mountdir=$(basename $x)
-  if [ "$fs" = "vfat" ]; then
-          echo "/dev/$x /mnt/$mountdir $fs $MOPT,umask=0,check=s,utf8 0 0" >>/etc/fstab
+  if [ "$fs" = "vfat" ] ||  [ "$fs" = "exfat" ]; then
+          echo "/dev/$x /mnt/$mountdir $fs $MOPT,umask=0,utf8 0 0" >>/etc/fstab
   elif [ "$fs" = "iso9660" ]; then
           echo "/dev/$x /mnt/$mountdir $fs $MOPT,ro 0 0" >>/etc/fstab
   elif $(echo $x | grep mapper >/dev/null 2>&1);then
@@ -233,7 +233,7 @@ if [ "$fs" ]; then
     mountdir=$(basename $x)
     mkdir "/mnt/$mountdir"
     if [ "$fs" = "vfat" ]; then
-        mount -n /dev/$1 /mnt/$mountdir -o $MOPT,umask=0,check=s,utf8 2>/dev/null || rmdir /mnt/$mountdir
+        mount -n /dev/$1 /mnt/$mountdir -o $MOPT,umask=0,utf8 2>/dev/null || rmdir /mnt/$mountdir
     elif [ "$fs" = "ntfs" ]; then
         ntfs-3g /dev/$1 /mnt/${mountdir} -o $MOPT 2>/dev/null || rmdir /mnt/${mountdir}
     else

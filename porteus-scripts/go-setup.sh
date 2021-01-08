@@ -109,24 +109,41 @@ copyfile() {
     if [ "$?" != "0" ]; then echo "ERROR" ; umount_all; exit 1 ; fi
 }
 
+detect_mod_filename() {
+    _fname_ptn=$1
+    srcfile=$(find ${src_data_dir}/*/${os}/base/${_fname_ptn} 2>/dev/null)
+    if [ -z "$srcfile" ]; then
+        srcfile=$(find ${data_dev}/*/${os}/base/${_fname_ptn} 2>/dev/null)
+    fi
+    echo $srcfile
+}
+
 if [ $(value reset) = "1" ]; then
       from=$(value from)
       os=$(value os)
       kver=$(uname -r)
-      srckmodfile=$(find ${src_data_dir}/*/000-${kver}.??m)
-      destkmodfile=$(find /mnt/${data_dev}/${from}/000-${kver}.??m)
+      srckmodfile=$(find ${src_data_dir}/*/000-${kver}.??m >/dev/null)
+      destkmodfile=$(find /mnt/${data_dev}/${from}/000-${kver}.??m 2>/dev/null)
       copyfile $srckmodfile $destkmodfile
-      srcfile=$(find ${src_data_dir}/*/${os}/base/001-*-x86_64.??m)
-      destfile=/mnt/${data_dev}/${from}/${os}/base/$(basename ${srcfile})
-      copyfile $srcfile $destfile
+      srcfile=$(find ${src_data_dir}/*/${os}/base/001-*-x86_64.??m 2>/dev/null)
+      echo "srcfile: '$srcfile'"
+      if [ ! -z "$srcfile" ]; then
+        destfile=/mnt/${data_dev}/${from}/${os}/base/$(basename ${srcfile})
+        copyfile $srcfile $destfile
+      fi
       src_share_file=$(find /mnt/${setup_dev}/*/share/002-*${os}-*x86_64.??m)
       dest_share_file=$(find /mnt/${data_dev}/${from}/share/002-*${os}-*x86_64.??m)
       copyfile $src_share_file $dest_share_file
       umount /dev/$data_dev
       # hardcoded section
       outfile=$(find ${src_data_dir}/out.sqs ${src_data_dir}/tmp/out.sqs 2>/dev/null | tail -n1)
-      if [ ! -z "$outfile" ] && [ -f "$outfile" ] && [ $(stat -c %Y $outfile) -gt $(stat -c %Y $destfile) ]; then
-          echo "Copy out.sqs from ${src_data_dir} to current $destfile .."
+      if [ ! -z "$outfile" ] && [ -f "$outfile" ]; then
+          if [ -z "$srcfile" ]; then
+              srcfile=$(find /mnt/${data_dev}/${from}/${os}/base/001-*.??m 2>/dev/null)
+              echo "srcfile: '$srcfile'"
+          fi
+          destfile=/mnt/${data_dev}/${from}/${os}/base/$(basename $srcfile)
+          echo "Copy out.sqs from ${outfile} to current $destfile .."
           cp ${outfile} $destfile
       fi
 fi

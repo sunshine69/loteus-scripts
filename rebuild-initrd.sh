@@ -32,8 +32,9 @@ cp -a $SCRIPT_DIR/linuxrc .
 echo "Copy modules into - /tmp/initrd_$$/lib/modules/ if needed and then type kernel version in"
 
 if [ -z "$KVERS" ]; then
-    echo "Enter kernel version (space separated for a list): "
+    echo "Enter kernel version (space separated for a list): Hit enter to use the current running version `uname -r`"
     read KVERS
+    [ -z "$KVERS" ] && KVERS=$(uname -r)
 else
     echo "Kernel version from KVERS: $KVERS"
 fi
