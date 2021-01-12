@@ -1,0 +1,10 @@
+To remaster one
+boot the cd with 'copy2ram base_only' (so no 1XXX include changes gets in) and we are free to modify the module as all module are copied to ram
+
+adjust settings - install new thing and finally to same - can do save to a new module or use save-session /existing_module_name to merge into one of exsiting module
+
+If save to new module and named it like 199-changes-machinename.xzm to only contain local specific changes for end uder. Put that in the module folder (not base folder)
+
+boot with arg 'factoryreset' will remove all debsave/changes folder found in the system and create noew one so it will start from fresh read only module.
+
+
