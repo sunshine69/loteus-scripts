@@ -62,7 +62,7 @@ KVER=$(echo $KVER | sed 's/ \[EOL\]//g')
 
 if [ "$KVER" == "$OLD_KVER" ] && [ -z "$REBUILD" ]; then echo "No new version. Do nothing"; exit 0; fi
 
-if [ ! -f "patch-$KVER.xz" ]; then
+if [ ! -f "patch-$KVER.xz" ] && [ -z "$REBUILD" ]; then
     wget https://cdn.kernel.org/pub/linux/kernel/v${VERSION}.x/patch-$KVER.xz
 fi
 
@@ -78,7 +78,7 @@ if [ "$KVER" != "$OLD_KVER" ]; then
     if [ "$_TEST_LAST" = "" ] || [ "$_TEST_LAST" = "0" ]; then
         echo "Skip patching as this is begin of stream line"
     else
-        if [ -z "$NO_UPGRADE" ]; then
+        if [ -z "$REBUILD" ]; then
             [ -f "../patch-${OLD_KVER}.xz" ] && xzcat ../patch-${OLD_KVER}.xz | patch -p1 -R
             xzcat ../patch-${KVER}.xz | patch -p1
         fi
@@ -93,11 +93,18 @@ make oldconfig
 CORE=$(lscpu | grep '^CPU(s):' | awk '{print $2}')
 let "CORE=$CORE - 2"
 
+startbuild=`date +%s`
+
 make -j $CORE bzImage modules
 if [ $? != "0" ]; then
     echo "Build bzImage and modules return error"
     exit 1
 fi
+
+endbuild=`date +%s`
+runtime=$((end-start))
+
+echo "Make kernel spend start: $startbuild - end: $endbuild - runtime:  $(echo "$runtime/60" | bc -l) mins" > ${SCRIPT_DIR}/${0}-build-${KVER}-$(hostname -s)-runtime.txt
 
 # KVER="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
 
