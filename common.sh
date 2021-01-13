@@ -13,7 +13,7 @@ if ! `touch ${BZIMAGE_DIR}/test-file >/dev/null 2>&1`; then
     export BOOT_DIR=/mnt/portdata/boot
 else
     export BZIMAGE_FULL_PATH=$(find /mnt/sd*/${BZIMAGE_DIR}/ -maxdepth 2 -type f -name ${BZIMAGE_NAME})
-    export PORT_DIR=$(dirname `losetup -a|grep 000|awk '{print $3}'|cut -d'(' -f2`)
+    export PORT_DIR=$(dirname `losetup -a|grep -P '000\-[\d\.]+'|awk '{print $3}'|cut -d'(' -f2` | head -n1)
     export BOOT_DIR=$(dirname $BZIMAGE_FULL_PATH)
 fi
 

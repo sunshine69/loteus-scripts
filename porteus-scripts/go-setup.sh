@@ -26,12 +26,13 @@ blk_dev=${2:-sda4}
 data_dev=${3:-$setup_dev}
 
 setup_raw() {
+    # $1 is like /mnt/${device}/${loop_file}
     LOOP_DEV=$(losetup -f)
     losetup $LOOP_DEV $1
+    echo "****"
     read -s p
     echo $p | cryptsetup --key-file=- plainOpen $LOOP_DEV testme
-    raw_dev=$(dirname $1)
-    [ "$data_dev" = "$setup_dev" ] && data_dev=$raw_dev
+    [ "$data_dev" = "$setup_dev" ] && data_dev=$device
     setup_dev=mapper/testme
 }
 
@@ -62,10 +63,12 @@ echo "setup_dev: $setup_dev blk_dev: $blk_dev data_dev: $data_dev"
 
 setup_dev_mnt=$(basename $setup_dev)
 if [ ! -d /mnt/$setup_dev_mnt ]; then
+    echo "creating setup dev /mnt/$setup_dev_mnt"
     mkdir /mnt/$setup_dev_mnt
 fi
 
 if [ "$data_dev" != "$setup_dev" ] && [ ! -d /mnt/$data_dev ]; then
+    echo "creating data dev and mount /dev/$data_dev /mnt/$data_dev"
     mkdir /mnt/$data_dev
     mount /dev/$data_dev /mnt/$data_dev
 fi
@@ -75,7 +78,7 @@ mount /dev/$setup_dev /mnt/$setup_dev_mnt || (umount_all ; echo "error mount set
 if [ -d /mnt/${setup_dev_mnt}/goe ]; then
     mkdir /mnt/${setup_dev_mnt}/goem >/dev/null 2>&1
     while [ "$SUCCESS" != "yes" ]; do
-        gocryptfs /mnt/${setup_dev}/goe /mnt/${setup_dev}/goem
+        gocryptfs /mnt/${setup_dev_mnt}/goe /mnt/${setup_dev_mnt}/goem
         if [ "$?" = "0" ]; then SUCCESS="yes"; fi
     done
     SEC_DIR=/mnt/${setup_dev_mnt}/goem
@@ -83,9 +86,18 @@ else
     SEC_DIR=/mnt/${setup_dev_mnt}
 fi
 
+echo "SEC_DIR: $SEC_DIR"
+
 PASS_FILE_NAME=$(value hostname)-pass.dat
 LUKS_HEADER_FILE=$(value hostname)-luks.dat
-if [ ! -f ${SEC_DIR}/${PASS_FILE_NAME} ]; then PASS_FILE_NAME=blk.dat; fi
+if [ ! -f ${SEC_DIR}/${PASS_FILE_NAME} ]; then
+    if [ -f ${SEC_DIR}/blk.dat ]; then
+        PASS_FILE_NAME=blk.dat
+    else
+        echo "****"
+        read -s p
+    fi
+fi
 [ -f "${SEC_DIR}/$PASS_FILE_NAME" ] && p=$(cat ${SEC_DIR}/${PASS_FILE_NAME} 2>/dev/null)
 
 if [ -f "${SEC_DIR}/${LUKS_HEADER_FILE}" ]; then
@@ -94,6 +106,7 @@ if [ -f "${SEC_DIR}/${LUKS_HEADER_FILE}" ]; then
 fi
 
 export PASSPHRASE=$p
+echo "going to run setup-disk.sh $blk_dev ${EXTOPTS}"
 setup_disk_output=$(setup-disk.sh $blk_dev ${EXTOPTS} | tail -n1)
 
 if $(echo $setup_disk_output | grep mapper >/dev/null 2>&1); then
@@ -102,8 +115,8 @@ if $(echo $setup_disk_output | grep mapper >/dev/null 2>&1); then
   if [ "$?" = "0" ]; then
       src_data_dir=/mnt/$(basename $setup_disk_output)
   else
-      src_data_dir=/mnt/$setup_dev
-      mkdir $src_data_dir
+      src_data_dir=/mnt/$setup_dev_mnt
+      [ ! -d "$src_data_dir" ] && mkdir $src_data_dir
   fi
 else
     src_data_dir=$setup_disk_output
@@ -116,7 +129,9 @@ read _ans
 
 if [ "$src_data_dir" = "/mnt/$data_dev" ]; then echo "src data same as data nothing to do. exiting"; umount_all; exit 0; fi
 
-mount /dev/$data_dev /mnt/$data_dev
+if ! mount | grep "/mnt/$data_dev" >/dev/null 2>&1; then
+    mount /dev/$data_dev /mnt/$data_dev
+fi
 
 copyfile() {
     _src=$1
