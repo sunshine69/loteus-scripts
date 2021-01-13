@@ -25,22 +25,44 @@ blk_dev=${2:-sda4}
 # dev contains the port OS folder
 data_dev=${3:-$setup_dev}
 
+setup_raw() {
+    LOOP_DEV=$(losetup -f)
+    losetup $LOOP_DEV $1
+    read -s p
+    echo $p | cryptsetup --key-file=- plainOpen $LOOP_DEV testme
+    raw_dev=$(dirname $1)
+    [ "$data_dev" = "$setup_dev" ] && data_dev=$raw_dev
+    setup_dev=mapper/testme
+}
 
 umount_all() {
-    umount /mnt/${setup_dev}/goem >/dev/null 2>&1 || true
+    umount /mnt/${setup_dev_mnt}/goem >/dev/null 2>&1 || true
     if ! $(echo $src_data_dir | grep blkm >/dev/null 2>&1); then umount -l $src_data_dir || true; fi
     if $(echo $src_data_dir | grep '_DEC' >/dev/null 2>&1); then
         umount $src_data_dir
         rmdir $src_data_dir
     fi
     umount -l /mnt/$data_dev|| true
-    umount -l /mnt/$setup_dev || true
+    umount -l /mnt/$setup_dev_mnt || true
 }
+
+loop_file=$(echo $setup_dev | sed 's|/dev/||' | cut -f 2 -d/)
+device=$(echo $setup_dev | sed 's|/dev/||' | cut -f 1 -d/)
+if [ ! -z "$loop_file" ]; then
+    mkdir /mnt/$device >/dev/null 2>&1
+    mount /dev/$device /mnt/$device
+    if [ -f /mnt/${device}/${loop_file} ]; then
+        setup_raw /mnt/${device}/${loop_file}
+    else
+        umount -l /mnt/$device && sleep 2 && rmdir /mnt/$device
+    fi
+fi
 
 echo "setup_dev: $setup_dev blk_dev: $blk_dev data_dev: $data_dev"
 
-if [ ! -d /mnt/$setup_dev ]; then
-    mkdir /mnt/$setup_dev
+setup_dev_mnt=$(basename $setup_dev)
+if [ ! -d /mnt/$setup_dev_mnt ]; then
+    mkdir /mnt/$setup_dev_mnt
 fi
 
 if [ "$data_dev" != "$setup_dev" ] && [ ! -d /mnt/$data_dev ]; then
@@ -48,24 +70,26 @@ if [ "$data_dev" != "$setup_dev" ] && [ ! -d /mnt/$data_dev ]; then
     mount /dev/$data_dev /mnt/$data_dev
 fi
 
-mount /dev/$setup_dev /mnt/$setup_dev || (umount_all ; echo "error mount setup_dev, aborting" && exit 1)
+mount /dev/$setup_dev /mnt/$setup_dev_mnt || (umount_all ; echo "error mount setup_dev, aborting" && exit 1)
 
-[ ! -d /mnt/${setup_dev}/goe ] && echo "goe dir not found" && ( umount_all; exit 1 )
-
-mkdir /mnt/${setup_dev}/goem >/dev/null 2>&1
-
-while [ "$SUCCESS" != "yes" ]; do
-    gocryptfs /mnt/${setup_dev}/goe /mnt/${setup_dev}/goem
-    if [ "$?" = "0" ]; then SUCCESS="yes"; fi
-done
+if [ -d /mnt/${setup_dev_mnt}/goe ]; then
+    mkdir /mnt/${setup_dev_mnt}/goem >/dev/null 2>&1
+    while [ "$SUCCESS" != "yes" ]; do
+        gocryptfs /mnt/${setup_dev}/goe /mnt/${setup_dev}/goem
+        if [ "$?" = "0" ]; then SUCCESS="yes"; fi
+    done
+    SEC_DIR=/mnt/${setup_dev_mnt}/goem
+else
+    SEC_DIR=/mnt/${setup_dev_mnt}
+fi
 
 PASS_FILE_NAME=$(value hostname)-pass.dat
 LUKS_HEADER_FILE=$(value hostname)-luks.dat
-if [ ! -f /mnt/${setup_dev}/goem/${PASS_FILE_NAME} ]; then PASS_FILE_NAME=blk.dat; fi
-[ -f "/mnt/${setup_dev}/goem/$PASS_FILE_NAME" ] && p=$(cat /mnt/${setup_dev}/goem/${PASS_FILE_NAME} 2>/dev/null)
+if [ ! -f ${SEC_DIR}/${PASS_FILE_NAME} ]; then PASS_FILE_NAME=blk.dat; fi
+[ -f "${SEC_DIR}/$PASS_FILE_NAME" ] && p=$(cat ${SEC_DIR}/${PASS_FILE_NAME} 2>/dev/null)
 
-if [ -f "/mnt/${setup_dev}/goem/${LUKS_HEADER_FILE}" ]; then
-    EXTOPTS="--header /mnt/${setup_dev}/goem/${LUKS_HEADER_FILE}"
+if [ -f "${SEC_DIR}/${LUKS_HEADER_FILE}" ]; then
+    EXTOPTS="--header ${SEC_DIR}/${LUKS_HEADER_FILE}"
     export FORCE_LUKS=y
 fi
 
