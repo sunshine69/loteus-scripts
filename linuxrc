@@ -323,6 +323,16 @@ echo "start portetus init script - modified by stevek version v1.10"
 debug
 mount -nt devtmpfs none /dev
 sleep 3 # devices settle down
+
+echo -e "done\ngenerate hostname ...\n"
+debug
+# generate hostname based on motherboard UUID if no hostname is given at all
+if [ -z "$HOSTNAME" ]; then
+  HOSTNAME=`cat /sys/devices/virtual/dmi/id/product_uuid | sed 's/-//g'`
+fi
+
+echo ${HOSTNAME} > /proc/sys/kernel/hostname
+
 if param pause; then
     echo "Start shell ..."
     ls /dev/sd* /dev/nvm* 2>/dev/null
@@ -377,14 +387,6 @@ if [ ! -z "$KEXEC" ]; then
     fi    
 fi
 
-echo -e "done\ngenerate hostname ...\n"
-debug
-# generate hostname based on motherboard UUID if no hostname is given at all
-if [ -z "$HOSTNAME" ]; then
-  HOSTNAME=`cat /sys/devices/virtual/dmi/id/product_uuid | sed 's/-//g'`
-fi
-
-echo ${HOSTNAME} > /proc/sys/kernel/hostname
 echo -e "done\ncreating fstab now ...\n"
 debug
 
