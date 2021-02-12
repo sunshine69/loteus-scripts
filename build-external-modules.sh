@@ -31,4 +31,7 @@ else
 fi
 
 echo "Kernel source and mod mounted. Run your program to build the mod, when done type exit the shell"
+echo "remove existing vbox mod pkg - u can reinstall them in rm -rf /var/cache/akmods/VirtualBox/*.rpm"
+dnf -y remove kmod-VirtualBox*
+rm -rf /var/cache/akmods/VirtualBox/*.rpm
 bash
