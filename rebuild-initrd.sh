@@ -27,6 +27,7 @@ mkdir /tmp/initrd_$$
 cd /tmp/initrd_$$
 
 xzcat $INF | cpio -id
+#zcat $INF | cpio -id
 cp -a $SCRIPT_DIR/linuxrc .
 
 echo "Copy modules into - /tmp/initrd_$$/lib/modules/ if needed and then type kernel version in"
@@ -86,14 +87,16 @@ if [ ! -z "$KVERS" ]; then
 fi
 
 echo "Get into the new initrd root dir /tmp/initrd_$$ and modify things if u need. Then hit enter to build"
-read _junk
+#read _junk
 
 echo "Building ..."
 
 mv $OUT ${OUT}.bak
 echo "Kernel modules file list"
 find ./lib/modules/
-find . | cpio --quiet -o -H newc | pixz -9 > $OUT
+#if $(which pixz >/dev/null 2>&1); then COMP_CMD=pixz; else COMP_CMD=pigz; fi
+COMP_CMD='lzma -9'
+find . | cpio --quiet -o -H newc | $COMP_CMD > $OUT
 
 cd $CWD
 echo "Output file $OUT"

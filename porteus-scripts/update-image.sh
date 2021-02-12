@@ -4,8 +4,6 @@ SRC=$1
 
 [ -z "$SRC" ] && echo "Usage: $0 <image_file> [work_dir|pwd] [enc] [enc password]" && exit 1
 
-WORKDIR=$2
-
 [ -z "$WORKDIR" ] && WORKDIR=$(pwd)
 
 ENC=$3
@@ -41,9 +39,13 @@ if [ $? != 0 ]; then echo "Fatal Error mount layered fs"; umount ${NAME_PREFIX}1
 
 echo "Mount done, start subshell now on the mount point. Copy and modify files under it."
 
-echo "When done, type exit to exit this shell and I will continue "
-
-( cd ${NAME_PREFIX}3 && /bin/bash )
+if [ ! -z "$2" ]; then
+    echo "When done, type exit to exit this shell and I will continue "
+    ( cd ${NAME_PREFIX}3 && /bin/bash )
+else
+    echo "will execute script in the dir ${NAME_PREFIX}3"
+    ( cd ${NAME_PREFIX}3 && /bin/bash $2 )
+fi
 
 cd $WORKDIR
 rm -f out.sqs

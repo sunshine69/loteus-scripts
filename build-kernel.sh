@@ -91,8 +91,9 @@ if [ ! -z "$CONFIG_FILE" ]; then cp "$CONFIG_FILE" .config; fi
 make oldconfig
 
 CORE=$(lscpu | grep '^CPU(s):' | awk '{print $2}')
-let "CORE=$CORE - 2"
-
+if [[ $CORE -gt 2 ]]; then
+    let "CORE=$CORE - 2"
+fi
 startbuild=`date +%s`
 
 make -j $CORE bzImage modules

@@ -27,7 +27,9 @@ echo "KVER is : $KVER"
 KERNEL_MOD="000-$KVER.xzm"
 
 if [ ! -f $KERNEL_MOD ]; then
-	rm -f 000-*.xzm
-	ln -sf /mnt/sda3/usb/$KERNEL_MOD $KERNEL_MOD
+	if [ -f /mnt/sda3/usb/$KERNEL_MOD ]; then
+		rm -f 000-*.xzm
+		ln -sf /mnt/sda3/usb/$KERNEL_MOD $KERNEL_MOD
+	fi
     [ "$?" = "0" ] || (echo "Fatal, can not make kernel mod sym link" && exit 1)
 fi

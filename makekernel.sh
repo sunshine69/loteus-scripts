@@ -25,7 +25,7 @@ build_external_module() {
         export KDIR="$KDIR"
     fi
     echo "Build bcwc_pcie with KDIR: $KDIR"
-    read _junk
+    #read _junk
     make
     make install
     popd
