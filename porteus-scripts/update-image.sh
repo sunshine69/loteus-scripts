@@ -39,7 +39,7 @@ if [ $? != 0 ]; then echo "Fatal Error mount layered fs"; umount ${NAME_PREFIX}1
 
 echo "Mount done, start subshell now on the mount point. Copy and modify files under it."
 
-if [ ! -z "$2" ]; then
+if [ -z "$2" ]; then
     echo "When done, type exit to exit this shell and I will continue "
     ( cd ${NAME_PREFIX}3 && /bin/bash )
 else
