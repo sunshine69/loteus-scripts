@@ -122,7 +122,7 @@ rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
 #rm -rf ${NAME_PREFIX}2/root/.cache
 rm -rf ${NAME_PREFIX}2/root
 mkdir ${NAME_PREFIX}2/root
-for f in .bashrc .bash_history .profile .selected_editor .vimrc; do
+for f in .bashrc .bash_history .profile .selected_editor .vimrc .mc; do
 	cp -a /root/$f ${NAME_PREFIX}2/root/
 	mkdir -p ${NAME_PREFIX}2/root/.local/share
 	cp -a /root/.local/share/fish ${NAME_PREFIX}2/root/.local/share/
@@ -156,9 +156,13 @@ if [ "$?" == "0" ]; then
 fi
 done
 
-if [ -z "$FILEMGR" ]; then
+if [ -z "$PROMPT" ]; then
+    FILEMGR=
+else
+    if [ -z "$FILEMGR" ]; then
 	echo "What file manager you want. Hit enter to continue"
 	read FILEMGR
+fi
 fi
 
 echo "copying root config file"
@@ -208,32 +212,32 @@ echo "SQUASHFS_EXCLUDE_OPT=$SQUASHFS_EXCLUDE_OPT"
 rm -f ${DESTINATION_DIR}/out.sqs
 
 if [ -z "$SQUASHFS_OPT" ]; then
+	SQUASHFS_OPT="-comp zstd -Xcompression-level 15 -b 1M"
     if [ "$MOD_999" = "y" ]; then
-        SQUASHFS_OPT="-comp xz -b 512K"
-    else
+        SQUASHFS_OPT="-comp xz -b 1M"
+    elif [ "$PROMPT" = "y" ]; then
 	    # Best balance now seems to be lz4 -Xhc. The zstd is good to built rescue but level 19 is too slow
-	    SQUASHFS_OPT="-comp zstd -Xcompression-level 15 -b 512K"
 	    #SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K"
 	    #SQUASHFS_OPT="-b 1024K"
 	    echo "Default SQUASHFS_OPT is '$SQUASHFS_OPT' - fast enough and good compression"
-	    echo "0. -comp lz4 -Xhc -b 512K - Fast to compress/decompress, size is bugger the zstd. Small memory"
-	    echo "1. -comp zstd -b 512K -Xcompression-level 19 - good compress but compress slow"
-	    echo "2. -comp gzip -b 512K - bigger size than zstd"
-	    echo "3. -comp xz -b 512K - compress best but slowest"
+	    echo "0. -comp lz4 -Xhc -b 1M - Fast to compress/decompress, size is bugger the zstd. Small memory"
+	    echo "1. -comp zstd -b 1M -Xcompression-level 19 - good compress but compress slow"
+	    echo "2. -comp gzip -b 1M - bigger size than zstd"
+	    echo "3. -comp xz -b 1M - compress best but slowest"
 	    echo "Enter your selection as number or your own option string. Hit enter to choose default"
 	    read ans
 	    case "$ans" in
 	    	0)
-	    		SQUASHFS_OPT="-comp lz4 -Xhc -b 512K";
+	    		SQUASHFS_OPT="-comp lz4 -Xhc -b 1M";
 	    		;;
 	    	1)
-	    		SQUASHFS_OPT="-comp zstd -Xcompression-level 19 -b 512K";
+	    		SQUASHFS_OPT="-comp zstd -Xcompression-level 19 -b 1M";
 	    		;;
 	    	2)
-	    		SQUASHFS_OPT="-comp gzip -b 512K";
+	    		SQUASHFS_OPT="-comp gzip -b 1M";
 	    		;;
 	    	3)
-	    		SQUASHFS_OPT="-comp xz -b 512K";
+	    		SQUASHFS_OPT="-comp xz -b 1M";
 	    		;;
 	    	*)
 	    		if [ ! -z "$ans" ]; then SQUASHFS_OPT="$ans"; fi
@@ -267,10 +271,18 @@ if [[ "$1" =~ "999"  ]]; then
       mv ${DESTINATION_DIR}/out.sqs ${FROM_DIR}/${OS_DIR}/base/999-${HOSTNAME}-$(uname -m).sqs
   fi    
 else
-  echo "Move ${DESTINATION_DIR}/out.sqs to ${SRCPATH}.new? y/n"
-  read ans
-  if [ "$ans" = "y" ]; then  mv ${DESTINATION_DIR}/out.sqs ${SRCPATH}.new; fi
-  if [ "$?" != "0" ]; then echo "Output file is ${DESTINATION_DIR}/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi
+  if $(df | grep /mnt/doc >/dev/null 2>&1); then
+    echo "Mounted /mnt/doc detected. Copy out.sqs over"
+    cp ${DESTINATION_DIR}/out.sqs /mnt/doc/opc-backup/out.sqs
+  fi
+  if [ "$PROMPT" = "y" ]; then
+    echo "Move ${DESTINATION_DIR}/out.sqs to ${SRCPATH}.new? y/n"
+    read ans
+    if [ "$ans" = "y" ]; then  mv ${DESTINATION_DIR}/out.sqs ${SRCPATH}.new; fi
+    if [ "$?" != "0" ]; then echo "Output file is ${DESTINATION_DIR}/out.sqs"; else echo "Output file is ${SRCPATH}.new";fi
+  else
+    echo "Output file is ${DESTINATION_DIR}/out.sqs"
+  fi
 fi
 
 rm -rf ${NAME_PREFIX}_wd ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}2 ${NAME_PREFIX}ENC ${NAME_PREFIX}D >/dev/null 2>&1
