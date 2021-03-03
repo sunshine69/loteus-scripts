@@ -20,11 +20,11 @@ cd $KSOURCE_DIR
 # From kernel.org what is longer and stable? Used to detect what version we will build
 # This is the first number (version) and minor as now stable and longterm having the same version.
 #LONGTERM="5.4"
-#LONGTERM="5.10"
+LONGTERM="5.10"
 #LONGTERM="4.9"
-STABLE="5.10"
+STABLE="5.11"
 #STABLE="5.9"
-MAINLINE="5.10"
+MAINLINE="5.12"
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
@@ -35,7 +35,8 @@ export VERSION
 #PATCHLEVEL=19
 #PATCHLEVEL=8
 PATCHLEVEL=10
-PATCHLEVEL=${PATCHLEVEL:-8} export PATCHLEVEL
+#PATCHLEVEL=${PATCHLEVEL:-8}
+export PATCHLEVEL
 ####
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
