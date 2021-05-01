@@ -44,6 +44,8 @@ SGN=`value sgnfile`; [ $SGN ] || SGN=${OSDIR}-$arch.sgn
 FROM=`value from`; ISO=`echo $FROM | egrep ".*\.iso( |\$)"`
 IP=`value ip | cut -d: -f2`
 MOPT=`value mopt`; [ $MOPT ] || MOPT="noatime,nodiratime,suid,dev,exec,async"
+# format <file-system-name>:<option-string>. It will be appended to the MOPT
+MOPT1=`value mopt1`; [ $MOPT1 ] || MOPT1=""
 CHANGES=`value changes`; [ $CHANGES ] || CHANGES=`value c`
 RAMSIZE=`value ramsize`; [ $RAMSIZE ] || RAMSIZE=60%
 ZRAMSIZE=`value zramsize`; [ $ZRAMSIZE ] || ZRAMSIZE=256M
@@ -152,6 +154,8 @@ for x in $dev; do
   fi
   debug
   mountdir=$(basename $x)
+  _MOPT1=$(echo $MOPT1 | egrep -o "${fs}:[^ ]+" | cut -f 2 -d:)
+  if [ ! -z "${_MOPT1}" ]; then MOPT="${_MOPT1}"; fi
   if [ "$fs" = "vfat" ] ||  [ "$fs" = "exfat" ]; then
           echo "/dev/$x /mnt/$mountdir $fs $MOPT,umask=0,utf8 0 0" >>/etc/fstab
   elif [ "$fs" = "iso9660" ]; then

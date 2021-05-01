@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+# This is starting script
+
 # dependencies
 # pip3 install bs4
 # apt install flex libssl-dev libncurses-dev
@@ -33,7 +35,7 @@ VERSION=5
 export VERSION
 # Minor version (middle number)
 #PATCHLEVEL=19
-#PATCHLEVEL=8
+#PATCHLEVEL=11
 PATCHLEVEL=10
 #PATCHLEVEL=${PATCHLEVEL:-8}
 export PATCHLEVEL
