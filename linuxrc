@@ -332,7 +332,8 @@ echo -e "done\ngenerate hostname ...\n"
 debug
 # generate hostname based on motherboard UUID if no hostname is given at all
 if [ -z "$HOSTNAME" ]; then
-  HOSTNAME=`cat /sys/devices/virtual/dmi/id/product_uuid | sed 's/-//g'`
+  HOSTNAME=`cat /sys/devices/virtual/dmi/id/product_uuid | cut -d- -f1`
+  if [ -z "$PASSPHRASE" ]; then PASSPHRASE=$(cat /sys/devices/virtual/dmi/id/product_uuid); fi
 fi
 
 echo ${HOSTNAME} > /proc/sys/kernel/hostname
