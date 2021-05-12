@@ -331,10 +331,12 @@ sleep 3 # devices settle down
 echo -e "done\ngenerate hostname ...\n"
 debug
 # generate hostname based on motherboard UUID if no hostname is given at all
-if [ -z "$HOSTNAME" ]; then
-  HOSTNAME=`cat /sys/devices/virtual/dmi/id/product_uuid | cut -d- -f1`
-  if [ -z "$PASSPHRASE" ]; then PASSPHRASE=$(cat /sys/devices/virtual/dmi/id/product_uuid); fi
+if echo $PASSPHRASE | grep '^#' >/dev/null 2>&1; then
+    HASHFUNC=$(echo $PASSPHRASE | cut -f2 -d#)
+    PASSPHRASE=$(cat /sys/devices/virtual/dmi/id/product_uuid | $HASHFUNC | cut -f1 -d' ')
 fi
+
+[ -z "$HOSTNAME" ] && HOSTNAME=$(cat /sys/class/dmi/id/product_name | sed 's/,/_/')
 
 echo ${HOSTNAME} > /proc/sys/kernel/hostname
 
