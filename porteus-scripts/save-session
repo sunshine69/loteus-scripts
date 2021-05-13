@@ -273,7 +273,9 @@ if [[ "$1" =~ "999"  ]]; then
 else
   if $(df | grep /mnt/doc >/dev/null 2>&1); then
     echo "Mounted /mnt/doc detected. Copy out.sqs over"
-    cp ${DESTINATION_DIR}/out.sqs /mnt/doc/opc-backup/out.sqs
+    DNAME=$(lsb_release -i | awk -F: '{print $2}' | sed 's/^\s+*//g; s/\s+$//g')
+    DVER=$(lsb_release -r | awk -F: '{print $2}' | sed 's/^\s+*//g; s/\s+$//g')
+    cp ${DESTINATION_DIR}/out.sqs /mnt/doc/opc-backup/out-${DNAME}-${DVER}.sqs
   fi
   if [ "$PROMPT" = "y" ]; then
     echo "Move ${DESTINATION_DIR}/out.sqs to ${SRCPATH}.new? y/n"
