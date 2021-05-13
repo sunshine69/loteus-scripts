@@ -324,10 +324,10 @@ dirname() {
 
 echo "start portetus init script - modified by stevek version v1.10"
 # Make all drivers available: stevek move it first so we have module
+echo "mount /dev ..."
 debug
 mount -nt devtmpfs none /dev
 sleep 3 # devices settle down
-
 echo -e "done\ngenerate hostname ...\n"
 debug
 # generate hostname based on motherboard UUID if no hostname is given at all
@@ -336,7 +336,7 @@ if echo $PASSPHRASE | grep '^#' >/dev/null 2>&1; then
     PASSPHRASE=$(cat /sys/devices/virtual/dmi/id/product_uuid | $HASHFUNC | cut -f1 -d' ')
 fi
 
-[ -z "$HOSTNAME" ] && HOSTNAME=$(cat /sys/class/dmi/id/product_name | sed 's/,/_/')
+[ -z "$HOSTNAME" ] && HOSTNAME=$(cat /sys/class/dmi/id/product_name | cut -f1 -d-)
 
 echo ${HOSTNAME} > /proc/sys/kernel/hostname
 
@@ -347,7 +347,7 @@ if param pause; then
 fi    
 generate_devices() {
 echo "Detect block devices, create /etc/fstab and mount devices ..."
-blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* | grep -v /dev/loop | grep -v BitLocker | grep -v 'EFI system partition' | grep TYPE > /tmp/devices
+blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* /dev/mapper/* | grep -v /dev/loop | grep -v BitLocker | grep -v 'EFI system partition' | grep TYPE > /tmp/devices
 #blkid /dev/nvme* | grep -v 'EFI system partition' | grep -v 'BitLocker' | grep ' TYPE=' >> /tmp/devices
 #for listd in '/dev/sd??' '/dev/mmcblk?p?' '/dev/vd??'; do
 #   for d in $listd; do # add auto to some fs that blkid not know about
