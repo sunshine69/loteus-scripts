@@ -347,7 +347,7 @@ if param pause; then
 fi    
 generate_devices() {
 echo "Detect block devices, create /etc/fstab and mount devices ..."
-blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* /dev/mapper/* | grep -v /dev/loop | grep -v BitLocker | grep -v 'EFI system partition' | grep TYPE > /tmp/devices
+blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* /dev/mapper/* /dev/sr* | grep -v /dev/loop | grep -v BitLocker | grep -v 'EFI system partition' | grep TYPE > /tmp/devices
 #blkid /dev/nvme* | grep -v 'EFI system partition' | grep -v 'BitLocker' | grep ' TYPE=' >> /tmp/devices
 #for listd in '/dev/sd??' '/dev/mmcblk?p?' '/dev/vd??'; do
 #   for d in $listd; do # add auto to some fs that blkid not know about

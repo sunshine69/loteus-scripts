@@ -122,7 +122,7 @@ rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
 #rm -rf ${NAME_PREFIX}2/root/.cache
 rm -rf ${NAME_PREFIX}2/root
 mkdir ${NAME_PREFIX}2/root
-for f in .bashrc .bash_history .profile .selected_editor .vimrc .mc; do
+for f in .bashrc .bash_history .profile .selected_editor .vimrc .config; do
 	cp -a /root/$f ${NAME_PREFIX}2/root/
 	mkdir -p ${NAME_PREFIX}2/root/.local/share
 	cp -a /root/.local/share/fish ${NAME_PREFIX}2/root/.local/share/

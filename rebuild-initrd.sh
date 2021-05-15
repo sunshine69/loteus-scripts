@@ -69,7 +69,7 @@ if [ ! -z "$KVERS" ]; then
         echo Copy some modules over
         mkdir -p $DESTDIR
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
-        cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc} $DESTDIR/
+        cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi} $DESTDIR/
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/
         cp -a $SRCDIR/fs/{jfs,reiserfs,xfs,aufs,btrfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc.ko} $DESTDIR/
         #cp -a $SRCDIR/misc/vboxvideo $DESTDIR/ || true
