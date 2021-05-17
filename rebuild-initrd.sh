@@ -21,7 +21,7 @@ else
     OUT=$(readlink -f $2)
 fi
 
-[ ! -f "$INF" ] && echo "Origin initrd.xz as input file $INF does not exist. Aborting..." && exit 1
+[ ! -f "$INF" ] && echo "Origin initrd.xz as input file $INF does not exist. Use template one ..." && INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz|head -n1)
 
 mkdir /tmp/initrd_$$
 cd /tmp/initrd_$$
