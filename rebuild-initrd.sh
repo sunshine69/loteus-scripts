@@ -21,7 +21,9 @@ else
     OUT=$(readlink -f $2)
 fi
 
-[ ! -f "$INF" ] && echo "Origin initrd.xz as input file $INF does not exist. Use template one ..." && INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz|head -n1)
+if [ ! -f "$INF" ]; then
+    INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz /mnt/doc/opc-backup/initrd-template.xz 2>/dev/null | head -n1)
+    echo "Origin initrd.xz as input file $INF does not exist. Use template one $INF"
 
 mkdir /tmp/initrd_$$
 cd /tmp/initrd_$$
