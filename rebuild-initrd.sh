@@ -51,7 +51,7 @@ if [ ! -z "$KVERS" ]; then
 
         if [ -z "$KBUILDDIR_ENV" ]; then
             #Install xzm modules
-            ( cd $TEMP_KDIR ; $TARGET_DIR/porteus-kernel-$KVER.tar.sfx )
+            ( cd $TEMP_KDIR ; echo n | $TARGET_DIR/porteus-kernel-$KVER.tar.sfx )
             KBUILDDIR="$TEMP_KDIR/porteus-kernel"
         else
             KBUILDDIR=$KBUILDDIR_ENV
@@ -70,8 +70,9 @@ if [ ! -z "$KVERS" ]; then
         mkdir -p $DESTDIR
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
         cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi} $DESTDIR/
+        mkdir -p $DESTDIR/drivers
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/drivers/
-        cp -a $SRCDIR/fs/{jfs,reiserfs,xfs,aufs,btrfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc.ko} $DESTDIR/drivers/
+        cp -a $SRCDIR/fs/{jfs.ko,reiserfs.ko,xfs.ko,f2fs.ko,fat.ko,isofs.ko,nls.ko,overlayfs.ko,udf.ko,ufs.ko,binfmt_misc.ko,btrfs.ko} $DESTDIR/drivers/
         #cp -a $SRCDIR/misc/vboxvideo $DESTDIR/ || true
         depmod $KVER -b .
         echo "Done copying modules over"

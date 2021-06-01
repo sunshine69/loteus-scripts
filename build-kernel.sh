@@ -13,7 +13,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export KSOURCE_DIR=/mnt/portdata/tmp
+export KSOURCE_DIR=/mnt/nvme0n1p3/tmp
 
 pushd .
 cd $KSOURCE_DIR
@@ -25,6 +25,7 @@ cd $KSOURCE_DIR
 LONGTERM="5.10"
 #LONGTERM="4.9"
 STABLE="5.12"
+#STABLE="5.11"
 #STABLE="5.9"
 MAINLINE="5.13"
 
@@ -34,9 +35,10 @@ VERSION=5
 #VERSION=4
 export VERSION
 # Minor version (middle number)
-#PATCHLEVEL=12
+PATCHLEVEL=12
 #PATCHLEVEL=11
-PATCHLEVEL=10
+#PATCHLEVEL=4
+#PATCHLEVEL=10
 #PATCHLEVEL=${PATCHLEVEL:-8}
 export PATCHLEVEL
 ####
