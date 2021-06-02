@@ -7,7 +7,7 @@ mount -nt proc proc /proc
 echo "`cat /proc/cmdline|sed -e 's/^/ /'`" > /etc/cmdline
 umount /proc
 param() { egrep -qo " $1( |\$)" /etc/cmdline; }
-value() { egrep -o " $1=[^ ]+" /etc/cmdline | cut -d= -f2; }
+value() { egrep -o " $1=[^ ]+" /etc/cmdline | cut -d= -f2- ; }
 debug() { param debug && { echo -e "\n=====\n: Debugging started. Here is the shell for you.\n: Type your desired commands, hit Ctrl+D to continue booting\n: or press Ctrl+Alt+Del to reboot."; sh; echo -e "\n\n"; }; }
 # Enable pivot_root in initramfs to let it behave like initrd: we need that because aufs not work on initrd but works on tmpfs
 if [ -d /m ]; then
@@ -148,25 +148,25 @@ for x in $dev; do
 
   fs=`grep -w /dev/$x /tmp/devices | egrep -o ' TYPE=[^ ]+' | cut -d'"' -f2`
   if [ -z "$fs" ]; then 
-      echo "not be able to detect fs, will skip"; continue
+      echo "not be able to detect fs, will skip"; fs=''; continue
   else
-      echo "detected fs for $x is '$fs'"
+      echo "detected fs for $x is '$fs' mopt1 is ${MOPT1}"
   fi
   debug
   mountdir=$(basename $x)
   _MOPT1=$(echo $MOPT1 | egrep -o "${fs}:[^ ]+" | cut -f 2 -d:)
-  if [ ! -z "${_MOPT1}" ]; then MOPT="${_MOPT1}"; fi
+  if [ ! -z "${_MOPT1}" ]; then USE_MOPT="${_MOPT1}"; else USE_MOPT=$MOPT; fi
   if [ "$fs" = "vfat" ] ||  [ "$fs" = "exfat" ]; then
-          echo "/dev/$x /mnt/$mountdir $fs $MOPT,umask=0,utf8 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$mountdir $fs ${USE_MOPT},umask=0,utf8 0 0" >>/etc/fstab
   elif [ "$fs" = "iso9660" ]; then
-          echo "/dev/$x /mnt/$mountdir $fs $MOPT,ro 0 0" >>/etc/fstab
+          echo "/dev/$x /mnt/$mountdir $fs ${USE_MOPT},ro 0 0" >>/etc/fstab
   elif $(echo $x | grep mapper >/dev/null 2>&1);then
         #echo "/dev/$x /mnt/$mountdir $fs ${MOPT},x-systemd.device-timeout=1 0 0" >>/etc/fstab
-        echo "/dev/$x /mnt/$mountdir $fs ${MOPT} 0 0" >>/etc/fstab
+        echo "/dev/$x /mnt/$mountdir $fs ${USE_MOPT} 0 0" >>/etc/fstab
   else
-          echo "/dev/$x /mnt/$mountdir $fs $MOPT 0 0" >>/etc/fstab
+        echo "/dev/$x /mnt/$mountdir $fs ${USE_MOPT} 0 0" >>/etc/fstab
   fi
-  
+
   if [ -z "$KPATH" ] && [ ! -z "$KEXEC" ]; then KPATH=$(dirname $KEXEC); fi
   echo "done populating /etc/fstab with detected device entries $x"
   debug

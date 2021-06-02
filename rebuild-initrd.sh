@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 echo "Start rebuild initrd.xz"
 
@@ -21,9 +21,11 @@ else
     OUT=$(readlink -f $2)
 fi
 
+
 if [ ! -f "$INF" ]; then
     INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz /mnt/doc/opc-backup/initrd-template.xz 2>/dev/null | head -n1)
     echo "Origin initrd.xz as input file $INF does not exist. Use template one $INF"
+fi
 
 mkdir /tmp/initrd_$$
 cd /tmp/initrd_$$
@@ -74,7 +76,7 @@ if [ ! -z "$KVERS" ]; then
         cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi} $DESTDIR/
         mkdir -p $DESTDIR/drivers
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/drivers/
-        cp -a $SRCDIR/fs/{jfs.ko,reiserfs.ko,xfs.ko,f2fs.ko,fat.ko,isofs.ko,nls.ko,overlayfs.ko,udf.ko,ufs.ko,binfmt_misc.ko,btrfs.ko} $DESTDIR/drivers/
+        cp -a $SRCDIR/fs/{jfs,reiserfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/drivers/
         #cp -a $SRCDIR/misc/vboxvideo $DESTDIR/ || true
         depmod $KVER -b .
         echo "Done copying modules over"
