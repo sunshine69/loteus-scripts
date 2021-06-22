@@ -9,3 +9,7 @@ if [ -d /mnt/live/memory/images/${dn} ]; then
     fi
     umount -l /mnt/live/memory/images/${dn}
 fi
+
+losetup -a | grep "${MOD_FILE}" | awk '{print $1}' | cut -f1 -d: | while read loop_dev; do
+	losetup -d $loop_dev
+done
