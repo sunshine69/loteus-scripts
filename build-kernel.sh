@@ -15,16 +15,12 @@ fi
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export KSOURCE_DIR=$(pwd)
 
-pushd .
-cd $KSOURCE_DIR
-
 # Change this to match with what is in the https://kernel.org site
 # From kernel.org what is longer and stable? Used to detect what version we will build
 # This is the first number (version) and minor as now stable and longterm having the same version.
 #LONGTERM="5.4"
 LONGTERM="5.10"
 #LONGTERM="4.9"
-STABLE="5.12"
 STABLE="5.13"
 #STABLE="5.9"
 MAINLINE="5.14"
@@ -38,9 +34,18 @@ export VERSION
 #PATCHLEVEL=12
 PATCHLEVEL=10
 PATCHLEVEL=13
+PATCHLEVEL=14
 #PATCHLEVEL=${PATCHLEVEL:-8}
 export PATCHLEVEL
 ####
+
+if [ ! -d "${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL}" ]; then
+    echo "Kenrel source dir ${KSOURCE_DIR}/linux-${VERSION}.${PATCHLEVEL} does not exist. Aborted!"
+    exit 1
+fi
+
+pushd .
+cd $KSOURCE_DIR
 
 SUBLEVEL=$(grep -oP '(?<=SUBLEVEL \= )([\d]+)' linux-${VERSION}.${PATCHLEVEL}/Makefile)
 OLD_KVER="${VERSION}.${PATCHLEVEL}.${SUBLEVEL}"
