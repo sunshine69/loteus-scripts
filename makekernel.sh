@@ -18,7 +18,7 @@ fi
 build_external_module() {
     pushd .
     export KERNELRELEASE=$KVER
-    cd /home/stevek/src/bcwc_pcie
+    cd /mnt/nvme0n1p3/tmp/bcwc_pcie
     if [ -z "$KDIR" ]; then
         export KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}"
     else
@@ -26,8 +26,7 @@ build_external_module() {
     fi
     echo "Build bcwc_pcie with KDIR: $KDIR"
     #read _junk
-    make
-    make install
+    make clean; make; make install
     popd
 }
 
