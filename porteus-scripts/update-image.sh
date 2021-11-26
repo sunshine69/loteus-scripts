@@ -2,14 +2,14 @@
 
 SRC=$1
 
-[ -z "$SRC" ] && echo "Usage: $0 <image_file> [sub-command] [enc] [enc password]" && exit 1
+[ -z "$SRC" ] && echo "Usage: $0 <image_file> [sub-command] [enc] [enc password]\nif var CHROOT=command then it will mount proc and dev and chroot in. and execute the command" && exit 1
 
 [ -z "$WORKDIR" ] && WORKDIR=$(pwd)
 
 ENC=$3
 PASS=$4
 
-NAME_PREFIX='update_mod'
+NAME_PREFIX="update_mod_$$"
 
 CDIR=`pwd`; cd $WORKDIR; rm -rf ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}-wd >/dev/null 2>&1; mkdir ${NAME_PREFIX}1 ${NAME_PREFIX}2 ${NAME_PREFIX}3 ${NAME_PREFIX}-wd >/dev/null 2>&1
 
@@ -37,14 +37,20 @@ mount -t overlay overlay -o lowerdir=${NAME_PREFIX}1,upperdir=${NAME_PREFIX}2,wo
 
 if [ $? != 0 ]; then echo "Fatal Error mount layered fs"; umount ${NAME_PREFIX}1; losetup -d $LODEV >/dev/null 2>&1; exit 1;fi
 
-echo "Mount done, start subshell now on the mount point. Copy and modify files under it."
-
-if [ -z "$2" ]; then
-    echo "When done, type exit to exit this shell and I will continue "
-    ( cd ${NAME_PREFIX}3 && /bin/bash )
+if [ ! -z "${CHROOT}" ]; then
+	for _d in dev proc; do mount -o bind /${_d} ${NAME_PREFIX}3/${_d}; done
+	chroot ${NAME_PREFIX}3 /bin/sh -c "${CHROOT}"
+	for _d in dev proc; do umount ${NAME_PREFIX}3/${_d}; done
+	
 else
-    echo "will execute script in the dir ${NAME_PREFIX}3"
-    ( cd ${NAME_PREFIX}3 && /bin/bash $2 )
+	echo "Mount done, start subshell now on the mount point. Copy and modify files under it."
+	if [ -z "$2" ]; then
+	    echo "When done, type exit to exit this shell and I will continue "
+	    ( cd ${NAME_PREFIX}3 && /bin/bash )
+	else
+	    echo "will execute script in the dir ${NAME_PREFIX}3"
+	    ( cd ${NAME_PREFIX}3 && /bin/bash $2 )
+	fi
 fi
 
 cd $WORKDIR
@@ -59,6 +65,7 @@ if [ -z "$SQUASHFS_OPT" ]; then
 	echo "1. -comp zstd -b 1024K -Xcompression-level 19 - good compress but compress slow"
 	echo "2. -comp gzip -b 1M - bigger size than zstd"
 	echo "3. -comp xz -b 1M - compress best but slowest"
+	echo "4. Abort. Do not do anything"
 	echo "Enter your selection as number or your own option string. Hit enter to choose default"
 	read ans
 	case "$ans" in
@@ -73,6 +80,13 @@ if [ -z "$SQUASHFS_OPT" ]; then
 			;;
 		3)
 			SQUASHFS_OPT="-comp xz";
+			;;
+		4)
+			umount ${NAME_PREFIX}3/dev || exit 1 
+			umount ${NAME_PREFIX}3/proc || exit 1
+			umount ${NAME_PREFIX}3; sleep 3; umount ${NAME_PREFIX}1 >/dev/null 2>&1
+			rm -rf ${NAME_PREFIX}3 ${NAME_PREFIX}2 ${NAME_PREFIX}1 wd
+			exit 0
 			;;
 		*)
 			if [ ! -z "$ans" ]; then SQUASHFS_OPT="$ans"; fi
