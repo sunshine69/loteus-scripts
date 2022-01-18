@@ -108,5 +108,5 @@ echo "Output file $OUT"
 rm -rf /tmp/initrd_$$
 
 if [ ! -z "$KVER" ]; then
-   cp $TARGET_DIR/porteus-kernel-$KVER.tar.sfx /mnt/doc/tmp/
+   cp $TARGET_DIR/porteus-kernel-$KVER.tar.sfx /mnt/doc/opc-backup/
 fi
