@@ -73,10 +73,10 @@ if [ ! -z "$KVERS" ]; then
         echo Copy some modules over
         mkdir -p $DESTDIR
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
-        cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi} $DESTDIR/
+        cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh} $DESTDIR/
         mkdir -p $DESTDIR/drivers
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/drivers/
-        cp -a $SRCDIR/fs/{jfs,reiserfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/drivers/
+        cp -a $SRCDIR/fs/{ntfs3,jfs,reiserfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/drivers/
         #cp -a $SRCDIR/misc/vboxvideo $DESTDIR/ || true
         depmod $KVER -b .
         echo "Done copying modules over"
@@ -107,6 +107,6 @@ cd $CWD
 echo "Output file $OUT"
 rm -rf /tmp/initrd_$$
 
-if [ ! -z "$KVER" ]; then
-   cp $TARGET_DIR/porteus-kernel-$KVER.tar.sfx /mnt/doc/opc-backup/
-fi
+#if [ ! -z "$KVER" ]; then
+#   cp $TARGET_DIR/porteus-kernel-$KVER.tar.sfx /mnt/doc/opc-backup/
+#fi
