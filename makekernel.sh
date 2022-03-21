@@ -18,7 +18,7 @@ fi
 build_external_module() {
     pushd .
     export KERNELRELEASE=$KVER
-    cd /mnt/nvme0n1p3/tmp/bcwc_pcie
+    cd /mnt/portdata/tmp/bcwc_pcie
     if [ -z "$KDIR" ]; then
         export KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}"
     else

@@ -18,6 +18,7 @@ export BOOT_DIR=$(dirname $BZIMAGE_FULL_PATH)
 
 [ -z "$PROMPT" ] && PROMPT=y
 
-[ -z "$TARGET_DIR" ] && TARGET_DIR=$(dirname $PORT_DIR)/build/kernel-binary
+# [ -z "$TARGET_DIR" ] && TARGET_DIR=$(dirname $PORT_DIR)/build/kernel-binary
+[ -z "$TARGET_DIR" ] && TARGET_DIR=/mnt/portdata/build/kernel-binary
 
 echo "TARGET_DIR=$TARGET_DIR PORT_DIR $PORT_DIR BOOT_DIR $BOOT_DIR"

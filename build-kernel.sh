@@ -24,7 +24,7 @@ LONGTERM="5.10"
 #LONGTERM="4.9"
 STABLE="5.16"
 #STABLE="5.9"
-MAINLINE="5.16"
+MAINLINE="5.17"
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
