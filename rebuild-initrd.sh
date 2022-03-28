@@ -62,8 +62,23 @@ if [ ! -z "$KVERS" ]; then
         fi
 
         if [ -z "$SRCDIR_ENV" ]; then
-            mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
-            SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
+            if [ -f $KBUILDDIR/000-$KVER.xzm ]; then
+                mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
+                SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
+            else
+                if [ -d /lib/modules/$KVER ]; then
+                    SRCDIR=/lib/modules/${KVER}/kernel
+                else
+                    echo "Can not auto parse the kernel module dir. Enter it here: "
+                    read _kmoddir
+                    if [ ! -z "$_kmoddir" ]; then
+                        SRCDIR=$_kmoddir/kernel
+                    else
+                        echo "empty anser, aborting"
+                        exit 1
+                    fi
+                fi
+            fi
         else
             SRCDIR=$SRCDIR_ENV
         fi
@@ -73,6 +88,8 @@ if [ ! -z "$KVERS" ]; then
         echo Copy some modules over
         mkdir -p $DESTDIR
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
+        mkdir -p $DESTDIR/arch/x86
+        cp -a $SRCDIR/arch/x86/crypto $DESTDIR/arch/x86/
         cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh} $DESTDIR/
         mkdir -p $DESTDIR/drivers
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/drivers/
