@@ -15,6 +15,7 @@ if [ -d /m ]; then
     echo "Start to load modules from initrd ..."
     if [ -d /lib/modules/`uname -r` ]; then
       if [ ! -z "$KMODS" ]; then KMODS=$(echo $KMODS | sed 's/,/ /'); fi
+      # essiv is for crypt dm, crc32 for f2fs - these are not auto load when main modules loads for some reason
       for MODULE in $KMODS essiv crc32 libcrc32c hid-apple mac_hid applesmc input_polldev mbcache ntfs3 overlay exportfs ext4 fat vfat fuse isofs nls_cp437 nls_iso8859-1 nls_utf8 reiserfs squashfs xfs f2fs jfs libata ahci libahci sata_sil24 pdc_adma sata_qstor sata_sx4 ata_piix sata_mv sata_nv sata_promise sata_sil sata_sis sata_svw sata_uli sata_via sata_vsc loop cdrom hid usbhid mptscsih mptspi mptsas tifm_core cb710 mmc_block mmc_core sdhci sdhci-pci wbsd tifm_sd cb710-mmc via-sdmmc vub300 sdhci-pltfm md_mod dm_mod dm_raid cryptd aes aes_generic aes_x86_64 aes_i586 dm_crypt cbc sha256_generic xts scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod usb-common usbcore ehci-hcd ehci-pci ohci-hcd uhci-hcd xhci-hcd usb-storage virtio virtio_blk virtio_pci virtio_net virtio_scsi; do
         modprobe $MODULE >> /loadmodules.log 2>&1
         if [ "$?" != "0" ]; then rmmod $MODULE || true; fi
@@ -77,7 +78,14 @@ parse_passphrase() {
         PASSPHRASE=$(cat /sys/devices/virtual/dmi/id/product_uuid | $HASHFUNC | cut -f1 -d' ')
     fi
 }
-
+# Detect if we have kernel ntfs3 mod
+if `grep ntfs3 /proc/filesystems >/dev/null 2>&1`; then 
+    NTFS_TYPE="ntfs3"
+    MOUNT_NTFS_CMD="mount -t ntfs3 -o $MOPT"
+else 
+    NTFS_TYPE="ntfs-3g"
+    MOUNT_NTFS_CMD="ntfs-3g -o $MOPT"
+fi
 # Device Functions:
 detect_fs_type() { # where blkid does not understand that file system we need this hack
     echo "detect_fs_type $1"
@@ -189,7 +197,7 @@ for x in $dev; do
   fi
   if [ "$fs" = "ntfs" ]; then
     echo "detect ntfs going to mount with -o $MOPT"
-    ntfs-3g /dev/$x /mnt/$mountdir -o $MOPT 
+    $MOUNT_NTFS_CMD /dev/$x /mnt/$mountdir
     if [ $? != 0 ]; then echo "mount error"; sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; fi
     for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${mountdir}/${FROM} /mnt/${mountdir}/${KPATH}; do
       if [ "$KMOD_DETECTED" == "y" ]; then break; fi
@@ -251,7 +259,7 @@ if [ "$fs" ]; then
     if [ "$fs" = "vfat" ]; then
         mount -n /dev/$1 /mnt/$mountdir -o $MOPT,umask=0,utf8 2>/dev/null || rmdir /mnt/$mountdir
     elif [ "$fs" = "ntfs" ]; then
-        ntfs-3g /dev/$1 /mnt/${mountdir} -o $MOPT 2>/dev/null || rmdir /mnt/${mountdir}
+        $MOUNT_NTFS_CMD /dev/$1 /mnt/${mountdir} 2>/dev/null || rmdir /mnt/${mountdir}
     else
         mount -n /dev/$1 /mnt/${mountdir} -o $MOPT 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /dev/$1 /mnt/${mountdir} -o $MOPT || rmdir /mnt/${mountdir}; }
     fi
@@ -839,7 +847,7 @@ else
         mount -n --move "/mnt/${_mountdir}" "/union/mnt/${_mountdir}" && rmdir "/mnt/${_mountdir}"
     done
 fi
-sed -i 's/ ntfs / ntfs-3g /g' /etc/fstab
+sed -i "s/ ntfs / $NTFS_TYPE /g" /etc/fstab
 echo -e "\n# Hotplugged devices:" >> /etc/fstab
 mv /union/etc/fstab /union/etc/fstab-orig
 cp -f /etc/fstab /union/etc/
