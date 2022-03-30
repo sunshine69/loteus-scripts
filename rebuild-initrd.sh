@@ -90,7 +90,7 @@ if [ ! -z "$KVERS" ]; then
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
         mkdir -p $DESTDIR/arch/x86 $DESTDIR/drivers $DESTDIR/fs/ $DESTDIR/drivers/platform
         cp -a $SRCDIR/arch/x86/crypto $DESTDIR/arch/x86/
-        cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh,usb,thunderbolt} $DESTDIR/drivers/
+        cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh,usb,thunderbolt,nvme} $DESTDIR/drivers/
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/drivers/
         cp -a $SRCDIR/drivers/platform/x86 $DESTDIR/drivers/platform/
         cp -a $SRCDIR/fs/{ntfs3,jfs,reiserfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/fs/
