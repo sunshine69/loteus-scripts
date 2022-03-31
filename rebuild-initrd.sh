@@ -23,7 +23,10 @@ fi
 
 
 if [ ! -f "$INF" ]; then
-    INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz /mnt/doc/opc-backup/initrd-template.xz 2>/dev/null | head -n1)
+    INF=$SCRIPT_DIR/initrd-template.xz
+    if [ ! -f $INF ]; then
+        INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz /mnt/doc/opc-backup/initrd-template.xz 2>/dev/null | head -n1)
+    fi
     echo "Origin initrd.xz as input file $INF does not exist. Use template one $INF"
 fi
 
@@ -74,7 +77,7 @@ if [ ! -z "$KVERS" ]; then
                     if [ ! -z "$_kmoddir" ]; then
                         SRCDIR=$_kmoddir/kernel
                     else
-                        echo "empty anser, aborting"
+                        echo "empty answer, aborting"
                         exit 1
                     fi
                 fi
@@ -113,7 +116,7 @@ echo "Get into the new initrd root dir /tmp/initrd_$$ and modify things if u nee
 
 echo "Building ..."
 
-mv $OUT ${OUT}.bak
+[ -f $OUT ] && mv $OUT ${OUT}.bak
 echo "Kernel modules file list"
 find ./lib/modules/
 #if $(which pixz >/dev/null 2>&1); then COMP_CMD=pixz; else COMP_CMD=pigz; fi
