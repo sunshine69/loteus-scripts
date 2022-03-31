@@ -45,6 +45,7 @@ rm -rf kmod
 cp -a $KIMAGE_PATH $WORK_DIR/porteus-kernel/bzImage 
 KVERS=$KVER $SCRIPT_DIR/rebuild-initrd.sh $WORK_DIR/porteus-kernel/initrd.xz
 cp $SCRIPT_DIR/common.sh $SCRIPT_DIR/porteus-install-kernel.sh $WORK_DIR/porteus-kernel/
+chmod +x $SCRIPT_DIR/porteus-install-kernel.sh
 $SCRIPT_DIR/porteus-scripts/repack-porteus-kernel.sh porteus-kernel-$KVER.tar.sfx
 popd
 mv $WORK_DIR/porteus-kernel-$KVER.tar.sfx .
