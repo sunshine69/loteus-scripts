@@ -95,11 +95,14 @@ if [ ! -z "$KVERS" ]; then
         echo Copy some modules over
         mkdir -p $DESTDIR
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
-        mkdir -p $DESTDIR/arch/x86 $DESTDIR/drivers $DESTDIR/fs/ $DESTDIR/drivers/platform
+        mkdir -p $DESTDIR/arch/x86 $DESTDIR/drivers $DESTDIR/fs/ $DESTDIR/drivers/platform $DESTDIR/drivers/staging $DESTDIR/drivers/hwmon/
         cp -a $SRCDIR/arch/x86/crypto $DESTDIR/arch/x86/
-        cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh,usb,thunderbolt,nvme} $DESTDIR/drivers/
-        cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/drivers/
+        cp -a $SRCDIR/drivers/staging/{apple-bce,apple-ibridge} $DESTDIR/drivers/staging/
+
+        cp -a $SRCDIR/drivers/{input,hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh,usb,thunderbolt,nvme} $DESTDIR/drivers/
+        cp -a $SRCDIR/drivers/hwmon/applesmc.ko $DESTDIR/drivers/hwmon/
         cp -a $SRCDIR/drivers/platform/x86 $DESTDIR/drivers/platform/
+        cp -a $SRCDIR/sound $DESTDIR/
         cp -a $SRCDIR/fs/{ntfs3,jfs,reiserfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/fs/
         #cp -a $SRCDIR/misc/vboxvideo $DESTDIR/ || true
         depmod $KVER -b .
