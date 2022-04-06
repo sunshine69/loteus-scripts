@@ -27,7 +27,11 @@ if [ ! -f "$INF" ]; then
     if [ ! -f $INF ]; then
         INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz /mnt/doc/opc-backup/initrd-template.xz 2>/dev/null | head -n1)
     fi
-    echo "Origin initrd.xz as input file $INF does not exist. Use template one $INF"
+    if [ -z "$INF" ]; then echo "Enter path to initrd: "; read INF ; fi
+    if [ ! -f $INF ]; then
+        echo "Origin initrd.xz as input file $INF does not exist. Aborting..."
+        exit 1
+    fi
 fi
 
 mkdir /tmp/initrd_$$
