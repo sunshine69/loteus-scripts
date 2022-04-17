@@ -2,8 +2,7 @@
 ### linuxc script by fanthom <http://www.porteus.org>
 ### Rework to support many features by stevek for his usage
 
-### This macbook version pro 2019 is so unstable (or my machine has a hardware flaw) that if we load these apple keyboard first when starting X with second monitor it crashes. So this is not to load it apple_bce
-# The end result is we do not have keyboard work at boot to enter passphrase, this can be done using usb keyboard or boot usb
+# These staging apple bce tested with macbook pro 2018 but for 2019 it crashes if second monitor connected at boot.
 
 export PATH=/bin:/usr/bin:./
 mount -nt proc proc /proc
@@ -19,7 +18,7 @@ if [ -d /m ]; then
     if [ -d /lib/modules/`uname -r` ]; then
       if [ ! -z "$KMODS" ]; then KMODS=$(echo $KMODS | sed 's/,/ /'); fi
       # essiv is for crypt dm, crc32 for f2fs - these are not auto load when main modules loads for some reason
-      for MODULE in $KMODS nvme-core nvme essiv crc32 libcrc32c thunderbolt input_polldev mbcache ntfs3 overlay exportfs ext4 fat vfat fuse isofs nls_cp437 nls_iso8859-1 nls_utf8 reiserfs squashfs xfs f2fs jfs libata ahci libahci sata_sil24 pdc_adma sata_qstor sata_sx4 ata_piix sata_mv sata_nv sata_promise sata_sil sata_sis sata_svw sata_uli sata_via sata_vsc loop cdrom hid usbhid mptscsih mptspi mptsas tifm_core cb710 mmc_block mmc_core sdhci sdhci-pci wbsd tifm_sd cb710-mmc via-sdmmc vub300 sdhci-pltfm md_mod dm_mod dm_raid cryptd aes aes_generic aes_x86_64 aes_i586 dm_crypt cbc sha256_generic xts scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod usb-common usbcore xhci-pci ehci-hcd ehci-pci ohci-hcd uhci-hcd xhci-hcd usb-storage virtio virtio_blk virtio_pci virtio_net virtio_scsi; do
+      for MODULE in $KMODS nvme-core nvme essiv crc32 libcrc32c thunderbolt hid-apple mac_hid applesmc apple_ibridge apple_bce apple_bl apple_ib_als applespi input_polldev mbcache ntfs3 overlay exportfs ext4 fat vfat fuse isofs nls_cp437 nls_iso8859-1 nls_utf8 reiserfs squashfs xfs f2fs jfs libata ahci libahci sata_sil24 pdc_adma sata_qstor sata_sx4 ata_piix sata_mv sata_nv sata_promise sata_sil sata_sis sata_svw sata_uli sata_via sata_vsc loop cdrom hid usbhid mptscsih mptspi mptsas tifm_core cb710 mmc_block mmc_core sdhci sdhci-pci wbsd tifm_sd cb710-mmc via-sdmmc vub300 sdhci-pltfm md_mod dm_mod dm_raid cryptd aes aes_generic aes_x86_64 aes_i586 dm_crypt cbc sha256_generic xts scsi_mod scsi_transport_spi scsi_transport_sas sd_mod sr_mod usb-common usbcore xhci-pci ehci-hcd ehci-pci ohci-hcd uhci-hcd xhci-hcd usb-storage virtio virtio_blk virtio_pci virtio_net virtio_scsi; do
         modprobe $MODULE >> /loadmodules.log 2>&1
         if [ "$?" != "0" ]; then rmmod $MODULE || true; fi
       done

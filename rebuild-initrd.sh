@@ -2,6 +2,8 @@
 
 echo "Start rebuild initrd.xz"
 
+SYSTEM_PRODUCT_NAME=$(dmidecode -s 'system-product-name')
+
 CWD="$(pwd)"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -23,8 +25,15 @@ fi
 
 
 if [ ! -f "$INF" ]; then
-    INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz /mnt/doc/opc-backup/initrd-template.xz 2>/dev/null | head -n1)
-    echo "Origin initrd.xz as input file $INF does not exist. Use template one $INF"
+    INF=$SCRIPT_DIR/initrd-template.xz
+    if [ ! -f $INF ]; then
+        INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz /mnt/doc/opc-backup/initrd-template.xz 2>/dev/null | head -n1)
+    fi
+    if [ -z "$INF" ]; then echo "Enter path to initrd: "; read INF ; fi
+    if [ ! -f $INF ]; then
+        echo "Origin initrd.xz as input file $INF does not exist. Aborting..."
+        exit 1
+    fi
 fi
 
 mkdir /tmp/initrd_$$
@@ -32,7 +41,17 @@ cd /tmp/initrd_$$
 
 xzcat $INF | cpio -id
 #zcat $INF | cpio -id
-cp -a $SCRIPT_DIR/linuxrc .
+
+LINUXRC_FILE="linuxrc"
+if [ "$SYSTEM_PRODUCT_NAME" = "MacBookPro15,1" ]; then
+    echo "SYSTEM_PRODUCT_NAME MacBookPro15,1 detected. WILL USE linuxrc.mpb2018. IT MAY CRASH. If it is say no here"
+    echo "Use macbookpro 2018 linuxrc? y/n"
+    read _ans
+    if [ "$_ans" = "y" ]; then
+        LINUXRC_FILE="linuxrc.mpb2018"
+    fi
+fi
+cp -a $SCRIPT_DIR/${LINUXRC_FILE} .
 
 echo "Copy modules into - /tmp/initrd_$$/lib/modules/ if needed and then type kernel version in"
 
@@ -62,8 +81,23 @@ if [ ! -z "$KVERS" ]; then
         fi
 
         if [ -z "$SRCDIR_ENV" ]; then
-            mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
-            SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
+            if [ -f $KBUILDDIR/000-$KVER.xzm ]; then
+                mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
+                SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
+            else
+                if [ -d /lib/modules/$KVER ]; then
+                    SRCDIR=/lib/modules/${KVER}/kernel
+                else
+                    echo "Can not auto parse the kernel module dir. Enter it here: "
+                    read _kmoddir
+                    if [ ! -z "$_kmoddir" ]; then
+                        SRCDIR=$_kmoddir/kernel
+                    else
+                        echo "empty answer, aborting"
+                        exit 1
+                    fi
+                fi
+            fi
         else
             SRCDIR=$SRCDIR_ENV
         fi
@@ -73,10 +107,15 @@ if [ ! -z "$KVERS" ]; then
         echo Copy some modules over
         mkdir -p $DESTDIR
         cp -a $SRCDIR/{crypto,lib} $DESTDIR/
-        cp -a $SRCDIR/drivers/{hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh} $DESTDIR/
-        mkdir -p $DESTDIR/drivers
-        cp -a $SRCDIR/drivers/hwmon/applesmc.ko $SRCDIR/drivers/input/input-polldev.ko $DESTDIR/drivers/
-        cp -a $SRCDIR/fs/{ntfs3,jfs,reiserfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/drivers/
+        mkdir -p $DESTDIR/arch/x86 $DESTDIR/drivers $DESTDIR/fs/ $DESTDIR/drivers/platform $DESTDIR/drivers/staging $DESTDIR/drivers/hwmon/
+        cp -a $SRCDIR/arch/x86/crypto $DESTDIR/arch/x86/
+        cp -a $SRCDIR/drivers/staging/{apple-bce,apple-ibridge} $DESTDIR/drivers/staging/
+
+        cp -a $SRCDIR/drivers/{input,hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh,usb,thunderbolt,nvme} $DESTDIR/drivers/
+        cp -a $SRCDIR/drivers/hwmon/applesmc.ko $DESTDIR/drivers/hwmon/
+        cp -a $SRCDIR/drivers/platform/x86 $DESTDIR/drivers/platform/
+        cp -a $SRCDIR/sound $DESTDIR/
+        cp -a $SRCDIR/fs/{ntfs3,jfs,reiserfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/fs/
         #cp -a $SRCDIR/misc/vboxvideo $DESTDIR/ || true
         depmod $KVER -b .
         echo "Done copying modules over"
@@ -96,7 +135,7 @@ echo "Get into the new initrd root dir /tmp/initrd_$$ and modify things if u nee
 
 echo "Building ..."
 
-mv $OUT ${OUT}.bak
+[ -f $OUT ] && mv $OUT ${OUT}.bak
 echo "Kernel modules file list"
 find ./lib/modules/
 #if $(which pixz >/dev/null 2>&1); then COMP_CMD=pixz; else COMP_CMD=pigz; fi
