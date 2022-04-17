@@ -62,6 +62,7 @@ RAMMOD=`value rammod | sed 's/;/|/g'`
 ROOTCOPY=`value rootcopy`
 livedbg=/var/log/livedbg
 PASSPHRASE=`value pass`; [ "$PASSPHRASE" ] || PASSPHRASE=
+PASSPHRASE_FILE=`value passfile`; [ "$PASSPHRASE_FILE" ] || PASSPHRASE_FILE=
 RAW_DEV=`value raw`; [ "$RAW_DEV" ] || RAW_DEV=`value r`
 FACTORYRESET=`value reset`; [ $FACTORYRESET ] || FACTORYRESET=`value factoryreset`; [ $FACTORYRESET ] || FACTORYRESET='0'
 KVER=`uname -r`
@@ -344,27 +345,6 @@ dirname() {
     _n=$(basename "$1")
     echo "$1" | sed "s@/${_n}@@"
 }
-
-echo "start portetus init script - modified by stevek version v1.10"
-# Make all drivers available: stevek move it first so we have module
-echo "mount /dev ..."
-debug
-mount -nt devtmpfs none /dev
-sleep 3 # devices settle down
-echo -e "done\ngenerate hostname ...\n"
-debug
-
-parse_passphrase
-
-[ -z "$HOSTNAME" ] && HOSTNAME=$(cat /sys/class/dmi/id/product_name | cut -f1 -d-)
-
-echo ${HOSTNAME} > /proc/sys/kernel/hostname
-
-if param pause; then
-    echo "Start shell ..."
-    ls /dev/sd* /dev/nvm* 2>/dev/null
-    /bin/sh
-fi    
 generate_devices() {
 echo "Detect block devices, create /etc/fstab and mount devices ..."
 blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* /dev/mapper/* /dev/sr* | grep -v /dev/loop | grep -v BitLocker | grep -v 'EFI system partition' | grep TYPE > /tmp/devices
@@ -376,7 +356,51 @@ blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* /dev/mapper/* /dev/sr* | grep 
 #   done
 #done
 }
+
+echo "Start portetus init script - modified by stevek version v1.10"
+# Make all drivers available: stevek move it first so we have module
+echo "mount /dev ..."
+debug
+mount -nt devtmpfs none /dev
+sleep 3 # devices settle down
+echo -e "done\ngenerate hostname ...\n"
+debug
+echo -e "generate_devices..."
 generate_devices
+echo -e "done generate_devices"
+debug
+if [ ! -z "${PASSPHRASE_FILE}" ]; then
+    mkdir -p /tmp/_passphrase_dev 
+    _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | cut -f 1 -d:)
+    if [ ! -z "${_PASSPHRASE_DEV}" ]; then
+        PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | cut -f 2 -d:)
+        mount /dev/${_PASSPHRASE_DEV} /tmp/_passphrase_dev
+        PASSPHRASE=$(cat /tmp/_passphrase_dev/${PASSPHRASE_FILE})
+    else
+        for block_dev in $(cat /tmp/devices); do
+            mount $block_dev /tmp/_passphrase_dev
+            if [ -f /tmp/_passphrase_dev/${PASSPHRASE_FILE} ]; then
+                PASSPHRASE=$(cat /tmp/_passphrase_dev/${PASSPHRASE_FILE})
+                umount -l /tmp/_passphrase_dev
+                rm -rf /tmp/_passphrase_dev
+                break
+            fi        
+        done
+    fi
+else
+    parse_passphrase
+fi
+echo -e "done parse passphrase"
+debug
+[ -z "$HOSTNAME" ] && HOSTNAME=$(cat /sys/class/dmi/id/product_name | cut -f1 -d-)
+
+echo ${HOSTNAME} > /proc/sys/kernel/hostname
+
+if param pause; then
+    echo "Start shell ..."
+    ls /dev/sd* /dev/nvm* 2>/dev/null
+    /bin/sh
+fi    
 fstab
 echo "Re-generate again as fstab will mount kernel module and load extra devices in."
 debug
