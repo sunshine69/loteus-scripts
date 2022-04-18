@@ -372,11 +372,18 @@ if [ ! -z "${PASSPHRASE_FILE}" ]; then
     mkdir -p /tmp/_passphrase_dev 
     _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | cut -f 1 -d:)
     if [ ! -z "${_PASSPHRASE_DEV}" ]; then
+        _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | cut -f 1 -d/)
+    fi
+    if [ ! -z "${_PASSPHRASE_DEV}" ]; then
         PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | cut -f 2 -d:)
         mount /dev/${_PASSPHRASE_DEV} /tmp/_passphrase_dev
         PASSPHRASE=$(cat /tmp/_passphrase_dev/${PASSPHRASE_FILE})
     else
-        for block_dev in $(cat /tmp/devices); do
+        for block_dev_line in $(cat /tmp/devices); do
+            _block_dev=$(echo $block_dev_line | egrep -o 'UUID="[^ ]+"' )
+            if [ -z "$_block_dev" ]; then 
+                continue
+            fi
             mount $block_dev /tmp/_passphrase_dev
             if [ -f /tmp/_passphrase_dev/${PASSPHRASE_FILE} ]; then
                 PASSPHRASE=$(cat /tmp/_passphrase_dev/${PASSPHRASE_FILE})
