@@ -372,11 +372,12 @@ debug
 if [ ! -z "${PASSPHRASE_FILE}" ]; then
     mkdir -p /tmp/_passphrase_dev 
     _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | cut -f 1 -d:)
+    PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | cut -f 2 -d:)
     if [ ! -z "${_PASSPHRASE_DEV}" ]; then
         _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | cut -f 1 -d/)
+        PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | cut -f 2 -d/)
     fi
     if [ ! -z "${_PASSPHRASE_DEV}" ]; then
-        PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | cut -f 2 -d:)
         mount /dev/${_PASSPHRASE_DEV} /tmp/_passphrase_dev
         PASSPHRASE=$(cat /tmp/_passphrase_dev/${PASSPHRASE_FILE})
     else
@@ -388,11 +389,15 @@ if [ ! -z "${PASSPHRASE_FILE}" ]; then
             mount $block_dev /tmp/_passphrase_dev
             if [ -f /tmp/_passphrase_dev/${PASSPHRASE_FILE} ]; then
                 PASSPHRASE=$(cat /tmp/_passphrase_dev/${PASSPHRASE_FILE})
+                echo "going to umount /tmp/_passphrase_dev"
+                debug
                 umount -l /tmp/_passphrase_dev
-                rm -rf /tmp/_passphrase_dev
                 break
             fi        
         done
+    fi
+    if [ -z "$PASSPHRASE" ]; then
+        echo "[WARN] PASSPHRASE_FILE is supplied but can not parse into PASSPHRASE"
     fi
 else
     parse_passphrase
