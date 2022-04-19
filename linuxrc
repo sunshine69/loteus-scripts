@@ -63,17 +63,25 @@ ROOTCOPY=`value rootcopy`
 livedbg=/var/log/livedbg
 PASSPHRASE=`value pass`; [ "$PASSPHRASE" ] || PASSPHRASE=
 PASSPHRASE_FILE=`value passfile`; [ "$PASSPHRASE_FILE" ] || PASSPHRASE_FILE=
+# without the /dev/
 RAW_DEV=`value raw`; [ "$RAW_DEV" ] || RAW_DEV=`value r`
 FACTORYRESET=`value reset`; [ $FACTORYRESET ] || FACTORYRESET=`value factoryreset`; [ $FACTORYRESET ] || FACTORYRESET='0'
 KVER=`uname -r`
 KPATH=`value kpath`; [ $KPATH ] || KPATH=
 KMOD_DETECTED=
 HOSTNAME=`value h`; [ $HOSTNAME ] || HOSTNAME=`value hn`; [ $HOSTNAME ] || HOSTNAME=`value hostname`
+# suggest to use started path /_keystore/<luks-header-file> so we have common place to put passphrase and luks header
 LUKS_HEAD=`value lh`
 UNION_FS_TYPE=`value unionfs`; [ $UNION_FS_TYPE ] || UNION_FS_TYPE='overlay'
 CHANGES_MOUNT=/memory/changes
 # kexec=/full/path/to/kernel/image to load secondary kernel. Same dir must have initrd.xz
 KEXEC=`value kexec`; [ $KEXEC ] || KEXEC=
+
+if [ ! -z "$LUKS_HEAD" ]; then 
+    CRYPTSETUP_OPT="--header $LUKS_HEAD"
+    echo "LUKS_HEAD (lh) supplied. CRYPTSETUP_OPT='$CRYPTSETUP_OPT'. Recommend to use the file from this path /_keystore/<<headerfile>"
+    if [ -z "$RAW_DEV" ]; then echo "If you want to use separate LUKS_HEAD you need to supply RAW_DEV using option r=" ; fi
+fi
 
 # generate hostname based on motherboard UUID if no hostname is given at all
 parse_passphrase() {
@@ -133,10 +141,10 @@ for x in $dev; do
             continue
           fi
 	  if [ -z "$PASSPHRASE" ]; then echo "$x ..."; PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p'); fi
-          parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
+          parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup $CRYPTSETUP_OPT --key-file=- luksOpen /dev/$x ${x}_DEC
           if [ $? != 0 ] && [ ! -z "$PASSPHRASE" ]; then 
 		echo "Failed, second try .."; PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p')
-   	  	parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen /dev/$x ${x}_DEC
+   	  	parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup $CRYPTSETUP_OPT --key-file=- luksOpen /dev/$x ${x}_DEC
           fi
           if [ $? == 0 ]; then
               x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
@@ -156,7 +164,7 @@ for x in $dev; do
             parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen /dev/$x ${x}_DEC
           else
             echo -e "/dev/$x => '$LUKS_HEAD' .....\n\n"
-            sh 
+            # sh 
             parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- --header=$LUKS_HEAD luksOpen /dev/$x ${x}_DEC
           fi
           if [ $? == 0 ]; then
@@ -348,6 +356,7 @@ dirname() {
 generate_devices() {
 echo "Detect block devices, create /etc/fstab and mount devices ..."
 blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* /dev/mapper/* /dev/sr* | grep -v /dev/loop | grep -v BitLocker | grep -v 'EFI system partition' | grep TYPE > /tmp/devices
+if [ ! -z "$RAW_DEV" ]; then blkid "/dev/$RAW_DEV" >> /tmp/devices; fi
 #blkid /dev/nvme* | grep -v 'EFI system partition' | grep -v 'BitLocker' | grep ' TYPE=' >> /tmp/devices
 #for listd in '/dev/sd??' '/dev/mmcblk?p?' '/dev/vd??'; do
 #   for d in $listd; do # add auto to some fs that blkid not know about
@@ -370,29 +379,32 @@ generate_devices
 echo -e "done generate_devices"
 debug
 if [ ! -z "${PASSPHRASE_FILE}" ]; then
-    mkdir -p /_passphrase_dev 
-    _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | cut -f 1 -d:)
-    PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | cut -f 2 -d:)
-    if [ ! -z "${_PASSPHRASE_DEV}" ]; then
-        _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | cut -f 1 -d/)
-        PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | cut -f 2 -d/)
-    fi
-    if [ ! -z "${_PASSPHRASE_DEV}" ]; then
-        mount /dev/${_PASSPHRASE_DEV} /_passphrase_dev
-        PASSPHRASE=$(cat /_passphrase_dev/${PASSPHRASE_FILE})
+    mkdir -p /_keystore 
+    if `echo "${PASSPHRASE_FILE}" | grep ':' >/dev/null 2>&1`; then
+        _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | egrep -o '^[^:]+')
+        PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | egrep -o '[^:]+$')
+    elif `echo "${PASSPHRASE_FILE}" | grep '/' >/dev/null 2>&1`; then
+        _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | egrep -o '^[^/]+')
+        PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | cut -f 2- -d/)
     else
-        for block_dev_line in $(cat /tmp/devices); do
-            _block_dev=$(echo $block_dev_line | egrep -o 'UUID="[^ ]+"' )
-            if [ -z "$_block_dev" ]; then 
-                continue
-            fi
-            mount $block_dev /_passphrase_dev
-            if [ -f /_passphrase_dev/${PASSPHRASE_FILE} ]; then
-                PASSPHRASE=$(cat /_passphrase_dev/${PASSPHRASE_FILE})
-                echo "going to umount /_passphrase_dev"
+        echo "[WARN] PASSPHRASE_FILE (opt passfile) supplied but haing no device separator. The format is <devicename>[:/]<path-to-file> "
+        _PASSPHRASE_DEV=""
+    fi
+    if [ ! -z "${_PASSPHRASE_DEV}" ] && [ -b /dev/${_PASSPHRASE_DEV} ]; then
+        mount /dev/${_PASSPHRASE_DEV} /_keystore
+        PASSPHRASE=$(cat /_keystore/${PASSPHRASE_FILE})
+    else
+        [ ! -z "${_PASSPHRASE_DEV}" ] && PASSPHRASE_FILE="${_PASSPHRASE_DEV}/$PASSPHRASE_FILE"
+        _securedev=`egrep -v 'TYPE="sw|TYPE="LVM|TYPE=".*_raid_member"' /tmp/devices 2>/dev/null | cut -f 1 -d: | sort | uniq`
+        for block_dev in $_securedev; do
+            echo "trying to search for ${PASSPHRASE_FILE} in dev $block_dev ..."
+            mount $block_dev /_keystore
+            if [ -f /_keystore/${PASSPHRASE_FILE} ]; then
+                PASSPHRASE=$(cat /_keystore/${PASSPHRASE_FILE})
                 debug
-                umount /_passphrase_dev
                 break
+            else
+                umount /_keystore
             fi        
         done
     fi
@@ -523,11 +535,11 @@ if [ "$CHANGES" ]; then
               LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
               echo $i"sha512 $CIMAGE_FILE"
               if [ -z "$PASSPHRASE" ]; then echo "$CIMAGE_FILE ..."; PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p'); fi
-              parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
+              parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup $CRYPTSETUP_OPT --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
               if [ $? != 0 ] && [ ! -z "$PASSPHRASE" ]; then 
 		echo "Failed, second try .."
 		PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p')
-		parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
+		parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup $CRYPTSETUP_OPT --key-file=- luksOpen $LODEV ${IMG_FILE}.$$
 	      fi
               fsck_dat /dev/mapper/${IMG_FILE}.$$
               mount /dev/mapper/${IMG_FILE}.$$ $IMAGE_MOUNT_DIR 2>/dev/null && touch $IMAGE_MOUNT_DIR/._test1 2>/dev/null
@@ -540,7 +552,7 @@ if [ "$CHANGES" ]; then
                     parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen $LODEV ${IMG_FILE}.$$
                 else
                     echo "$RAW_DEV $LUKS_HEAD ....."
-                    sh
+                    #sh
                     parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- --header=$LUKS_HEAD luksOpen $LODEV ${IMG_FILE}.$$
                 fi    
                 fsck_dat /dev/mapper/${IMG_FILE}.$$
@@ -725,8 +737,8 @@ for x in `cat /tmp/modules`; do
     NAME=`basename $x`; mkdir "/memory/images/$NAME"; LODEV=$(losetup -f); losetup $LODEV $x
     if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
        if [ ! -f "$PASSPHRASE" ]; then echo "$LODEV ..."; PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p'); parse_passphrase; echo $PASSPHRASE > $PASSPHRASE; fi
-       cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC
-       if [ $? != 0 ] && [ ! -z "$PASSPHRASE" ]; then echo "Failed, second try .."; PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p'); parse_passphrase; echo $PASSPHRASE > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup --key-file=- luksOpen $LODEV ${NAME}_DEC; fi
+       cat $PASSPHRASE | /usr/bin/cryptsetup $CRYPTSETUP_OPT --key-file=- luksOpen $LODEV ${NAME}_DEC
+       if [ $? != 0 ] && [ ! -z "$PASSPHRASE" ]; then echo "Failed, second try .."; PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p'); parse_passphrase; echo $PASSPHRASE > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup $CRYPTSETUP_OPT --key-file=- luksOpen $LODEV ${NAME}_DEC; fi
        mount /dev/mapper/${NAME}_DEC /memory/images/$NAME
     else
        _MOUNT_MOD=1 # only mount current kernel ver
