@@ -116,6 +116,7 @@ if [ ! -z "$KVERS" ]; then
         cp -a $SRCDIR/drivers/platform/x86 $DESTDIR/drivers/platform/
         cp -a $SRCDIR/sound $DESTDIR/
         cp -a $SRCDIR/fs/{ntfs3,jfs,reiserfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/fs/
+        cp -a $SRCDIR/misc $DESTDIR/
         #cp -a $SRCDIR/misc/vboxvideo $DESTDIR/ || true
         depmod $KVER -b .
         echo "Done copying modules over"

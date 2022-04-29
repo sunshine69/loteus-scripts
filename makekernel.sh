@@ -18,15 +18,18 @@ fi
 build_external_module() {
     pushd .
     export KERNELRELEASE=$KVER
-    cd /mnt/portdata/tmp/bcwc_pcie
-    if [ -z "$KDIR" ]; then
-        export KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}"
-    else
-        export KDIR="$KDIR"
-    fi
-    echo "Build bcwc_pcie with KDIR: $KDIR"
-    #read _junk
-    make clean; make; make install
+    #for kmoddir in bcwc_pcie apple-bce-drv apple-ib-drv; do
+    for kmoddir in bcwc_pcie; do
+        cd /mnt/portdata/tmp/$kmoddir
+        if [ -z "$KDIR" ]; then
+            export KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}"
+        else
+            export KDIR="$KDIR"
+        fi
+        echo "Build bcwc_pcie with KDIR: $KDIR"
+        #read _junk
+        make clean; make; make install
+    done
     popd
 }
 

@@ -583,12 +583,13 @@ if [ "$CHANGES" ]; then
         if [ "$FACTORYRESET" == '3' ]; then
           rm -rf ${CHANGES_MOUNT_SRC}/changes
         elif [ "$FACTORYRESET" == '1' ] || [ "$FACTORYRESET" == 'keephome' ];  then
-          mv ${CHANGES_MOUNT_SRC}/changes/rootdir/home ${CHANGES_MOUNT_SRC}/home_$$
+          #mv ${CHANGES_MOUNT_SRC}/changes/rootdir/home ${CHANGES_MOUNT_SRC}/home_$$
           rm -rf ${CHANGES_MOUNT_SRC}/changes.backup
           mv ${CHANGES_MOUNT_SRC}/changes ${CHANGES_MOUNT_SRC}/changes.backup
           mkdir -p "${CHANGES_MOUNT_SRC}/changes/rootdir"
           debug
-          mv ${CHANGES_MOUNT_SRC}/home_$$ ${CHANGES_MOUNT_SRC}/changes/rootdir/home
+          #mv ${CHANGES_MOUNT_SRC}/home_$$ ${CHANGES_MOUNT_SRC}/changes/rootdir/home
+	  mv ${CHANGES_MOUNT_SRC}/changes.backup/rootdir/home ${CHANGES_MOUNT_SRC}/changes/rootdir/
         elif [ "$FACTORYRESET" == '2' ] || [ "$FACTORYRESET" == 'backup' ];  then
             rm -rf ${CHANGES_MOUNT_SRC}/changes.backup
             mv ${CHANGES_MOUNT_SRC}/changes ${CHANGES_MOUNT_SRC}/changes.backup
@@ -608,9 +609,9 @@ if [ "$CHANGES" ]; then
                 read; rmdir /mnt/$DEV/$LPTH/changes; fail_chn
             else
                 echo $i"filesystem is posix compatible"; CHNDEV=/mnt/$DEV
-                rmdir ${CHANGES_MOUNT_SRC}/changes/mnt/* 2>/dev/null
-                rm -f ${CHANGES_MOUNT_SRC}/changes/var/lock/subsys/* /var/run/laptop-mode-tools/*
-                for x in `find ${CHANGES_MOUNT_SRC}/changes/var/run -name "*pid" 2>/dev/null`; do rm $x; done
+                rmdir ${CHANGES_MOUNT_SRC}/changes/rootdir/mnt/* 2>/dev/null
+                rm -f ${CHANGES_MOUNT_SRC}/changes/rootdir/var/lock/subsys/* /var/run/laptop-mode-tools/*
+                for x in `find ${CHANGES_MOUNT_SRC}/changes/rootdir/var/run -name "*pid" 2>/dev/null`; do rm $x; done
                 echo make symlink portdata for the app to know a fixed name to use non overlayfs file like docker
             fi
             echo "Success setup changes on device $DEV"
@@ -940,23 +941,24 @@ EOF
     debug
     echo "Create /tmp/rc.local for this host. In /etc/rc.local you can detect and exec it"
     if [ -f ${CHANGES_MOUNT_SRC}/${HOSTNAME}-rc.local ]; then
+	echo "Detect ${HOSTNAME}-rc.local in CHANGES_MOUNT_SRC, copying it to new root /tmp/"
         cp -a ${CHANGES_MOUNT_SRC}/${HOSTNAME}-rc.local /union/tmp/rc.local
         chown root:root /union/tmp/rc.local
         chmod 0600 /union/tmp/rc.local
     fi
     if [ -f ${CHANGES_MOUNT_SRC}/${HOSTNAME}-init.sh ]; then
+	echo "Detected ${HOSTNAME}-init.sh, copying it to /tmp/ in new root"
         cp -a ${CHANGES_MOUNT_SRC}/${HOSTNAME}-init.sh /union/tmp/${HOSTNAME}-init.sh
         chown root:root /union/tmp/${HOSTNAME}-init.sh
         chmod +x /union/tmp/${HOSTNAME}-init.sh
     fi
-
-    echo "Create /tmp/init-playbook.yaml for this host. In /etc/rc.local you can detect and run ansible-playbook on it to provision the host"
     if [ -f ${CHANGES_MOUNT_SRC}/${HOSTNAME}-init-playbook.yaml ]; then
+        echo "Detected ${HOSTNAME}-init-playbook.yaml, Create /tmp/init-playbook.yaml for this host. In /etc/rc.local you can detect and run ansible-playbook on it to provision the host"
         cp -a ${CHANGES_MOUNT_SRC}/${HOSTNAME}-init-playbook.yaml /union/tmp/init-playbook.yaml
         chown root:root /union/tmp/init-playbook.yaml
         chmod 0600 /union/tmp/init-playbook.yaml
     fi
-
+    debug
     pivot_root /union  /union/mnt/live
     echo "Execute commands in the new root eg. prepare, cleaning up before execting init."
     echo clean up systemd journal

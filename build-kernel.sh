@@ -23,8 +23,8 @@ export KSOURCE_DIR=$(pwd)
 LONGTERM="5.15"
 #LONGTERM="4.9"
 STABLE="5.16"
-#STABLE="5.9"
-MAINLINE="5.17"
+#STABLE="5.17"
+MAINLINE="5.18"
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
@@ -32,11 +32,10 @@ VERSION=5
 #VERSION=4
 export VERSION
 # Minor version (middle number)
-#PATCHLEVEL=12
 PATCHLEVEL=10
 PATCHLEVEL=15
-#PATCHLEVEL=16
-#PATCHLEVEL=14
+PATCHLEVEL=16
+#PATCHLEVEL=17
 #PATCHLEVEL=${PATCHLEVEL:-8}
 export PATCHLEVEL
 ####
