@@ -43,14 +43,14 @@ xzcat $INF | cpio -id
 #zcat $INF | cpio -id
 
 LINUXRC_FILE="linuxrc"
-if [ "$SYSTEM_PRODUCT_NAME" = "MacBookPro15,1" ]; then
-    echo "SYSTEM_PRODUCT_NAME MacBookPro15,1 detected. WILL USE linuxrc.mpb2018. IT MAY CRASH. If it is say no here"
-    echo "Use macbookpro 2018 linuxrc? y/n"
-    read _ans
-    if [ "$_ans" = "y" ]; then
-        LINUXRC_FILE="linuxrc.mpb2018"
-    fi
-fi
+#if [ "$SYSTEM_PRODUCT_NAME" = "MacBookPro15,1" ]; then
+#    echo "SYSTEM_PRODUCT_NAME MacBookPro15,1 detected. WILL USE linuxrc.mpb2018. IT MAY CRASH. If it is say no here"
+#    echo "Use macbookpro 2018 linuxrc? y/n"
+#    read _ans
+#    if [ "$_ans" = "y" ]; then
+#        LINUXRC_FILE="linuxrc.mpb2018"
+#    fi
+#fi
 cp -a $SCRIPT_DIR/${LINUXRC_FILE} .
 
 echo "Copy modules into - /tmp/initrd_$$/lib/modules/ if needed and then type kernel version in"

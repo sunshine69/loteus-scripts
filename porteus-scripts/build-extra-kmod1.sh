@@ -16,9 +16,19 @@ else
     fi
 fi
 
-vboxconfig
+which vboxconfig
+if [ ! $? = 0 ]; then
+	#cd /usr/src/virtualbox-6.1.32/
+	#make; make install
+	echo "Run dkms autoinstall"
+	dkms remove virtualbox/6.1.32 --all
+	dkms add virtualbox/6.1.32
+	dkms autoinstall
+else 
+	vboxconfig
+fi
 pushd .
-cd /mnt/nvme0n1p3/tmp/Linux-Magic-Trackpad-2-Driver/linux/drivers/hid/ && make clean && make && cp hid-magicmouse.ko /lib/modules/${KVER}/misc/
-cd /mnt/nvme0n1p3/tmp/bcwc_pcie/ && make clean && make && make install
+#cd /mnt/portdata/tmp/Linux-Magic-Trackpad-2-Driver/linux/drivers/hid/ && make clean && make && cp hid-magicmouse.ko /lib/modules/${KVER}/misc/
+cd /mnt/portdata/tmp/bcwc_pcie/ && make clean && make && make install
 
 echo "remember to run build-extra-kmod2.sh as well after compression"
