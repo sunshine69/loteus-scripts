@@ -17,6 +17,7 @@ if ! $(ls porteus-kernel/000-${KVER}* >/dev/null 2>&1); then
     echo "No matching kernel version detected, abort"
     exit 1
 fi
+rm -f porteus-kernel/*.bak
 tar cf $TAR_FNAME porteus-kernel
 cat ${SCRIPT_DIR}/self-extract.sh $TAR_FNAME > $TARGET_FNAME
 rm -rf $TAR_FNAME porteus-kernel

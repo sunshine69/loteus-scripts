@@ -463,9 +463,6 @@ if [ ! -z "$KEXEC" ]; then
     fi    
 fi
 
-echo -e "done\ncreating fstab now ...\n"
-debug
-
 echo -e "done\n$i searching for $SGN file ...\n"
 debug
 if [ "$IP" ]; then BOOTDEV=network; SGNDEV=/mnt/nfs
@@ -501,10 +498,24 @@ PTH=`echo $PTH | sed 's|//|/|'`
 echo $i"using data from $PTH"
 echo  $PTH > /etc/homedrv
 echo -e $i"done.\nCreate symlinks used often by porteus scripts ...\n"
-debug
-ln -sf $PTH/modules  /porteus/modules
-ln -sf $PTH/optional /porteus/optional
+[ -d $PTH/modules ] && ln -sf $PTH/modules  /porteus/modules
+[ -d $PTH/optional ] && ln -sf $PTH/optional /porteus/optional
+CURRENT_IMAGE_FILE=$(find $PTH/base -name "001-*-${arch}.[xglz]zm" 2>/dev/null | egrep -v ".old" | tail -n1 )
+echo -e $i"use current porteus base image $CURRENT_IMAGE_FILE"
 
+echo -e $i"done.\nCheck update image porteus-update-${OSDIR}.squashfs ...\n"
+debug
+UPDATE_IMAGE_FILE=$(find /mnt/*/ -maxdepth 1 -name "porteus-update-$(value os).squashfs")
+if [ ! -z "$UPDATE_IMAGE_FILE" ]; then
+  if [ $(stat -c %Y $UPDATE_IMAGE_FILE) -gt $(stat -c %Y $CURRENT_IMAGE_FILE) ]; then
+    echo -e $i"move $UPDATE_IMAGE_FILE to $CURRENT_IMAGE_FILE"
+    mv $UPDATE_IMAGE_FILE $CURRENT_IMAGE_FILE
+  else
+    echo "current image newer or equal than update image."
+  fi
+else
+  echo "could not find update image file '$UPDATE_IMAGE_FILE'"
+fi
 
 echo -e $i"done.\nSetup changes ...\n"
 echo "INFO RAW_DEV: $RAW_DEV - CHANGES: $CHANGES"
