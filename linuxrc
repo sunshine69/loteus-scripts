@@ -503,9 +503,9 @@ echo -e $i"done.\nCreate symlinks used often by porteus scripts ...\n"
 CURRENT_IMAGE_FILE=$(find $PTH/base -name "001-*-${arch}.[xglz]zm" 2>/dev/null | egrep -v ".old" | tail -n1 )
 echo -e $i"use current porteus base image $CURRENT_IMAGE_FILE"
 
-echo -e $i"done.\nCheck update image porteus-update-$(value os).squashfs ...\n"
+echo -e $i"done.\nCheck update image porteus-update-$(value os)-${arch}.squashfs ...\n"
 debug
-UPDATE_IMAGE_FILE=$(find /mnt/*/ -maxdepth 1 -name "porteus-update-$(value os).squashfs")
+UPDATE_IMAGE_FILE=$(find /mnt/*/ -maxdepth 1 -name "porteus-update-$(value os)-${arch}.squashfs")
 if [ ! -z "$UPDATE_IMAGE_FILE" ]; then
   if [ $(stat -c %Y $UPDATE_IMAGE_FILE) -gt $(stat -c %Y $CURRENT_IMAGE_FILE) ]; then
     echo -e $i"move $UPDATE_IMAGE_FILE to $CURRENT_IMAGE_FILE"
