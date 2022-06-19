@@ -19,8 +19,9 @@ export KSOURCE_DIR=$(pwd)
 # From kernel.org what is longer and stable? Used to detect what version we will build
 # This is the first number (version) and minor as now stable and longterm having the same version.
 LONGTERM="5.15"
-STABLE="5.17"
-MAINLINE="5.18"
+#STABLE="5.17"
+STABLE="5.18"
+MAINLINE="5.19"
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
@@ -30,7 +31,7 @@ export VERSION
 # Minor version (middle number)
 #PATCHLEVEL=10
 PATCHLEVEL=15
-#PATCHLEVEL=17
+PATCHLEVEL=18
 #PATCHLEVEL=${PATCHLEVEL:-8}
 export PATCHLEVEL
 ####
