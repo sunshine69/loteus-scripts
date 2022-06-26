@@ -122,11 +122,11 @@ rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
 #rm -rf ${NAME_PREFIX}2/root/.cache
 rm -rf ${NAME_PREFIX}2/root
 mkdir ${NAME_PREFIX}2/root
-for f in .bashrc .bash_history .profile .selected_editor .vimrc .config; do
+for f in .vimrc .viminfo .profile .bashrc .bash_history .bash_aliases .config/fish .selected_editor .config; do
 	cp -a /root/$f ${NAME_PREFIX}2/root/
-	mkdir -p ${NAME_PREFIX}2/root/.local/share
-	cp -a /root/.local/share/fish ${NAME_PREFIX}2/root/.local/share/
 done
+mkdir -p ${NAME_PREFIX}2/root/.local/share
+cp -a /root/.local/share/fish ${NAME_PREFIX}2/root/.local/share/
 
 rm -rf ${NAME_PREFIX}2/run/*
 rm -rf ${NAME_PREFIX}2/tmp/* ${NAME_PREFIX}2/tmp/.*
@@ -164,9 +164,6 @@ else
 	read FILEMGR
 fi
 fi
-
-echo "copying root config file"
-(cd /root ; cp -a .vimrc .viminfo .profile .bashrc .bash_history .config/fish ${NAME_PREFIX}2/root/ )
 
 if [ "$FILEMGR" ] && [[ ! "$1" =~ "999"  ]]; then
     echo "start file manager at the mount point $FILEMGR"
