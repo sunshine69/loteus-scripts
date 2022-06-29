@@ -68,6 +68,12 @@ KVER=$(echo $KVER | sed 's/ \[EOL\]//g')
 
 if [ "$KVER" == "$OLD_KVER" ] && [ -z "$REBUILD" ]; then echo "No new version. Do nothing"; exit 0; fi
 
+if [ "NOTIFY_ONLY" = "yes" ]; then
+    # TODO make sendmail.py
+    sendmail.py -s "Kernel update available" -to msh.computing@gmail.com -from msh.computing@gmail.com -msg ''
+    exit 0
+fi
+
 if [ ! -f "patch-$KVER.xz" ] && [ -z "$REBUILD" ]; then
     wget https://cdn.kernel.org/pub/linux/kernel/v${VERSION}.x/patch-$KVER.xz
 fi
