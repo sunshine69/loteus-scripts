@@ -116,6 +116,7 @@ rm -f ${NAME_PREFIX}2/etc/blkid-cache
 rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
 rm -f ${NAME_PREFIX}2/var/lib/dhcp/dhclient.eth0.leases
 rm -f ${NAME_PREFIX}2/var/lib/dhcpcd/*.lease
+rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
 rm -rf ${NAME_PREFIX}2/dev/*
 rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
 
