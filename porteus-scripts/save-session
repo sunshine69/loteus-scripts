@@ -19,6 +19,12 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ "$1" = "help" ] || [ -z "$1" ]; t
     help
 fi    
 
+# If startswith 999 that is only config saved in etc and home/root is retained
+if [[ "$1" =~ "999"  ]]; then
+    MOD_999=y
+else
+    MOD_999=
+fi
 
 CHANGES='/mnt/live/memory/changes'
 NAME_PREFIX='save_session'
@@ -89,9 +95,6 @@ fi
 mkdir ${NAME_PREFIX}_wd
 
 echo "Copying changes files into ${NAME_PREFIX}1"
-#rsync -a ${CHANGES}/rootdir/ ${NAME_PREFIX}1/ --include "/home/$DEFAULT_USER" --exclude '/home/*' --exclude '/tmp/**' --exclude '/var/tmp/*' --exclude '/var/log/*.log*' --exclude '/var/cache/*' --exclude '/var/crash/*' --exclude '/var/spool/*'
-
-#echo starting mount overlay command: mount -t overlay overlay -o lowerdir=${NAME_PREFIX}0,upperdir=${NAME_PREFIX}1,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}2
 
 # When in doubt check https://www.kernel.org/doc/Documentation/filesystems/overlayfs.txt
 mount -t overlay overlay -o index=off,lowerdir=${CHANGES}/rootdir:${NAME_PREFIX}0,upperdir=${NAME_PREFIX}1,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}2
@@ -112,20 +115,23 @@ rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xbmc/temp
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xbmc/userdata/Thumbnails
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.Skype/DataRv
 rm -f ${NAME_PREFIX}2/etc/blkid-cache
-#rm -f ${NAME_PREFIX}2/etc/resolv.conf
-rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
 rm -f ${NAME_PREFIX}2/var/lib/dhcp/dhclient.eth0.leases
 rm -f ${NAME_PREFIX}2/var/lib/dhcpcd/*.lease
-rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
-rm -rf ${NAME_PREFIX}2/dev/*
 rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
 
-#rm -rf ${NAME_PREFIX}2/root/.cache
-rm -rf ${NAME_PREFIX}2/root
-mkdir ${NAME_PREFIX}2/root
+if [ -z "$MOD_999" ]; then
+	rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
+	rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
+	rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
+	rm -rf ${NAME_PREFIX}2/dev/*
+	rm -rf ${NAME_PREFIX}2/root
+	mkdir ${NAME_PREFIX}2/root
+fi
+
 for f in .vimrc .viminfo .profile .bashrc .bash_history .bash_aliases .config/fish .selected_editor .config; do
 	cp -a /root/$f ${NAME_PREFIX}2/root/
 done
+
 mkdir -p ${NAME_PREFIX}2/root/.local/share
 cp -a /root/.local/share/fish ${NAME_PREFIX}2/root/.local/share/
 
@@ -173,15 +179,11 @@ fi
 
 rm -rf ${NAME_PREFIX}2/tmp/* ${NAME_PREFIX}2/tmp/.*
 
-# If startswith 999 that is only config saved in etc and home/root is retained
-if [[ "$1" =~ "999"  ]]; then
-    MOD_999=y
-	ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root)" | while read dname; do 
-	    rm -rf ${NAME_PREFIX}2/${dname}
+if [ "$MOD_999" = "y"  ]; then
+    ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root)" | while read dname; do 
+	rm -rf ${NAME_PREFIX}2/${dname}
     done
     rm -rf ${NAME_PREFIX}2/var || true
-else
-    MOD_999=
 fi
 
 # If supply the third arg which the folder or coma separated list of folders we wil only compress that folder under a new rootdir. Example to update a specific modules
