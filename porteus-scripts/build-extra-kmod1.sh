@@ -18,11 +18,12 @@ fi
 
 which vboxconfig
 if [ ! $? = 0 ]; then
-	#cd /usr/src/virtualbox-6.1.32/
+	VBOX_VER=$(dpkg -s virtualbox | grep -i version | awk '{print $2}'|awk -F- '{print $1}')
+	#cd /usr/src/virtualbox-6.1.34/
 	#make; make install
 	echo "Run dkms autoinstall"
-	dkms remove virtualbox/6.1.32 --all
-	dkms add virtualbox/6.1.32
+	dkms remove virtualbox/$VBOX_VER --all
+	dkms add virtualbox/$VBOX_VER
 	dkms autoinstall
 else 
 	vboxconfig
