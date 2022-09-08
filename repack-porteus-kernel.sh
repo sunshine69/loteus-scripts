@@ -20,6 +20,7 @@ fi
 rm -f porteus-kernel/*.bak
 find porteus-kernel/*.new | while read fn; do
 	_name=$(basename $fn .new)
+    echo mv $fn $(dirname $fn)/$_name
 	mv $fn $(dirname $fn)/$_name
 done
 tar cf $TAR_FNAME porteus-kernel
