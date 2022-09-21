@@ -41,7 +41,7 @@ if [ ! -z "${CHROOT}" ]; then
 	for _d in dev proc; do mount -o bind /${_d} ${NAME_PREFIX}3/${_d}; done
 	chroot ${NAME_PREFIX}3 /bin/sh -c "${CHROOT}"
 	for _d in dev proc; do umount ${NAME_PREFIX}3/${_d}; done
-	
+
 else
 	echo "Mount done, start subshell now on the mount point. Copy and modify files under it."
 	if [ -z "$2" ]; then
@@ -54,6 +54,8 @@ else
 fi
 
 cd $WORKDIR
+umount dev || true
+umount proc || true
 rm -f out.sqs
 if [ -z "$SQUASHFS_OPT" ]; then
 	# Best balance now seems to be lz4 -Xhc. The zstd is good to built rescue but level 19 is too slow
@@ -82,7 +84,7 @@ if [ -z "$SQUASHFS_OPT" ]; then
 			SQUASHFS_OPT="-comp xz";
 			;;
 		4)
-			umount ${NAME_PREFIX}3/dev || exit 1 
+			umount ${NAME_PREFIX}3/dev || exit 1
 			umount ${NAME_PREFIX}3/proc || exit 1
 			umount ${NAME_PREFIX}3; sleep 3; umount ${NAME_PREFIX}1 >/dev/null 2>&1
 			rm -rf ${NAME_PREFIX}3 ${NAME_PREFIX}2 ${NAME_PREFIX}1 wd
