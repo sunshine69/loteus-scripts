@@ -195,8 +195,8 @@ else
 fi
 
 # Not sure why exclude opt never works for me but test shows mksquashfs actually work
-#SQUASHFS_EXCLUDE_OPT="-regex -e 'var/log/.*.log' -e 'usr/src/linux-headers-.*' -e 'var/crash/.*' -e 'var/cache/apt/archives/.*.deb' -e 'boot/.*' -e 'usr/lib/modules/.*' -e 'home/kodi/.cache/.*' -e 'home/kodi/Downloads/.*' -e 'home/kodi/.kodi/temp/.*'"
-SQUASHFS_EXCLUDE_OPT="-wildcards -e 'var/log/*.log' -e 'usr/src/linux-headers-*' -e 'var/crash/*' -e 'var/cache/apt/archives/*.deb' -e 'boot/*' -e 'usr/lib/modules/*' -e 'home/kodi/.cache/**' -e 'home/kodi/Downloads/*' -e 'home/kodi/.kodi/temp/**'"
+SQUASHFS_EXCLUDE_OPT="-regex -e 'var/log/.*.log' -e 'usr/src/linux-headers-.*' -e 'var/crash/.*' -e 'var/cache/apt/archives/.*.deb' -e 'boot/.*' -e 'home/kodi/.cache/.*' -e 'home/kodi/Downloads/.*' -e 'home/kodi/.kodi/temp/.*'"
+#SQUASHFS_EXCLUDE_OPT="-wildcards -e 'var/log/*.log' -e 'usr/src/linux-headers-*' -e 'var/crash/**' -e 'var/cache/apt/archives/*.deb' -e 'boot/**' -e 'usr/lib/modules/**' -e 'home/kodi/.cache/**' -e 'home/kodi/Downloads/**' -e 'home/kodi/.kodi/temp/**'"
 
 EXCLUDE_DIRS=$(ls /home/ | grep -v ${DEFAULT_USER})
 for i in $EXCLUDE_DIRS; do
@@ -243,6 +243,7 @@ if [ -z "$SQUASHFS_OPT" ]; then
 fi
 
 # I dont understand why if not running in a sub shell bash mksquashfs never respect the exclude. 
+rm -rf $OUTDIR/usr/lib/modules/*
 /bin/bash -c "$MKSQUASHFS $OUTDIR ${DESTINATION_DIR}/out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT"
 
 #( cd $OUTDIR &&  $MKSQUASHFS . ../out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT )
