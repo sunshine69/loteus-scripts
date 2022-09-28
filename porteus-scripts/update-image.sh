@@ -54,8 +54,6 @@ else
 fi
 
 cd $WORKDIR
-umount dev || umount -l dev || true
-umount proc || umount -l proc || true
 rm -f out.sqs var/crash/*
 
 rm -rf tmp/* var/tmp/*

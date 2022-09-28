@@ -19,12 +19,6 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ "$1" = "help" ] || [ -z "$1" ]; t
     help
 fi    
 
-# If startswith 999 that is only config saved in etc and home/root is retained
-if [[ "$1" =~ "999"  ]]; then
-    MOD_999=y
-else
-    MOD_999=
-fi
 
 CHANGES='/mnt/live/memory/changes'
 NAME_PREFIX='save_session'
@@ -115,23 +109,20 @@ rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xbmc/temp
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xbmc/userdata/Thumbnails
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.Skype/DataRv
 rm -f ${NAME_PREFIX}2/etc/blkid-cache
+rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
+rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
 rm -f ${NAME_PREFIX}2/var/lib/dhcp/dhclient.eth0.leases
 rm -f ${NAME_PREFIX}2/var/lib/dhcpcd/*.lease
+rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
+rm -rf ${NAME_PREFIX}2/dev/*
 rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
 
-if [ -z "$MOD_999" ]; then
-	rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
-	rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
-	rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
-	rm -rf ${NAME_PREFIX}2/dev/*
-	rm -rf ${NAME_PREFIX}2/root
-	mkdir ${NAME_PREFIX}2/root
-fi
-
+#rm -rf ${NAME_PREFIX}2/root/.cache
+rm -rf ${NAME_PREFIX}2/root
+mkdir ${NAME_PREFIX}2/root
 for f in .vimrc .viminfo .profile .bashrc .bash_history .bash_aliases .config/fish .selected_editor .config; do
 	cp -a /root/$f ${NAME_PREFIX}2/root/
 done
-
 mkdir -p ${NAME_PREFIX}2/root/.local/share
 cp -a /root/.local/share/fish ${NAME_PREFIX}2/root/.local/share/
 
@@ -179,11 +170,15 @@ fi
 
 rm -rf ${NAME_PREFIX}2/tmp/* ${NAME_PREFIX}2/tmp/.*
 
-if [ "$MOD_999" = "y"  ]; then
-    ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root)" | while read dname; do 
-	rm -rf ${NAME_PREFIX}2/${dname}
+# If startswith 999 that is only config saved in etc and home/root is retained
+if [[ "$1" =~ "999"  ]]; then
+    MOD_999=y
+	ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root)" | while read dname; do 
+	    rm -rf ${NAME_PREFIX}2/${dname}
     done
     rm -rf ${NAME_PREFIX}2/var || true
+else
+    MOD_999=
 fi
 
 # If supply the third arg which the folder or coma separated list of folders we wil only compress that folder under a new rootdir. Example to update a specific modules
@@ -200,7 +195,8 @@ else
 fi
 
 # Not sure why exclude opt never works for me but test shows mksquashfs actually work
-SQUASHFS_EXCLUDE_OPT="-regex -e 'var/log/.*.log' -e 'usr/src/linux-headers-.*' -e 'var/crash/.*' -e 'var/cache/apt/archives/.*.deb' -e 'boot/.*' -e 'usr/lib/modules/.*' -e 'home/kodi/.cache/.*' -e 'home/kodi/Downloads/.*' -e 'home/kodi/.kodi/temp/.*'"
+#SQUASHFS_EXCLUDE_OPT="-regex -e 'var/log/.*.log' -e 'usr/src/linux-headers-.*' -e 'var/crash/.*' -e 'var/cache/apt/archives/.*.deb' -e 'boot/.*' -e 'usr/lib/modules/.*' -e 'home/kodi/.cache/.*' -e 'home/kodi/Downloads/.*' -e 'home/kodi/.kodi/temp/.*'"
+SQUASHFS_EXCLUDE_OPT="-wildcards -e 'var/log/*.log' -e 'usr/src/linux-headers-*' -e 'var/crash/*' -e 'var/cache/apt/archives/*.deb' -e 'boot/*' -e 'usr/lib/modules/*' -e 'home/kodi/.cache/**' -e 'home/kodi/Downloads/*' -e 'home/kodi/.kodi/temp/**'"
 
 EXCLUDE_DIRS=$(ls /home/ | grep -v ${DEFAULT_USER})
 for i in $EXCLUDE_DIRS; do
