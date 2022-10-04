@@ -210,10 +210,21 @@ for x in $dev; do
   else
       echo "/mnt/$mountdir already exists, try unmounting"; umount /mnt/$mountdir || true
   fi
+  local _x_block_dev=$(echo $x | sed 's/[0-9]\+$//')
+  local _x_is_usb=no
+  if `ls -lha /sys/block/${_x_block_dev} | grep '/usb[0-9]\+' >/dev/null 2>&1`; then
+      _x_is_usb=yes
+  else
+      _x_is_usb=no
+  fi
   if [ "$fs" = "ntfs" ]; then
     echo "detect ntfs going to mount with -o $MOPT"
     $MOUNT_NTFS_CMD /dev/$x /mnt/$mountdir
-    if [ $? != 0 ]; then echo "mount error"; sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; fi
+    if [ $? != 0 ]; then 
+        echo "mount error"; sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x; 
+    else 
+        if [ "${_x_is_usb}" = "yes" ]; then sleep 2; fi
+    fi
     for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${mountdir}/${FROM} /mnt/${mountdir}/${KPATH}; do
       if [ "$KMOD_DETECTED" == "y" ]; then break; fi
       KMODS=`find ${_PATH}/000-*.[xglz]zm 2>/dev/null`
@@ -235,7 +246,18 @@ for x in $dev; do
       fi
     done
   else
-    mount -n /mnt/$mountdir 2>/dev/null || { modprobe $fs 2>/dev/null && mount -n /mnt/$mountdir 2>/dev/null || { sed -i "/$x /d" /etc/fstab; rmdir /mnt/$mountdir; }; }
+    mount -n /mnt/$mountdir 2>/dev/null 
+    if [ $? != 0 ]; then   
+       modprobe $fs 2>/dev/null 
+       mount -n /mnt/$mountdir 2>/dev/null 
+       if [ $? != 0 ]; then
+         sed -i "/$x /d" /etc/fstab; rmdir /mnt/$mountdir
+       else 
+         if [ "${_x_is_usb}" = "yes" ]; then sleep 2; fi
+       fi
+    else 
+        if [ "${_x_is_usb}" = "yes" ]; then sleep 2; fi   
+    fi 
     for _PATH in /mnt/${mountdir}/${FROM}/${OSDIR}/base /mnt/${mountdir}/${FROM} /mnt/${mountdir}/${KPATH}; do
       if [ "$KMOD_DETECTED" == "y" ]; then break; fi
       KMODS=`find ${_PATH}/000-*.[xglz]zm 2>/dev/null`
@@ -509,7 +531,8 @@ UPDATE_IMAGE_FILE=$(find /mnt/*/ -maxdepth 1 -name "porteus-update-$(value os)-$
 if [ ! -z "$UPDATE_IMAGE_FILE" ]; then
   if [ $(stat -c %Y $UPDATE_IMAGE_FILE) -gt $(stat -c %Y $CURRENT_IMAGE_FILE) ]; then
     echo -e $i"move $UPDATE_IMAGE_FILE to $CURRENT_IMAGE_FILE"
-    mv $UPDATE_IMAGE_FILE $CURRENT_IMAGE_FILE
+    cp -a $UPDATE_IMAGE_FILE $CURRENT_IMAGE_FILE
+    mv $UPDATE_IMAGE_FILE ${UPDATE_IMAGE_FILE}.old 
   else
     echo "current image newer or equal than update image."
   fi
@@ -602,7 +625,7 @@ if [ "$CHANGES" ]; then
           mkdir -p "${CHANGES_MOUNT_SRC}/changes/rootdir"
           debug
           #mv ${CHANGES_MOUNT_SRC}/home_$$ ${CHANGES_MOUNT_SRC}/changes/rootdir/home
-	  mv ${CHANGES_MOUNT_SRC}/changes.backup/rootdir/home ${CHANGES_MOUNT_SRC}/changes/rootdir/
+	      mv ${CHANGES_MOUNT_SRC}/changes.backup/rootdir/home ${CHANGES_MOUNT_SRC}/changes/rootdir/
         elif [ "$FACTORYRESET" == '2' ] || [ "$FACTORYRESET" == 'backup' ];  then
             rm -rf ${CHANGES_MOUNT_SRC}/changes.backup
             mv ${CHANGES_MOUNT_SRC}/changes ${CHANGES_MOUNT_SRC}/changes.backup
