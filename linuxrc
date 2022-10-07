@@ -527,8 +527,15 @@ echo -e $i"use current porteus base image $CURRENT_IMAGE_FILE"
 
 echo -e $i"done.\nCheck update image porteus-update-$(value os)-${arch}.squashfs ...\n"
 debug
-UPDATE_IMAGE_FILE=$(find /mnt/*/ -maxdepth 1 -name "porteus-update-$(value os)-${arch}.squashfs")
+if [ -f "${CURRENT_IMAGE_FILE}.new" ]; then 
+  echo "Found ${CURRENT_IMAGE_FILE}.new"
+  if [ "$FACTORYRESET" = "0" ]; then echo "Set FACTORYRESET=1"; FACTORYRESET='1'; fi
+  echo "Skip UPDATE_IMAGE_FILE"; UPDATE_IMAGE_FILE=""
+else 
+  UPDATE_IMAGE_FILE=$(find /mnt/*/ -maxdepth 1 -name "porteus-update-$(value os)-${arch}.squashfs")
+fi 
 if [ ! -z "$UPDATE_IMAGE_FILE" ]; then
+  echo "Found UPDATE_IMAGE_FILE $UPDATE_IMAGE_FILE"
   if [ $(stat -c %Y $UPDATE_IMAGE_FILE) -gt $(stat -c %Y $CURRENT_IMAGE_FILE) ]; then
     echo -e $i"move $UPDATE_IMAGE_FILE to $CURRENT_IMAGE_FILE"
     cp -a $UPDATE_IMAGE_FILE $CURRENT_IMAGE_FILE
