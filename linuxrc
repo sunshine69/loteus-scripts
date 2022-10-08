@@ -65,6 +65,8 @@ PASSPHRASE_FILE=`value passfile`; [ "$PASSPHRASE_FILE" ] || PASSPHRASE_FILE=
 # without the /dev/
 RAW_DEV=`value raw`; [ "$RAW_DEV" ] || RAW_DEV=`value r`
 FACTORYRESET=`value reset`; [ $FACTORYRESET ] || FACTORYRESET=`value factoryreset`; [ $FACTORYRESET ] || FACTORYRESET='0'
+# FACTORYRESET values: 1 - reset but keep home, 2 reset with backup - 3 reset everything, no backup, 4 reset mod 999,
+# -1 reset base image to .old and keep home 
 KVER=`uname -r`
 KPATH=`value kpath`; [ $KPATH ] || KPATH=
 KMOD_DETECTED=
@@ -527,6 +529,12 @@ echo -e $i"use current porteus base image $CURRENT_IMAGE_FILE"
 
 echo -e $i"done.\nCheck update image porteus-update-$(value os)-${arch}.squashfs ...\n"
 debug
+if [ "$FACTORYRESET" = "-1" ] && [ -f "${CURRENT_IMAGE_FILE}.old" ]; then 
+    echo "FACTORYRESET is -1 and ${CURRENT_IMAGE_FILE}.old exists. Will base image reset to that file "
+    rm "${CURRENT_IMAGE_FILE}.new" || true 
+    mv "${CURRENT_IMAGE_FILE}.old" "${CURRENT_IMAGE_FILE}"
+    FACTORYRESET='1'
+fi
 if [ -f "${CURRENT_IMAGE_FILE}.new" ]; then 
   echo "Found ${CURRENT_IMAGE_FILE}.new"
   if [ "$FACTORYRESET" = "0" ]; then echo "Set FACTORYRESET=1"; FACTORYRESET='1'; fi
@@ -626,12 +634,10 @@ if [ "$CHANGES" ]; then
         if [ "$FACTORYRESET" == '3' ]; then
           rm -rf ${CHANGES_MOUNT_SRC}/changes
         elif [ "$FACTORYRESET" == '1' ] || [ "$FACTORYRESET" == 'keephome' ];  then
-          #mv ${CHANGES_MOUNT_SRC}/changes/rootdir/home ${CHANGES_MOUNT_SRC}/home_$$
           rm -rf ${CHANGES_MOUNT_SRC}/changes.backup
           mv ${CHANGES_MOUNT_SRC}/changes ${CHANGES_MOUNT_SRC}/changes.backup
           mkdir -p "${CHANGES_MOUNT_SRC}/changes/rootdir"
           debug
-          #mv ${CHANGES_MOUNT_SRC}/home_$$ ${CHANGES_MOUNT_SRC}/changes/rootdir/home
 	      mv ${CHANGES_MOUNT_SRC}/changes.backup/rootdir/home ${CHANGES_MOUNT_SRC}/changes/rootdir/
         elif [ "$FACTORYRESET" == '2' ] || [ "$FACTORYRESET" == 'backup' ];  then
             rm -rf ${CHANGES_MOUNT_SRC}/changes.backup
