@@ -98,26 +98,28 @@ if [ $? != 0 ]; then echo "Fatal Error mount overlay fs"; umount ${NAME_PREFIX}0
 echo "Cleaning global and default users ${DEFAULT_USER} files..."
 rm -f ${NAME_PREFIX}2/var/lib/alsa/asound.state
 rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/.bash_history
+rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/*.log
 rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xsession-errors
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.cache
 rm -rf ${NAME_PREFIX}2/home/*/.cache
-#rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.config/chromium
-#rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.config/google-chrome
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.thumbnails
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.ACEStream
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xbmc/temp
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xbmc/userdata/Thumbnails
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.Skype/DataRv
 rm -f ${NAME_PREFIX}2/etc/blkid-cache
-rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
-rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
 rm -f ${NAME_PREFIX}2/var/lib/dhcp/dhclient.eth0.leases
 rm -f ${NAME_PREFIX}2/var/lib/dhcpcd/*.lease
-rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
+if [[ "$1" =~ "999" ]]; then
+  echo "999 mod, not clean crontab"
+else
+  rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
+  rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
+  rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
+fi
 rm -rf ${NAME_PREFIX}2/dev/*
 rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
 
-#rm -rf ${NAME_PREFIX}2/root/.cache
 rm -rf ${NAME_PREFIX}2/root
 mkdir ${NAME_PREFIX}2/root
 for f in .vimrc .viminfo .profile .bashrc .bash_history .bash_aliases .config/fish .selected_editor .config; do
@@ -173,10 +175,16 @@ rm -rf ${NAME_PREFIX}2/tmp/* ${NAME_PREFIX}2/tmp/.*
 # If startswith 999 that is only config saved in etc and home/root is retained
 if [[ "$1" =~ "999"  ]]; then
     MOD_999=y
-	ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root)" | while read dname; do 
-	    rm -rf ${NAME_PREFIX}2/${dname}
+    ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root|var)" | while read dname; do 
+	rm -rf ${NAME_PREFIX}2/${dname}
     done
-    rm -rf ${NAME_PREFIX}2/var || true
+    ls ${NAME_PREFIX}2/var | grep -v 'spool' | while read dname; do
+       	rm -rf ${NAME_PREFIX}2/var/${dname}
+    done
+    ls ${NAME_PREFIX}2/var/spool | grep -v 'cron' | while read dname; do
+       	rm -rf ${NAME_PREFIX}2/var/spool/${dname}
+    done
+
 else
     MOD_999=
 fi
@@ -210,7 +218,7 @@ rm -f ${DESTINATION_DIR}/out.sqs
 if [ -z "$SQUASHFS_OPT" ]; then
 	SQUASHFS_OPT="-comp zstd -Xcompression-level 15 -b 1M"
     if [ "$MOD_999" = "y" ]; then
-        SQUASHFS_OPT="-comp xz -b 1M"
+        SQUASHFS_OPT="-comp zstd -Xcompression-level 15 -b 1M"
     elif [ "$PROMPT" = "y" ]; then
 	    # Best balance now seems to be lz4 -Xhc. The zstd is good to built rescue but level 19 is too slow
 	    #SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K"
