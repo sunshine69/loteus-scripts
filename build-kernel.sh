@@ -20,12 +20,12 @@ export KSOURCE_DIR=$(pwd)
 # This is the first number (version) and minor as now stable and longterm having the same version.
 LONGTERM="5.15"
 #STABLE="5.17"
-STABLE="5.19"
-MAINLINE="5.19"
+STABLE="6.0"
+MAINLINE="6.1"
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
-VERSION=5
+VERSION=${VERSION-5}
 #VERSION=4
 export VERSION
 # Minor version (middle number)
