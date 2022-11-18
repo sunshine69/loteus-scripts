@@ -281,7 +281,7 @@ else
     DNAME=$(lsb_release -i | awk -F: '{print $2}' | sed 's/^\s+*//g; s/\s+$//g')
     DVER=$(lsb_release -r | awk -F: '{print $2}' | sed 's/^\s+*//g; s/\s+$//g')
     CURRENT_OS=$(cat /proc/cmdline | grep -oP '(?<=os=)[^\s]+')
-    cp ${DESTINATION_DIR}/out.sqs /mnt/doc/opc-backup/porteus-update-${CURRENT_OS}-$(uname -m).squashfs
+    echo "RUN THIS MANUALLY - cp ${DESTINATION_DIR}/out.sqs /mnt/doc/opc-backup/porteus-update-${CURRENT_OS}-$(uname -m).squashfs"
   fi
   if [ "$PROMPT" = "y" ]; then
     echo "Move ${DESTINATION_DIR}/out.sqs to ${SRCPATH}.new? y/n"
