@@ -396,6 +396,7 @@ echo "Start porteus init script - modified by stevek version v1.10"
 echo "mount /dev ..."
 debug
 mount -nt devtmpfs none /dev
+mkdir -p /run/cryptsetup 
 sleep 3 # devices settle down
 echo -e "done\ngenerate hostname ...\n"
 debug
