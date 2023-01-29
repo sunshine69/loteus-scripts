@@ -38,10 +38,14 @@ mount -t overlay overlay -o lowerdir=${NAME_PREFIX}1,upperdir=${NAME_PREFIX}2,wo
 if [ $? != 0 ]; then echo "Fatal Error mount layered fs"; umount ${NAME_PREFIX}1; losetup -d $LODEV >/dev/null 2>&1; exit 1;fi
 
 if [ ! -z "${CHROOT}" ]; then
-	for _d in dev proc; do mount -o bind /${_d} ${NAME_PREFIX}3/${_d}; done
+	for _d in dev proc; do
+        [ ! -d ${NAME_PREFIX}3/${_d} ] && mkdir -p ${NAME_PREFIX}3/${_d}
+        mount -o bind /${_d} ${NAME_PREFIX}3/${_d}
+    done
+    rm -f ${NAME_PREFIX}3/etc/resolv.conf; echo "nameserver 8.8.8.8" > ${NAME_PREFIX}3/etc/resolv.conf
 	chroot ${NAME_PREFIX}3 /bin/sh -c "${CHROOT}"
 	for _d in dev proc; do umount ${NAME_PREFIX}3/${_d}; done
-	
+
 else
 	echo "Mount done, start subshell now on the mount point. Copy and modify files under it."
 	if [ -z "$2" ]; then
@@ -88,7 +92,7 @@ if [ -z "$SQUASHFS_OPT" ]; then
 			SQUASHFS_OPT="-comp xz";
 			;;
 		4)
-			umount ${NAME_PREFIX}3/dev || exit 1 
+			umount ${NAME_PREFIX}3/dev || exit 1
 			umount ${NAME_PREFIX}3/proc || exit 1
 			umount ${NAME_PREFIX}3; sleep 3; umount ${NAME_PREFIX}1 >/dev/null 2>&1
 			rm -rf ${NAME_PREFIX}3 ${NAME_PREFIX}2 ${NAME_PREFIX}1 wd

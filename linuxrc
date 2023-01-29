@@ -710,8 +710,8 @@ fi
 
 if [ -z "$LOAD" ]; then
   LOAD="199"
-  echo "Load module /mnt/*/${LOAD}*.[xglz]zm"
-  ls /mnt/*/${LOAD}*.[xglz]zm | tail -n1 >> /tmp/modules
+  echo "Load module $PTH/*/${LOAD}*.[xglz]zm"
+  ls $PTH/*/${LOAD}*.[xglz]zm | tail -n1 >> /tmp/modules
 else
   ls $LOAD | tail -n1 >> /tmp/modules
 fi
@@ -930,7 +930,7 @@ fi
 # Create debug file:
 [ -e /tmp/devices ] && { echo "# Recognized devices:" >$livedbg; cat /tmp/devices >>$livedbg; }
 [ $BOOTDEV ] && SGNDEV=$BOOTDEV
-echo -e "\n# Booting device:\n$SGNDEV\n\n#  data found in:\n$PTH\n\n# Changes are stored in:\n$CHANGES\n\n# Non standard /rootcopy dir:\n$ROOTCOPY\n\n# Modules activated during boot time:" >>$livedbg; cat /tmp/modules >>$livedbg
+echo -e "\n# Booting data device:\n$SGNDEV\n\n#  data found in:\n$PTH\n\n# Changes are stored in:\n$CHANGES\n\n# Non standard /rootcopy dir:\n$ROOTCOPY\n\n# Modules activated during boot time:" >>$livedbg; cat /tmp/modules >>$livedbg
 
 cp -af $livedbg /union/var/log/porteus-livedbg
 
