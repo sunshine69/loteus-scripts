@@ -102,7 +102,7 @@ else
 fi
 # Device Functions:
 detect_fs_type() { # where blkid does not understand that file system we need this hack
-    echo "detect_fs_type $1"
+    #echo "detect_fs_type $1"
     mkdir /tmp/mount_temp >/dev/null 2>&1
     mount $1 /tmp/mount_temp
     if [ $? == 0 ]; then
@@ -169,14 +169,12 @@ for x in $dev; do
             parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- plainOpen /dev/$x ${x}_DEC
           else
             echo -e "/dev/$x => '$LUKS_HEAD' .....\n\n"
-            # sh
             parse_passphrase; echo $PASSPHRASE | /usr/bin/cryptsetup --key-file=- --header=$LUKS_HEAD luksOpen /dev/$x ${x}_DEC
           fi
           if [ $? == 0 ]; then
               x="${x}_DEC"; ln -sf /dev/mapper/$x /dev/$x
               fsck_dat /dev/$x
               detect_fs_type /dev/$x >> /tmp/devices
-              #blkid /dev/$x >> /tmp/devices
           else
               PASSPHRASE=""
           fi
@@ -380,6 +378,13 @@ dirname() {
 }
 generate_devices() {
 echo "Detect block devices, create /etc/fstab and mount devices ..."
+echo "List devices: "
+find /dev/nvme* 
+find /dev/sd* 
+find /dev/mmcblk?p? 
+find /dev/vd* 
+find /dev/mapper/* 
+find /dev/sr*
 blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* /dev/mapper/* /dev/sr* | grep -v /dev/loop | grep -v BitLocker | grep -v 'EFI system partition' | grep TYPE > /tmp/devices
 if [ ! -z "$RAW_DEV" ]; then blkid "/dev/$RAW_DEV" >> /tmp/devices; fi
 #blkid /dev/nvme* | grep -v 'EFI system partition' | grep -v 'BitLocker' | grep ' TYPE=' >> /tmp/devices
