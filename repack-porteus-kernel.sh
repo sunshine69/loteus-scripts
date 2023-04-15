@@ -28,3 +28,8 @@ tar cf $TAR_FNAME porteus-kernel
 cat ${SCRIPT_DIR}/self-extract.sh $TAR_FNAME > $TARGET_FNAME
 rm -rf $TAR_FNAME porteus-kernel
 chmod +x $TARGET_FNAME
+
+if [ -d /mnt/doc/opc-backup ]; then
+	echo "Copy to /mnt/doc/opc-backup ..."
+	cp $TARGET_FNAME /mnt/doc/opc-backup/
+fi

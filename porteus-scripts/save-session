@@ -119,6 +119,7 @@ else
 fi
 rm -rf ${NAME_PREFIX}2/dev/*
 rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
+rm -rf ${NAME_PREFIX}2/var/lib/snapd/cache/*
 
 rm -rf ${NAME_PREFIX}2/root
 mkdir ${NAME_PREFIX}2/root
