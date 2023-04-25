@@ -137,7 +137,7 @@ dev=`egrep -v 'TYPE="sw|TYPE="LVM|TYPE=".*_raid_member"' /tmp/devices 2>/dev/nul
 for x in $dev; do
   echo "processing dev $x"
   debug
-  if blkid /dev/$x 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
+  if blkid /dev/$x 2>/dev/null | cut -d" " -f3- | grep -q LUKS; then
       if `ls /dev/mapper/${x}_DEC >/dev/null 2>&1`; then
           echo "crypt already setup for device $x"
       else
@@ -284,7 +284,7 @@ done
 if [ -z "`egrep -o " noswap( |\$)" /etc/cmdline`" -a -e /tmp/devices ]; then
     echo -e "\n# Swap partitions:" >>/etc/fstab
     for x in `grep 'TYPE="swap"' /tmp/devices | cut -d: -f1`; do echo "$x none swap sw,pri=1 0 0" >>/etc/fstab; done
-  grep -v 'TYPE="crypto_LUKS"' /etc/fstab > /etc/fstab.new; mv /etc/fstab.new /etc/fstab
+  grep -v 'LUKS"' /etc/fstab > /etc/fstab.new; mv /etc/fstab.new /etc/fstab
 fi } # end fstab
 
 mount_device() {
@@ -587,7 +587,7 @@ if [ "$CHANGES" ]; then
             else
                 CHANGES_MOUNT_SRC=$IMAGE_MOUNT_DIR
             fi
-            if blkid $CIMAGE_FILE 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
+            if blkid $CIMAGE_FILE 2>/dev/null | cut -d" " -f3- | grep -q LUKS; then
               LODEV=$(losetup -f); losetup $LODEV $CIMAGE_FILE
               echo $i"sha512 $CIMAGE_FILE"
               if [ -z "$PASSPHRASE" ]; then echo "$CIMAGE_FILE ..."; PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p'); fi
@@ -790,7 +790,7 @@ for x in `cat /tmp/modules`; do
         mv ${x}.new $x
     fi # will fail from the cdrom but does not matter
     NAME=`basename $x`; mkdir "/memory/images/$NAME"; LODEV=$(losetup -f); losetup $LODEV $x
-    if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q _LUKS; then
+    if blkid $LODEV 2>/dev/null | cut -d" " -f3- | grep -q LUKS; then
        if [ ! -f "$PASSPHRASE" ]; then echo "$LODEV ..."; PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p'); parse_passphrase; echo $PASSPHRASE > $PASSPHRASE; fi
        cat $PASSPHRASE | /usr/bin/cryptsetup $CRYPTSETUP_OPT --key-file=- luksOpen $LODEV ${NAME}_DEC
        if [ $? != 0 ] && [ ! -z "$PASSPHRASE" ]; then echo "Failed, second try .."; PASSPHRASE=$(timeout 30 sh -c 'read -s p && echo $p'); parse_passphrase; echo $PASSPHRASE > $PASSPHRASE; cat $PASSPHRASE | /usr/bin/cryptsetup $CRYPTSETUP_OPT --key-file=- luksOpen $LODEV ${NAME}_DEC; fi
