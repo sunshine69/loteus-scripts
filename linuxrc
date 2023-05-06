@@ -385,7 +385,7 @@ find /dev/mmcblk?p?
 find /dev/vd* 
 find /dev/mapper/* 
 find /dev/sr*
-blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* /dev/mapper/* /dev/sr* | grep -v /dev/loop | grep -v BitLocker | grep -v 'EFI system partition' | grep TYPE > /tmp/devices
+blkid /dev/nvme* /dev/sd* /dev/mmcblk?p? /dev/vd* /dev/mapper/* /dev/sr* | grep -v /dev/loop | grep -v BitLocker | grep TYPE > /tmp/devices
 if [ ! -z "$RAW_DEV" ]; then blkid "/dev/$RAW_DEV" >> /tmp/devices; fi
 #blkid /dev/nvme* | grep -v 'EFI system partition' | grep -v 'BitLocker' | grep ' TYPE=' >> /tmp/devices
 #for listd in '/dev/sd??' '/dev/mmcblk?p?' '/dev/vd??'; do
