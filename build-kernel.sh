@@ -8,9 +8,9 @@
 
 export INSTALL_MOD_PATH=/var/tmp/kernel-build
 
-if [ "$(id -u)" != "0" ]; then
-    exec sudo -E $0 $*
-fi
+#if [ "$(id -u)" != "0" ]; then
+#    exec sudo -E $0 $*
+#fi
 
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export KSOURCE_DIR=$(pwd)
