@@ -20,6 +20,7 @@ build_external_module() {
     export KERNELRELEASE=$KVER
     for kmoddir in bcwc_pcie apple-bce-drv apple-ib-drv; do
     #for kmoddir in bcwc_pcie; do
+		if [ ! -d /mnt/portdata/tmp/$kmoddir ]; then continue; fi
         cd /mnt/portdata/tmp/$kmoddir
         if [ -z "$KDIR" ]; then
             export KDIR="$KSOURCE_DIR/linux-${VERSION}.${PATCHLEVEL}"
