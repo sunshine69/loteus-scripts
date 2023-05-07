@@ -12,6 +12,9 @@ export INSTALL_MOD_PATH=/var/tmp/kernel-build
 #    exec sudo -E $0 $*
 #fi
 
+# Need chown stevek:stevek -R /mnt/portdata/build/kernel-binary /mnt/portdata/tmp/linux-XXX
+# /var/tmp should be 1777
+
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export KSOURCE_DIR=$(pwd)
 

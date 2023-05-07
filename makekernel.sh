@@ -97,7 +97,7 @@ esac
 
 rm -rf $TARGET_DIR/kernel-$KVER/$KVER
 mv ${INSTALL_MOD_PATH}/lib/modules/$KVER $TARGET_DIR/kernel-$KVER/
-rm -f /mnt/live/memory/changes/rootdir/lib/modules/$KVER
+#rm -f /mnt/live/memory/changes/rootdir/lib/modules/$KVER
 
 echo "Done "
 echo "Create install script ..."
@@ -335,13 +335,17 @@ INITRD_PATH=$(echo $BOOT_DIR|cut -f1 -d' ')
 echo "INITRD_PATH to search for input initrd.xz:  '$INITRD_PATH'"
 
 if [ ! -f $INITRD_PATH/initrd.xz ]; then
+    INITRD_PATH=$SCRIPT_DIR/initrd-template.xz
+fi
+
+if [ ! -f $INITRD_PATH/initrd.xz ]; then
     echo "initrd not found. Use template"
     INITRD_FILE_PATH=$(find /mnt/*/build/kernel-binary/initrd-template.xz|head -n1)
     if [ -z "$INITRD_FILE_PATH" ]; then echo "Enter path to initrd: "; read INITRD_FILE_PATH ; fi
 else
     INITRD_FILE_PATH="${INITRD_PATH}/initrd.xz"
 fi
-KBUILDDIR_ENV=$(pwd) KVERS="$KVER" $SCRIPT_DIR/rebuild-initrd.sh $INITRD_FILE_PATH "$(pwd)/initrd.xz"
+KBUILDDIR_ENV=$(pwd) KVERS="$KVER" sudo -E $SCRIPT_DIR/rebuild-initrd.sh $INITRD_FILE_PATH "$(pwd)/initrd.xz"
 
 echo "Create kernel source module ..."
 
