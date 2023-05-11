@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $SCRIPT_DIR/common.sh
@@ -28,12 +28,12 @@ echo "BOOT_DIR: $BOOT_DIR"
 
 for BD in $(echo $BOOT_DIR); do
 	echo "Backup current kernel in $BD ..."
-	[ -f "$BD/bzImage" ] && mv "$BD/bzImage" "$BD/bzImage.old" 
+	[ -f "$BD/bzImage" ] && mv "$BD/bzImage" "$BD/bzImage.old"
 	[ -f "$BD/initrd.xz" ] && mv "$BD/initrd.xz" "$BD/initrd.xz.old"
-	
+
 	echo "Copy new kernel in $BD"
-	cp -a $SCRIPT_DIR/initrd.xz $SCRIPT_DIR/bzImage $BD/
-	cp -a $SCRIPT_DIR/000-*.xzm $PORT_DIR/
+	cp $SCRIPT_DIR/initrd.xz $SCRIPT_DIR/bzImage $BD/
+	cp $SCRIPT_DIR/000-*.xzm $PORT_DIR/
 
 done
 
