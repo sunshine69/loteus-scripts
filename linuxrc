@@ -85,6 +85,8 @@ if [ ! -z "$LUKS_HEAD" ]; then
     if [ -z "$RAW_DEV" ]; then echo "If you want to use separate LUKS_HEAD you need to supply RAW_DEV using option r=" ; fi
 fi
 
+CRYPTSETUP_OPT="$CRYPTSETUP_OPT --allow-discards"
+
 # generate hostname based on motherboard UUID if no hostname is given at all
 parse_passphrase() {
     if echo $PASSPHRASE | grep '^#' >/dev/null 2>&1; then
