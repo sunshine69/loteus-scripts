@@ -44,7 +44,7 @@ i=`echo "[1;33m""^ ""[0m"`
 m=`echo "[1;33m""->""[0m"`
 arch=`uname -m`; [ $arch = x86_64 ] || arch=i486
 DELAY=`value delay`; [ $DELAY ] && { echo $i"delaying $DELAY sec (waiting for slow devices to settle up)"; sleep $DELAY; }
-[ -z "$DELAY" ] && DELAY=0 
+USB_DELAY=`value usb-delay` 
 OSDIR=`value os`; [ $OSDIR ] || OSDIR="ubuntu"
 SGN=`value sgnfile`; [ $SGN ] || SGN=${OSDIR}-$arch.sgn
 FROM=`value from`; ISO=`echo $FROM | egrep ".*\.iso( |\$)"`
@@ -226,7 +226,9 @@ for x in $dev; do
     if [ $? != 0 ]; then
         echo "mount error"; sed -i "/$x /d" /etc/fstab; rmdir /mnt/$x;
     else
-        if [ "${_x_is_usb}" = "yes" ]; then sleep $DELAY; fi
+        if [ "${_x_is_usb}" = "yes" ]; then 
+            if [ ! -z "$USB_DELAY" ]; then sleep $USB_DELAY; fi
+        fi 
     fi
     for _PATH in /mnt/${x}/${FROM}/${OSDIR}/base /mnt/${mountdir}/${FROM} /mnt/${mountdir}/${KPATH}; do
       if [ "$KMOD_DETECTED" == "y" ]; then break; fi
@@ -256,10 +258,18 @@ for x in $dev; do
        if [ $? != 0 ]; then
          sed -i "/$x /d" /etc/fstab; rmdir /mnt/$mountdir
        else
-         if [ "${_x_is_usb}" = "yes" ]; then sleep $DELAY; fi
+         if [ "${_x_is_usb}" = "yes" ]; then 
+             if [ ! -z "$USB_DELAY" ]; then 
+                sleep $USB_DELAY
+             fi
+         fi 
        fi
     else
-        if [ "${_x_is_usb}" = "yes" ]; then sleep $DELAY; fi
+        if [ "${_x_is_usb}" = "yes" ]; then 
+            if [ ! -z "$USB_DELAY" ]; then
+                sleep $USB_DELAY
+            fi
+        fi 
     fi
     for _PATH in /mnt/${mountdir}/${FROM}/${OSDIR}/base /mnt/${mountdir}/${FROM} /mnt/${mountdir}/${KPATH}; do
       if [ "$KMOD_DETECTED" == "y" ]; then break; fi
@@ -405,7 +415,7 @@ echo "mount /dev ..."
 debug
 mount -nt devtmpfs none /dev
 mkdir -p /run/cryptsetup 
-sleep 3 # devices settle down
+# sleep 3 # devices settle down
 echo -e "done\ngenerate hostname ...\n"
 debug
 echo -e "generate_devices..."
