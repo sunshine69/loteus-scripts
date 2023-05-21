@@ -1,0 +1,87 @@
+- hosts: localhost
+  become: yes
+  vars:
+    part_unit: KiB
+    disk_partition: "SET_ME"
+    resize_part: 'no'
+  tasks:
+    - block:
+      - name: Find the porteus booting device
+        shell: "grep -A1 'Booting data device:' /var/log/live/livedbg 2>/dev/null | tail -n1 | sed 's|/mnt/|/dev/|'"
+        register: boot_device_out
+      - set_fact:
+          disk_partition: "{{ boot_device_out.stdout }}"
+      when: 'disk_partition == "SET_ME"'
+
+    - name: Find the disk which contains the boot device
+      shell: "lsblk -no pkname {{ disk_partition }}"
+      register: disk_device_out
+
+    - set_fact:
+        disk_device: "{{ disk_device_out.stdout }}"
+
+    - name: Read device information (always use unit when probing)
+      parted:
+        device: "/dev/{{ disk_device }}"
+        unit: "{{ part_unit }}"
+      register: disk_info
+      when: 'not disk_device_out.failed and disk_device != ""'
+
+    - debug: var=disk_info
+
+    - when: "disk_device != ''"
+      set_fact:
+        disk_list: |
+          [
+          {% for dev_name in ansible_devices -%}
+          {% if not dev_name is regex('(loop|dm-[\d]+|zram|'+disk_device+')') -%}
+          { "{{dev_name}}": "{{ ansible_devices[dev_name]['model'] }}"}{% if not loop.last -%},{% endif -%}
+          {% endif -%}
+          {% endfor %}
+          ]
+
+    - when: "disk_device == ''"
+      set_fact:
+        disk_list: |
+          [
+          {% for dev_name in ansible_devices -%}
+          {% if not dev_name is regex('(loop|dm-[\d]+|zram)') -%}
+          { "{{dev_name}}": "{{ ansible_devices[dev_name]['model'] }}"}{% if not loop.last -%},{% endif -%}
+          {% endif -%}
+          {% endfor %}
+          ]
+
+    - pause:
+        prompt: |
+          *** INFORMATION ***
+          Disk Device: /dev/{{ disk_device }}
+          Porteus data device detected: {{ disk_partition }}
+          Porteus Directory: /mnt/{{ disk_partition | basename }}/{{ ansible_cmdline.from }}
+          Disk List:
+            {{ disk_list }}
+
+          Enter the device name which will be install porteus into.
+          Enter 'n' to stop.
+      register: confirm
+
+    - meta: end_play
+      when: 'confirm.user_input == "n"'
+
+    - set_fact:
+        default_hostname: '{{ ansible_product_name | regex_replace("[\s\+,\=\*\@\#\$\!\%^\&\(\)]", "") }}'
+
+    - pause:
+        prompt: 'Enter hostname - default is {{ default_hostname }}'
+      register: prompt_hostname
+
+    - set_fact:
+        new_hostname: "{{ prompt_hostname.user_input | default(default_hostname) }}"
+
+    - name: "Run the install script"
+      shell: "{{ playbook_dir }}/build-usb-hybrid-grub-boot.sh {{ confirm.user_input }}"
+      environment:
+        HOSTNAME: "{{ new_hostname }}"
+
+    - pause:
+        prompt: "Hit enter to continue"
+
