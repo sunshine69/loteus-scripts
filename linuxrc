@@ -44,7 +44,7 @@ i=`echo "[1;33m""^ ""[0m"`
 m=`echo "[1;33m""->""[0m"`
 arch=`uname -m`; [ $arch = x86_64 ] || arch=i486
 DELAY=`value delay`; [ $DELAY ] && { echo $i"delaying $DELAY sec (waiting for slow devices to settle up)"; sleep $DELAY; }
-USB_DELAY=`value usb-delay` 
+USB_DELAY=`value usb_delay` 
 OSDIR=`value os`; [ $OSDIR ] || OSDIR="ubuntu"
 SGN=`value sgnfile`; [ $SGN ] || SGN=${OSDIR}-$arch.sgn
 FROM=`value from`; ISO=`echo $FROM | egrep ".*\.iso( |\$)"`
@@ -415,7 +415,7 @@ echo "mount /dev ..."
 debug
 mount -nt devtmpfs none /dev
 mkdir -p /run/cryptsetup 
-# sleep 3 # devices settle down
+if [ ! -z "$USB_DELAY" ]; then sleep $USB_DELAY ; fi # devices settle down
 echo -e "done\ngenerate hostname ...\n"
 debug
 echo -e "generate_devices..."
