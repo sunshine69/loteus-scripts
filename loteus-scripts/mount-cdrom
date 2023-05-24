@@ -1,9 +1,0 @@
-#!/bin/sh
-set -x
-
-mkdir /media/cdrom
-mount /dev/sr0 /media/cdrom
-xfe -d /media/cdrom
-
-umount /media/cdrom
-rmdir /media/cdrom
