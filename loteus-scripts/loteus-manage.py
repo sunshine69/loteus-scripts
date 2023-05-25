@@ -36,21 +36,24 @@ def run_cmd(cmd,sendtxt=None, working_dir=".", args=[], shell=True, DEBUG=False,
 
 def get_info():
     output = {  }
-    o,c,e = run_cmd('df --output=source,fstype,avail,target')
+    o,c,e = run_cmd('df --output=source,fstype,size,avail,target')
     acceptedfs = ['ext4', 'btrfs', 'f2fs', 'xfs', 'jfs']
     for line in o.splitlines():
         try:
-            _dev, _fstype, avail, _mount = re.split('[\s]+', line.decode('utf-8'))
+            _dev, _fstype, size, avail, _mount = re.split('[\s]+', line)
             if _fstype in acceptedfs:
                 try:
                     output[_dev] = {}
+                    output[_dev]['size'] = int(size)
                     output[_dev]['avail'] = int(avail)
                     output[_dev]['fstype'] = _fstype
                     output[_dev]['mountpoint'] = _mount
                     output[_dev]['dev'] = _dev
-                except:
+                except Exception as e:
+                    print(e)
                     continue
-        except: continue
+        except Exception as e:
+            continue
     os, c, e = run_cmd("""grep -oP '(?<=os=)[^\s]+' /proc/cmdline""")
     arch, c, e = run_cmd("""uname -m""")
 
@@ -169,6 +172,33 @@ def update_tools():
     o,c,e = run_cmd(cmd)
     print(f"Output: {o}\nError: '{e}' (Ignore if empty)")
 
+def resize_usb_root():
+    print("**** WARNING ****\nTHIS SCRIPT ONLE RESIZE THE LIVE USB ROOT CREATED BY THE USB IMAGE\nIF YOU ALREADY INSTALL IT INTO THE INTERNAL DISK THEN DO NOT RUN THIS COMMAND\nBACKUP BEFORE PROCEED IF YOU ALREADY HAVE DATA")
+    confirm = input("TYPE 'yes' in CAPITAL to continue: ")
+    if confirm != 'YES':
+        print("Aborted...")
+        return
+    full_path, mount_point, size = get_baseimage_location()
+    dev_name = f"/dev/{mount_point.split('/')[2]}"
+    disk_info = get_info()['disk_info']
+    size = disk_info[dev_name]['size']
+    confirm = input(f"DETECTED MOUNT POINT {mount_point} WITH SIZE {int(size/1024/1024)} GB\nTYPE 'yes' in CAPITAL to continue: ")
+    if confirm != 'YES':
+        print("Aborted...")
+        return
+    o,c,e = run_cmd(f"""
+    if `ls -lha /sys/block/${_x_block_dev} | grep '/usb[0-9]\+' >/dev/null 2>&1`; then
+      _x_is_usb=yes
+    else
+      _x_is_usb=no
+    fi
+    if [ "$_x_is_usb" = "yes" ]; then
+        /opt/bin/resize-last-part.sh {dev_name}")
+    fi
+    """)
+    print(f"Output: {o}\nError: '{e}' ignore if empty")
+
+
 cmdlist = {
         'create_change_image': {
             'help': 'Create a encrypted change image. This will be used for the next reboot. The current changes data will be copied into the image and it will be encrypted.',
@@ -186,6 +216,10 @@ cmdlist = {
             'help': 'Update loteus tools scripts from github. This will download and update cripts tools in /opt/bin/ ',
             'run': update_tools,
         },
+        'resize_usb_root': {
+            'help': 'Resize the last partition of the live USB to maximum size supported by the usb disk. DO NOT NEED TO RUN IT IF YOU HAVE INSTALL THE SYSTEM TO THE INTERNAL DISK',
+            'run': resize_usb_root,
+        }
 }
 
 def help():
