@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-# Merge the base root image with current changes
+# A front end script to manage several things that is loteus specific. This will call other scripts to do the job
 
 import re, sys, subprocess, os
+from getpass import getpass
 
 def run_cmd(cmd,sendtxt=None, working_dir=".", args=[], shell=True, DEBUG=False, shlex=False):
     if DEBUG:
@@ -95,7 +96,7 @@ def new_image_location(sys_info, full_path, base_mount_point, base_size): # retu
         return f"{max_part['mountpoint']}/porteus-update-{sys_info['os']}-{sys_info['arch']}.squashfs"
     return f"{full_path}.new"
 
-def main():
+def merge_base():
     sys_info = get_info()
     disk_info = sys_info['disk_info']
     full_path, mountpoint, size = get_baseimage_location()
@@ -111,6 +112,79 @@ def main():
     """
     print(f"COMMAND: {command}")
     run_cmd(command)
+    print("Done")
+
+def save_config():
+    sys_info = get_info()
+    disk_info = sys_info['disk_info']
+    work_dir = get_partion_with_max_available_size(disk_info)['mountpoint']
+    cmd = f'''mkdir {work_dir}/tmp_$$ || true
+        cd {work_dir}/tmp_$$
+        save-session 999 n {work_dir}/tmp_$$
+        cd ..
+        rm -rf tmp_$$
+        '''
+    print(cmd)
+    o, c, e = run_cmd(cmd)
+    if c != 0:
+        print(f"ERROR {e.decode('utf-8')}")
+    else:
+        print(f"Done {o.decode('utf-8')}\n{str(e)}")
+
+def create_change_image():
+    SIZE = os.getenv('IMAGE_SIZE', '')
+    if SIZE == '':
+        print("INFO Use size 1024M. To set size eg. `export IMAGE_SIZE=2048` will create 2G image")
+        SIZE = '1024'
+    IMAGE_NAME = os.getenv('IMAGE_NAME', '')
+    if IMAGE_NAME == '':
+        IMAGE_NAME = 'c.img'
+        print("INFO Image name is c.img - set env var IMAGE_NAME to change")
+    IMAGE_PATH = os.getenv('IMAGE_PATH', '')
+    if IMAGE_PATH == '':
+        sys_info = get_info()
+        disk_info = sys_info['disk_info']
+        IMAGE_PATH = get_partion_with_max_available_size(disk_info)['mountpoint']
+        print(f"INFO default IMAGE_PATH is {IMAGE_PATH}, set env var IMAGE_PATH to change. It needs to be the root mount point of the partition")
+    password = getpass("Enter password to encrypt the image: ")
+    cmd = f"""export PASS={password}
+    /opt/bin/make-changes-image-enc.sh {SIZE} {IMAGE_NAME} {IMAGE_PATH}
+    """
+    o,c,e = run_cmd(cmd)
+    if c != 0:
+        print(f"ERROR command {cmd}")
+        print(f"ERROR {e.decode('utf-8')}")
+    else:
+        print(f"Done {o.decode('utf-8')}\n{str(e)}")
+
+
+
+cmdlist = {
+        'create_change_image': {
+            'help': 'Create a encrypted change image. This will be used for the next reboot. The current changes data will be copied into the image and it will be encrypted.',
+            'run':  create_change_image
+        },
+        'merge_base': {
+            'help': 'Save the current changes into the system base image. Next reboot you should select teh boot menu RESET to use the new updated sase system image',
+            'run': merge_base
+        },
+        'save_config': {
+            'help': 'Save current config into system config so if you boot with reset option it will retain',
+            'run': save_config,
+        },
+}
+
+def help():
+    print(f"\n***** Usage *****\n{sys.argv[0]} <command>\n")
+    for _cmd in cmdlist:
+        print(f"command `{_cmd}`:\n{cmdlist[_cmd]['help']}\n")
 
 if __name__ == '__main__':
-    main()
+    try:
+        command = sys.argv[1]
+        cmdlist[command]['run']()
+    except Exception as e:
+        print("ERROR =======")
+        print(e)
+        help()
+
