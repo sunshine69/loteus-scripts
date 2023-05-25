@@ -27,11 +27,12 @@ def run_cmd(cmd,sendtxt=None, working_dir=".", args=[], shell=True, DEBUG=False,
             cwd=working_dir
         )
     if sendtxt: output, err = popen.communicate(bytearray(sendtxt, 'utf-8'))
-    else: output, err = popen.communicate()
+    else: _output, err = popen.communicate()
     code = popen.returncode
+    output = _output.decode('utf-8')
     if not code == 0 or DEBUG:
         output = "Command string: '%s'\n\n%s" % (cmd, output)
-    return (output.strip(), code, err)
+    return (output.strip(), code, err.decode('utf-8'))
 
 def get_info():
     output = {  }
@@ -53,7 +54,7 @@ def get_info():
     os, c, e = run_cmd("""grep -oP '(?<=os=)[^\s]+' /proc/cmdline""")
     arch, c, e = run_cmd("""uname -m""")
 
-    return {'os': os.decode('utf-8'), 'arch': arch.decode('utf-8'), 'disk_info': output  }
+    return {'os': os, 'arch': arch, 'disk_info': output  }
 
 def get_partion_with_max_available_size(disk_info):
     avail_num, key = 0, ''
@@ -69,7 +70,6 @@ def get_baseimage_location(): # full_path, mount_point, size
     if c != 0:
         print(f"ERROR {e}")
         sys.exit(1)
-    o = o.decode('utf-8')
     _tmp = o.split('/')
     mount_point = '/'.join(_tmp[1:3])
     return o, f"/{mount_point}", os.path.getsize(o)
@@ -127,9 +127,9 @@ def save_config():
     print(cmd)
     o, c, e = run_cmd(cmd)
     if c != 0:
-        print(f"ERROR {e.decode('utf-8')}")
+        print(f"ERROR {e}")
     else:
-        print(f"Done {o.decode('utf-8')}\n{str(e)}")
+        print(f"Done {o}\n{e}")
 
 def create_change_image():
     SIZE = os.getenv('IMAGE_SIZE', '')
@@ -153,11 +153,21 @@ def create_change_image():
     o,c,e = run_cmd(cmd)
     if c != 0:
         print(f"ERROR command {cmd}")
-        print(f"ERROR {e.decode('utf-8')}")
+        print(f"ERROR {e}")
     else:
-        print(f"Done {o.decode('utf-8')}\n{str(e)}")
+        print(f"Done {o}\n{e}")
 
-
+def update_tools():
+    repo_url = 'https://github.com/sunshine69/loteus-scripts.git'
+    cmd = f'''if [ ! -d /tmp/loteus-scripts/.git ]; then
+        git clone {repo_url} /tmp/loteus-scripts
+        else
+            cd /tmp/loteus-scripts && git pull
+        fi
+        rsync -avh /tmp/loteus-scripts/loteus-scripts/ /opt/bin/
+    '''
+    o,c,e = run_cmd(cmd)
+    print(f"Output: {o}\nError: '{e}' (Ignore if empty)")
 
 cmdlist = {
         'create_change_image': {
@@ -172,6 +182,10 @@ cmdlist = {
             'help': 'Save current config into system config so if you boot with reset option it will retain',
             'run': save_config,
         },
+        'update_tools': {
+            'help': 'Update loteus tools scripts from github. This will download and update cripts tools in /opt/bin/ ',
+            'run': update_tools,
+        },
 }
 
 def help():
@@ -184,7 +198,6 @@ if __name__ == '__main__':
         command = sys.argv[1]
         cmdlist[command]['run']()
     except Exception as e:
-        print("ERROR =======")
-        print(e)
+        print("ERROR -- ", e)
         help()
 
