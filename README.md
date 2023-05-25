@@ -8,7 +8,7 @@ I come up with a name for my linux distribution - Loteus!
 
 I use the linuxrc start up script from a linux distro [porteus](http://www.porteus.org/) modified it to support many functionalities I need. Still keep the original idea which is run linux from a compresses root image and mount overlayfs as root.
 
-To try click [this](https://mega.nz/file/tQAXibhQ#N0dBfz7EZPRbcFeiOFdV9wxl8fDLYgFKAIoUrzEBrTA) to download the USB image. This will fit any USB with minimum size of 8GB.
+To try click [this](https://mega.nz/file/QIQWCbbA#kbfGJCfx2Frxm7l7lR5c6w0O9xX2ifw7YzT9OceFFTk) to download the USB image. This will fit any USB with minimum size of 8GB.
 
 Use a image burner program like [balenaEtcher](https://etcher.download/download-etcher/) to flash the image into a USB disk (your disk will be wiped off in the process so make sure you back up your data).
 
