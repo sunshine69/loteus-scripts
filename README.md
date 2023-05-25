@@ -45,3 +45,7 @@ Check inside the folder `loteus-scripts/make-changes-image.sh`. Copy the content
 
 To create an encrypted disk image with 1G size run `/opt/bin/make-changes-image-enc.sh 1024`. This is a symlink to the above script which enable it to encrypt the image.
 
+## Script tools 
+
+I have added a script which take all loteus administration helpers. Run `/opt/bin/loteus-manage.py` to see what available.
+
