@@ -16,7 +16,8 @@ if [ -z "$BZIMAGE_FULL_PATH" ]; then
 	fi
 fi
 export PORT_DIR=$(dirname `losetup -a|grep -P '000\-[\d\.]+'|awk '{print $3}'|cut -d'(' -f2` | head -n1)
-export BOOT_DIR=$(dirname $BZIMAGE_FULL_PATH)
+BOOT_DIR=${BOOT_DIR:-$(dirname $BZIMAGE_FULL_PATH)}
+export BOOT_DIR
 
 [ -z "$PROMPT" ] && PROMPT=y
 
