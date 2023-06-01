@@ -1,8 +1,4 @@
-# Kernel build scripts
-
-This is a set of porteus custom kernel build script.
-
-## Welcome to Loteus!
+# Welcome to Loteus!
 
 I come up with a name for my linux distribution - Loteus!
 
