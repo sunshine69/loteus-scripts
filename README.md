@@ -14,6 +14,11 @@ Use a image burner program like [balenaEtcher](https://etcher.download/download-
 
 If you are on a linux host you can simply using dd command to write it.
 
+```
+zcat <path-to-image.gz> | dd if=- of=/dev/<your-usb-device-name> bs=1M 
+sync
+```
+
 Then insert the USB into the target machine; boot it up make sure it boots from the USB (by setting the BIOS or display the BIOS boot menu, please consult your specific bios system for the howto)
 
 If all good then you will be presented with GDM3 login and with the initial user `chrome`.
@@ -23,7 +28,7 @@ Login using the initial password `1q2w3e`.
 By default it will log you in a icewm windows session. You can change the session at the GDM3 login screen though to boot to standard Ubuntu 22 gnome desktop which then no longer be a thin OS anymore :) .
 
 As of now it is a live, data persistent USB. That means any settings, data download etc will be saved to the USB and available after reboot. It has:
-- Three web browsers, firefox, edge and google chrome. I recommend edge which is pretty fast and less memory usage for a small box. 
+- Web browsers, firefox, google chrome. 
 - Kodi media player
 - vmware horizon client for remote access to vmware horizon VDIs
 - many text tools - ansible, python3, openvpn, gcc and g++, fish shell.
@@ -49,3 +54,25 @@ To create an encrypted disk image with 1G size run `/opt/bin/make-changes-image-
 
 I have added a script which take all loteus administration helpers. Run `/opt/bin/loteus-manage.py` to see what available.
 
+## Maintenance.
+
+The system is boot using a read-only base image and all changes are also saved to disk as normal so use it like
+a normal Ubuntu system.
+
+If you made a changes and crash the system you can always reboot and select the second boot menu (reset) which remove all changes in the system. The user data is retained at your home directory.
+
+You have the ability to merge to the readonly base image using the command `loteus-manage.py`. Example below - note you need to run the command as root user:
+
+```
+# become root 
+sudo -i 
+# Run apt update and apt upgrade to bring up the system to the latest from ubuntu 
+apt update && apt upgrade 
+# Save the system config like new users you have added, wifi password etc 
+loteus-manage.py save_config
+# Use it for a while test see everything works fine, maybe reboot etc. Then run this command to merge to the read-only base image 
+loteus-manage.py merge_base
+# After run the command above, reboot the system and select the second boot entry (reset) to clean up 
+# Run without command to show help and all available commands
+loteus-manage.py 
+```
