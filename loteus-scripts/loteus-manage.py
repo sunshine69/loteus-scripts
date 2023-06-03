@@ -186,17 +186,21 @@ def resize_usb_root():
     if confirm != 'YES':
         print("Aborted...")
         return
-    o,c,e = run_cmd(f"""
-    if `ls -lha /sys/block/${_x_block_dev} | grep '/usb[0-9]\+' >/dev/null 2>&1`; then
+    cmd = f"""
+    dev_name=$(echo {dev_name} | sed 's/[0-9]\+//g')
+    mydev=$(basename $dev_name)
+    if `ls -lha /sys/block/$mydev | grep '/usb[0-9]\+' >/dev/null 2>&1`; then
       _x_is_usb=yes
     else
       _x_is_usb=no
     fi
     if [ "$_x_is_usb" = "yes" ]; then
-        /opt/bin/resize-last-part.sh {dev_name}")
-    fi
-    """)
-    print(f"Output: {o}\nError: '{e}' ignore if empty")
+        dev_name=$(ls -l /sys/block/ | grep '/usb[0-9]\+' | grep -oP '(?<=block\/).*$')
+        echo "DEBUG: $_x_is_usb: dev_name: $dev_name "
+        /opt/bin/resize-last-part.sh /dev/$dev_name
+    fi"""
+    o,c,e = run_cmd(cmd)
+    print(f"DEBUG Output: {o}\nDEBUG Error: '{e}' ignore if empty")
 
 
 cmdlist = {
