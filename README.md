@@ -4,22 +4,26 @@ I come up with a name for my linux distribution - Loteus!
 
 I use the linuxrc start up script from a linux distro [porteus](http://www.porteus.org/) modified it to support many functionalities I need. Still keep the original idea which is run linux from a compresses root image and mount overlayfs as root.
 
-To try click [this](https://mega.nz/file/0Aw0ySxR#A6iMdK25IJMVV7qvoAZdWeE6ExHpYo9dtS57t0-Bzqk) to download the USB image. This will fit any USB with minimum size of 8GB.
+To try click:
+[Ubuntu22.04](https://mega.nz/file/0Aw0ySxR#A6iMdK25IJMVV7qvoAZdWeE6ExHpYo9dtS57t0-Bzqk) 
+[Ubuntu23.04](https://mega.nz/file/UdBnVTaA#yiMkDxn2Luh9OFMev_hjgNXVwkxpLUZEj7AOFNpTui4)
+
+to download the USB image. This will fit any USB with minimum size of 8GB.
 
 Use a image burner program like [balenaEtcher](https://etcher.download/download-etcher/) to flash the image into a USB disk (your disk will be wiped off in the process so make sure you back up your data).
 
 If you are on a linux host you can simply using dd command to write it.
 
 ```
-zcat <path-to-image.gz> | dd if=- of=/dev/<your-usb-device-name> bs=1M 
+zcat <path-to-image.gz> | dd of=/dev/<your-usb-device-name> bs=1M 
 sync
 ```
 
 Then insert the USB into the target machine; boot it up make sure it boots from the USB (by setting the BIOS or display the BIOS boot menu, please consult your specific bios system for the howto)
 
-If all good then you will be presented with GDM3 login and with the initial user `chrome`.
+If all good then you will be auto login the initial user `loteus` running simple icewm window manager.
 
-Login using the initial password `1q2w3e`.
+The initial password of user loteus is `1q2w3e`.
 
 By default it will log you in a icewm windows session. You can change the session at the GDM3 login screen though to boot to standard Ubuntu 22 gnome desktop which then no longer be a thin OS anymore :) .
 
@@ -51,6 +55,8 @@ To create an encrypted disk image with 1G size run `/opt/bin/make-changes-image-
 I have added a script which take all loteus administration helpers. Run `/opt/bin/loteus-manage.py` to see what available.
 
 ## Maintenance.
+
+**REMEMBER to add new user for you and change the default password of user loteus!**
 
 The system is boot using a read-only base image and all changes are also saved to disk as normal so use it like
 a normal Ubuntu system.
