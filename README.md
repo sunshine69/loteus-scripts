@@ -5,8 +5,8 @@ I come up with a name for my linux distribution - Loteus!
 I use the linuxrc start up script from a linux distro [porteus](http://www.porteus.org/) modified it to support many functionalities I need. Still keep the original idea which is run linux from a compresses root image and mount overlayfs as root.
 
 To try click:
-[Ubuntu22.04](https://mega.nz/file/0Aw0ySxR#A6iMdK25IJMVV7qvoAZdWeE6ExHpYo9dtS57t0-Bzqk) 
-[Ubuntu23.04](https://mega.nz/file/UdBnVTaA#yiMkDxn2Luh9OFMev_hjgNXVwkxpLUZEj7AOFNpTui4)
+- [Ubuntu22.04](https://mega.nz/file/0Aw0ySxR#A6iMdK25IJMVV7qvoAZdWeE6ExHpYo9dtS57t0-Bzqk) 
+- [Ubuntu23.04](https://mega.nz/file/EMImGKAa#uhczQa3buJwn2EYni2X4w9FMGDy3RXNVr_eaXsoQUd4)
 
 to download the USB image. This will fit any USB with minimum size of 8GB.
 
