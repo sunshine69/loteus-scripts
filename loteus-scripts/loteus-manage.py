@@ -168,6 +168,7 @@ def update_tools():
             cd /tmp/loteus-scripts && git pull
         fi
         rsync -avh /tmp/loteus-scripts/loteus-scripts/ /opt/bin/
+        chmod +x /opt/bin/*
     '''
     o,c,e = run_cmd(cmd)
     print(f"Output: {o}\nError: '{e}' (Ignore if empty)")
