@@ -15,6 +15,8 @@ Use a image burner program like [balenaEtcher](https://etcher.download/download-
 If you are on a linux host you can simply using dd command to write it.
 
 ```
+# Put your USB in then run dmesg | tail -n 50 to see which device name is, like sda or sdb etc..
+dmesg | tail -n 50
 zcat <path-to-image.gz> | dd of=/dev/<your-usb-device-name> bs=1M 
 sync
 ```
