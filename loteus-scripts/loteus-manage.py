@@ -203,6 +203,26 @@ def resize_usb_root():
     o,c,e = run_cmd(cmd)
     print(f"DEBUG Output: {o}\nDEBUG Error: '{e}' ignore if empty")
 
+def install_mod():
+    try:
+        mod_url = sys.argv[2]
+    except:
+        print("[ERROR] Need to provide url or file path to the module")
+        sys.exit(1)
+    if mod_url.startswith('http'):
+        print("URL download has not yet supported. You download it using normal browser and then run this script using the file path")
+        sys.exit(1)
+
+    mod_file = mod_url
+    mod_file_name, o, e = run_cmd(f"basename {mod_file}")
+
+    full_path, mountpoint, size = get_baseimage_location()
+    base_dir_name, c, e = run_cmd(f"dirname {full_path}")
+    run_cmd(f"mv {mod_file} {base_dir_name}/{mod_file_name}")
+    run_cmd(f"activate {base_dir_name}/{mod_file_name}")
+    print("Completed. New module activated on /opt/ you can try to get in there and run the program in its bin folder\nYou can create short cut by yourself")
+    o,c,e = run_cmd('ls -lha /opt')
+    print(o)
 
 cmdlist = {
         'create_change_image': {
@@ -224,6 +244,10 @@ cmdlist = {
         'resize_usb_root': {
             'help': 'Resize the last partition of the live USB to maximum size supported by the usb disk. DO NOT NEED TO RUN IT IF YOU HAVE INSTALL THE SYSTEM TO THE INTERNAL DISK',
             'run': resize_usb_root,
+        },
+        'install_mod': {
+            'help': 'Download and install the loteus module package. Need to give it the URL or module file name',
+            'run': install_mod,
         }
 }
 
