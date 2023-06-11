@@ -6,7 +6,7 @@ I use the linuxrc start up script from a linux distro [porteus](http://www.porte
 
 To try click:
 - [Ubuntu22.04](https://mega.nz/file/0Aw0ySxR#A6iMdK25IJMVV7qvoAZdWeE6ExHpYo9dtS57t0-Bzqk) 
-- [Ubuntu23.04](https://mega.nz/file/EMImGKAa#uhczQa3buJwn2EYni2X4w9FMGDy3RXNVr_eaXsoQUd4)
+- [Ubuntu23.04](https://mega.nz/file/pAgSGIiB#LbyBGAZ-b-ku7HZLs7ax-m1KTN3wwc0sMtbL96ywneU)
 
 to download the USB image. This will fit any USB with minimum size of 8GB.
 
@@ -15,6 +15,8 @@ Use a image burner program like [balenaEtcher](https://etcher.download/download-
 If you are on a linux host you can simply using dd command to write it.
 
 ```
+# Put your USB in then run dmesg | tail -n 50 to see which device name is, like sda or sdb etc..
+dmesg | tail -n 50
 zcat <path-to-image.gz> | dd of=/dev/<your-usb-device-name> bs=1M 
 sync
 ```
