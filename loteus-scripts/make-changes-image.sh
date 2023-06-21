@@ -8,15 +8,14 @@ CURRENT_CHANGES=$(grep -A1 'Changes are stored in:' /var/log/live/livedbg | tail
 # size in MB
 SIZE="${1:-512}"
 # generated image name, default is c.img
-IMAGE_NAME=${2:-c.img}
-FILE_PATH="${BOOT_MOUNT}/${IMAGE_NAME}"
+FILE_PATH=${2:-${BOOT_MOUNT}/c.img}
+IMAGE_NAME=$(basename $FILE_PATH)
 
 if [ "$( basename $0)" = "make-changes-image-enc.sh" ]; then FILE_ENC=yes; fi
 
 # This is from the initrd image to insure compatibility betwwel LUK VERSION
 CRYPTSETUP=$(which cryptsetup)
 
-FILE_NAME=$(basename $FILE_PATH)
 DIR_NAME=$(dirname $FILE_PATH)
 
 if [ ! -d $DIR_NAME ]; then
@@ -30,7 +29,16 @@ if [ -b "$FILE_PATH" ]; then
     echo "Raw block device detected"
     DEVICE=$FILE_PATH
 elif [ ! -f "$FILE_PATH" ]; then
-    fallocate -l ${SIZE}M $FILE_PATH
+    file_system=$(df -P "$file_path" | awk 'NR==2{print $1}')
+    file_system_type=$(blkid -s TYPE -o value $file_system)
+    if [ "$file_system_type" = "btrfs" ]; then
+        echo "btrfs fs detected. Will disable COW"
+        truncate -s 0 $FILE_PATH
+        chattr +C $FILE_PATH
+        fallocate -l ${SIZE}M $FILE_PATH
+    else
+        fallocate -l ${SIZE}M $FILE_PATH
+    fi
     #dd if=/dev/zero of=$FILE_PATH bs=1M count=$SIZE
 fi
 
@@ -49,8 +57,8 @@ if [ "$FILE_ENC" = "yes" ]; then
         echo "Will set up new LUKS container"
         echo $PASS | $CRYPTSETUP --key-file=- -q luksFormat --type luks1 $DEVICE
     fi
-    echo $PASS | $CRYPTSETUP --key-file=- luksOpen $DEVICE ${FILE_NAME}_ENC_$$
-    TARGET_DEVICE=/dev/mapper/${FILE_NAME}_ENC_$$
+    echo $PASS | $CRYPTSETUP --key-file=- luksOpen $DEVICE ${IMAGE_NAME}_ENC_$$
+    TARGET_DEVICE=/dev/mapper/${IMAGE_NAME}_ENC_$$
 else
     TARGET_DEVICE="$DEVICE"
 fi
@@ -77,7 +85,7 @@ sed -i "s|changes=${CURRENT_CHANGES}|changes=${IMAGE_NAME}/${CURRENT_OS}|g" ${BO
 sync
 umount /tmp/mount$$ && rm -rf /tmp/mount$$
 
-if [ "$FILE_ENC" = "yes" ]; then $CRYPTSETUP luksClose ${FILE_NAME}_ENC_$$; fi
+if [ "$FILE_ENC" = "yes" ]; then $CRYPTSETUP luksClose ${IMAGE_NAME}_ENC_$$; fi
 
 if [ "$USE_LOOP" = "yes" ]; then losetup -d $DEVICE; fi
 

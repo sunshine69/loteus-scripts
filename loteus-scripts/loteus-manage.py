@@ -149,9 +149,13 @@ def create_change_image():
         disk_info = sys_info['disk_info']
         IMAGE_PATH = get_partion_with_max_available_size(disk_info)['mountpoint']
         print(f"INFO default IMAGE_PATH is {IMAGE_PATH}, set env var IMAGE_PATH to change. It needs to be the root mount point of the partition")
+    MKFS = os.getenv('MKFS', '')
+    if MKFS == '':
+        print(f"INFO Use {MKFS} to create file system. Set your env var MKFS to change")
+        MKFS = 'mkfs.f2fs'
     password = getpass("Enter password to encrypt the image: ")
     cmd = f"""export PASS={password}
-    /opt/bin/make-changes-image-enc.sh {SIZE} {IMAGE_NAME} {IMAGE_PATH}
+    /opt/bin/make-changes-image-enc.sh {SIZE} {IMAGE_PATH}/{IMAGE_NAME} {MKFS}
     """
     o,c,e = run_cmd(cmd)
     if c != 0:
