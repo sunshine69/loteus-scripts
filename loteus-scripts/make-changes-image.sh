@@ -2,7 +2,7 @@
 
 CURRENT_OS=$(cat /proc/cmdline | grep -oP '(?<= os=)[^\s]+')
 
-BOOT_MOUNT=$(grep -A1 'Booting data device:' /var/log/live/livedbg | tail -n1)
+BOOT_MOUNT=${BOOT_MOUNT:-$(grep -A1 'Booting data device:' /var/log/live/livedbg | tail -n1)}
 CURRENT_CHANGES=$(grep -A1 'Changes are stored in:' /var/log/live/livedbg | tail -n1)
 
 # size in MB
