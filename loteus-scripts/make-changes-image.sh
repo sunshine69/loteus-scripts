@@ -29,7 +29,7 @@ if [ -b "$FILE_PATH" ]; then
     echo "Raw block device detected"
     DEVICE=$FILE_PATH
 elif [ ! -f "$FILE_PATH" ]; then
-    file_system=$(df -P "$file_path" | awk 'NR==2{print $1}')
+    file_system=$(df -P "$(dirname $file_path)" | awk 'NR==2{print $1}')
     file_system_type=$(blkid -s TYPE -o value $file_system)
     if [ "$file_system_type" = "btrfs" ]; then
         echo "btrfs fs detected. Will disable COW"
@@ -77,7 +77,12 @@ DISK_UUID=$(blkid $TARGET_DEVICE | grep -oP '(?<= UUID=)[^\s]+' | sed 's/"//g' |
 echo "Copy current changes into new one"
 CHANGES_DEV=$(df /mnt/live/memory/changes | tail -n1 | awk '{print $1}')
 CHANGES_MOUNT=$(df $CHANGES_DEV | tail -n1 | awk '{print $NF}')
-rsync -a ${CHANGES_MOUNT}/${CURRENT_CHANGES}/ /tmp/mount$$/${CURRENT_OS}/
+if [ "$CHANGES_MOUNT" = "/mnt/live/memory/changes" ]; then
+    echo "Detect that we have changes as loop file"
+    rsync -a ${CHANGES_MOUNT}/ /tmp/mount$$/${CURRENT_OS}/
+else
+    rsync -a ${CHANGES_MOUNT}/${CURRENT_CHANGES}/ /tmp/mount$$/${CURRENT_OS}/
+fi
 
 echo "Backup ${BOOT_MOUNT}/boot/grub/grub.cfg before editing"
 cp ${BOOT_MOUNT}/boot/grub/grub.cfg ${BOOT_MOUNT}/boot/grub/grub.cfg.bak
