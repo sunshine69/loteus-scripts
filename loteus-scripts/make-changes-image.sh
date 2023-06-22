@@ -16,12 +16,14 @@ if [ "$( basename $0)" = "make-changes-image-enc.sh" ]; then FILE_ENC=yes; fi
 # This is from the initrd image to insure compatibility betwwel LUK VERSION
 CRYPTSETUP=$(which cryptsetup)
 
-DIR_NAME=$(dirname $FILE_PATH)
+DIR_NAME="$(dirname $FILE_PATH)"
 
 if [ ! -d $DIR_NAME ]; then
      echo "Directory does not exist. Creating .."
      mkdir -p $DIR_NAME
 fi
+
+echo "INFO FILE_PATH: $FILE_PATH | DIR_NAME: $DIR_NAME | SIZE: $SIZE | MKFS: $MKFS | BOOT_MOUNT: $BOOT_MOUNT CURRENT_CHANGES: $CURRENT_CHANGES"
 
 DEVICE=""
 
@@ -29,11 +31,11 @@ if [ -b "$FILE_PATH" ]; then
     echo "Raw block device detected"
     DEVICE=$FILE_PATH
 elif [ ! -f "$FILE_PATH" ]; then
-    file_system=$(df -P "$(dirname $file_path)" | awk 'NR==2{print $1}')
+    truncate -s 0 $FILE_PATH
+    file_system=$(df -P "$FILE_PATH" | awk 'NR==2{print $1}')
     file_system_type=$(blkid -s TYPE -o value $file_system)
     if [ "$file_system_type" = "btrfs" ]; then
         echo "btrfs fs detected. Will disable COW"
-        truncate -s 0 $FILE_PATH
         chattr +C $FILE_PATH
         fallocate -l ${SIZE}M $FILE_PATH
     else
