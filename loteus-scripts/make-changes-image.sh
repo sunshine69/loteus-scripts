@@ -81,7 +81,8 @@ CHANGES_DEV=$(df /mnt/live/memory/changes | tail -n1 | awk '{print $1}')
 CHANGES_MOUNT=$(df $CHANGES_DEV | tail -n1 | awk '{print $NF}')
 if [ "$CHANGES_MOUNT" = "/mnt/live/memory/changes" ]; then
     echo "Detect that we have changes as loop file"
-    rsync -a ${CHANGES_MOUNT}/ /tmp/mount$$/${CURRENT_OS}/
+    mkdir /tmp/mount$$/${CURRENT_OS}/changes
+    rsync -a ${CHANGES_MOUNT}/ /tmp/mount$$/${CURRENT_OS}/changes/
 else
     rsync -a ${CHANGES_MOUNT}/${CURRENT_CHANGES}/ /tmp/mount$$/${CURRENT_OS}/
 fi
