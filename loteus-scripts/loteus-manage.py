@@ -230,7 +230,7 @@ def install_mod():
 
 cmdlist = {
         'create_change_image': {
-            'help': 'Create a encrypted change image. This will be used for the next reboot. The current changes data will be copied into the image and it will be encrypted.',
+            'help': 'Create a encrypted change image. This will be used for the next reboot. The current changes data will be copied into the image and it will be encrypted. Controll Vars: IMAGE_SIZE, IMAGE_NAME, IMAGE_PATH, MKFS',
             'run':  create_change_image
         },
         'merge_base': {
