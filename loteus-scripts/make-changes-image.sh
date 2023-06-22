@@ -75,7 +75,8 @@ mkdir /tmp/mount$$/${CURRENT_OS}/
 
 DISK_UUID=$(blkid $TARGET_DEVICE | grep -oP '(?<= UUID=)[^\s]+' | sed 's/"//g' | cut -b1-8)
 echo "Copy current changes into new one"
-rsync -a ${BOOT_MOUNT}/${CURRENT_CHANGES}/ /tmp/mount$$/${CURRENT_OS}/
+CHANGES_MOUNT=$(df /mnt/live/memory/changes | awk '{print $1}')
+rsync -a ${CHANGES_MOUNT}/${CURRENT_CHANGES}/ /tmp/mount$$/${CURRENT_OS}/
 
 echo "Backup ${BOOT_MOUNT}/boot/grub/grub.cfg before editing"
 cp ${BOOT_MOUNT}/boot/grub/grub.cfg ${BOOT_MOUNT}/boot/grub/grub.cfg.bak
