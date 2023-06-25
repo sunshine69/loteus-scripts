@@ -42,6 +42,8 @@ else
     WIN_INFO=''
 fi
 
+echo "WIN_INFO detected before adjust: $WIN_INFO"
+
 if [ ! -z "$WIN_INFO" ]; then
     SCREEN_SIZE=$(echo $WIN_INFO | cut -f1 -d+)
     _W=$(echo $SCREEN_SIZE | cut -f1 -dx)
