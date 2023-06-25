@@ -8,20 +8,23 @@ CURRENT_DIR=$(pwd)
 CURRENT_KVER=$(uname -r)
 
 # Clean up
-LAST_FILE=$(find $PORT_DIR/ -maxdepth 1 -type f -name "000*linux-header*.xzm" -printf "%T+\t%p\n" | grep -v  "*${CURRENT_KVER}*.xzm" | grep -v "*${KVER}*.xzm" | sort -r )
+LAST_FILE=$(find $PORT_DIR/ -maxdepth 1 -type f -name "000*linux-header*.xzm" -printf "%T+\t%p\n" | grep -v  "${CURRENT_KVER}" | grep -v "${KVER}" | sort -r )
 
 LINE_COUNT=$(echo "$LAST_FILE" | wc -l )
+let "TOBE_RM_COUNT=${LINE_COUNT}-1"
 
 if [ $LINE_COUNT -gt 2 ]; then
-    echo "$LAST_FILE" | head -n 1 | awk '{print $2}' |  while read fn; do rm -f "$fn"; done
+    echo "clean should exclude CURRENT_KVER: $CURRENT_KVER | KVER: $KVER"
+    echo "$LAST_FILE" | tail -n $TOBE_RM_COUNT | awk '{print $2}' |  while read fn; do echo "going to rm $fn"; rm -f "$fn"; done
 fi
 
-LAST_FILE=$(find $PORT_DIR/ -maxdepth 1 -type f -name "000*.xzm" -printf "%T+\t%p\n" | grep -v  "*${CURRENT_KVER}*.xzm" | grep -v "linux-header" | grep -v "*${KVER}*.xzm" |sort -r )
+LAST_FILE=$(find $PORT_DIR/ -maxdepth 1 -type f -name "000*.xzm" -printf "%T+\t%p\n" | grep -v  "${CURRENT_KVER}" | grep -v "${KVER}" |sort -r )
 
 LINE_COUNT=$(echo "$LAST_FILE" | wc -l )
+let "TOBE_RM_COUNT=${LINE_COUNT}-1"
 
 if [ $LINE_COUNT -gt 2 ]; then
-    echo "$LAST_FILE" | head -n 1 | awk '{print $2}' |  while read fn; do echo "Going to rm '$fn'"; rm -f "$fn"; done
+    echo "$LAST_FILE" | tail -n $TOBE_RM_COUNT | awk '{print $2}' |  while read fn; do echo "going to rm '$fn'"; rm -f "$fn"; done
 fi
 
 echo "BOOT_DIR: $BOOT_DIR"
