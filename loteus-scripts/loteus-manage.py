@@ -170,6 +170,11 @@ def create_change_image():
     else:
         print(f"Done {o}\n{e}")
 
+
+def update_kernel():
+    pass
+
+
 def update_tools():
     repo_url = 'https://github.com/sunshine69/loteus-scripts.git'
     cmd = f'''if [ ! -d /tmp/loteus-scripts/.git ]; then
@@ -235,6 +240,10 @@ def install_mod():
     print(o)
 
 cmdlist = {
+        'update_kernel': {
+            'help': 'Update kernel to the latest version',
+            'run': update_kernel
+        },
         'create_change_image': {
             'help': 'Create a encrypted change image. This will be used for the next reboot. The current changes data will be copied into the image and it will be encrypted. Controll Vars: IMAGE_SIZE, IMAGE_NAME, IMAGE_PATH, MKFS, BOOT_MOUNT',
             'run':  create_change_image

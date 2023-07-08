@@ -1,6 +1,9 @@
 #!/bin/bash
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+if [ ! -z "$BOOT_DIR" ]; then export BOOT_DIR; fi
+
 . $SCRIPT_DIR/common.sh
 
 CURRENT_DIR=$(pwd)
@@ -8,7 +11,7 @@ CURRENT_DIR=$(pwd)
 CURRENT_KVER=$(uname -r)
 
 # Clean up
-LAST_FILE=$(find $PORT_DIR/ -maxdepth 1 -type f -name "000*linux-header*.xzm" -printf "%T+\t%p\n" | grep -v  "${CURRENT_KVER}" | grep -v "${KVER}" | sort -r )
+LAST_FILE=$(find $PORT_DIR/ -maxdepth 1 -type f -name "000*linux-header*.xzm" -printf "%T+\t%p\n" | grep -v  "${CURRENT_KVER}" | grep -v "${KVER}" | grep -v 'fallback' | sort -r )
 
 LINE_COUNT=$(echo "$LAST_FILE" | wc -l )
 let "TOBE_RM_COUNT=${LINE_COUNT}-1"
@@ -18,7 +21,7 @@ if [ $LINE_COUNT -gt 2 ]; then
     echo "$LAST_FILE" | tail -n $TOBE_RM_COUNT | awk '{print $2}' |  while read fn; do echo "going to rm $fn"; rm -f "$fn"; done
 fi
 
-LAST_FILE=$(find $PORT_DIR/ -maxdepth 1 -type f -name "000*.xzm" -printf "%T+\t%p\n" | grep -v  "${CURRENT_KVER}" | grep -v "${KVER}" |sort -r )
+LAST_FILE=$(find $PORT_DIR/ -maxdepth 1 -type f -name "000*.xzm" -printf "%T+\t%p\n" | grep -v  "${CURRENT_KVER}" | grep -v "${KVER}" | grep -v 'fallback' | sort -r )
 
 LINE_COUNT=$(echo "$LAST_FILE" | wc -l )
 let "TOBE_RM_COUNT=${LINE_COUNT}-1"

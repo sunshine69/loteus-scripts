@@ -147,9 +147,12 @@ sed "s/<SET_ME_ROOT_PART_UUID>/${ROOT_PART_UUID}/g; s/<SET_ME_BOOT_OS>/${BOOT_OS
 # Populate things here
 cp ${CURRENT_BOOT_DIR}/{bzImage,initrd.xz} /mnt/root/boot/
 
-mkdir /mnt/root/$BOOT_FROM -p
+mkdir /mnt/root/$BOOT_FROM/${CURRENT_BOOT_OS} -p
 
-rsync --exclude '999*' --exclude '*.old' --exclude '*.new' --inplace -avh ${CURRENT_PORT_DIR}/ /mnt/root/$BOOT_FROM/
+rsync --exclude '999*' --exclude '*.old' --exclude '*.new' --inplace -avh ${CURRENT_PORT_DIR}/${CURRENT_BOOT_OS}/ /mnt/root/$BOOT_FROM/${CURRENT_BOOT_OS}/
+
+CURRENT_KERNEL_VER=$(uname -r)
+cp -a ${CURRENT_PORT_DIR}/000-*${CURRENT_KERNEL_VER}* /mnt/root/$BOOT_FROM/
 
 mkdir /mnt/root/c-${BOOT_FROM}/${BOOT_OS} -p
 chattr +c -R /mnt/root/c-${BOOT_FROM}

@@ -16,8 +16,8 @@ if [ -z "$BZIMAGE_FULL_PATH" ]; then
 	fi
 fi
 export PORT_DIR=$(dirname `losetup -a|grep -P '000\-[\d\.]+'|awk '{print $3}'|cut -d'(' -f2` | head -n1)
-BOOT_DIR=${BOOT_DIR:-$(dirname $BZIMAGE_FULL_PATH)}
-export BOOT_DIR
+
+if [ -z "$BOOT_DIR" ]; then export BOOT_DIR=$(dirname $BZIMAGE_FULL_PATH); else export BOOT_DIR=${BOOT_DIR}; fi
 
 [ -z "$PROMPT" ] && PROMPT=y
 
@@ -25,3 +25,4 @@ export BOOT_DIR
 [ -z "$TARGET_DIR" ] && TARGET_DIR=/mnt/portdata/build/kernel-binary
 
 echo "TARGET_DIR=$TARGET_DIR PORT_DIR $PORT_DIR BOOT_DIR $BOOT_DIR"
+export KVER=6.4.1-3-amd64
