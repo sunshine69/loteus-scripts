@@ -4,7 +4,8 @@
 
 LOOP_DEV=$1
 
-if [ -z "$LOOP_DEV" ]; then echo "ERROR - Usage: $0 [disk-device-like-sda] <path-boot-from> <porteus-dev-like-sdc3>"; exit 1; fi
+if [ -z "$LOOP_DEV" ]; then echo "ERROR - Usage: $0 [disk-device-like-sda] <boot-from-dir-name> <porteus-devname-like-sdc3>"; exit 1; fi
+
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ ! -b "/dev/${LOOP_DEV}" ]; then
@@ -14,10 +15,10 @@ if [ ! -b "/dev/${LOOP_DEV}" ]; then
 fi
 
 CURRENT_BOOT_FROM=$2
+CURRENT_BOOT_OS=$(grep -oP '(?<=os=)[^\s]+' /proc/cmdline)
 
 if [ -z "$CURRENT_BOOT_FROM" ]; then
     CURRENT_BOOT_FROM=$(grep -oP '(?<=from=)[^\s]+' /proc/cmdline)
-    CURRENT_BOOT_OS=$(grep -oP '(?<=os=)[^\s]+' /proc/cmdline)
 fi
 CURRENT_PORTEUS_DEV=$3
 
