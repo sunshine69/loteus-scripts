@@ -4,6 +4,7 @@
 
 LOOP_DEV=$1
 
+if [ -z "$LOOP_DEV" ]; then echo "ERROR - Usage: $0 [disk-device-like-sda] <path-boot-from> <porteus-dev-like-sdc3>"; exit 1; fi
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ ! -b "/dev/${LOOP_DEV}" ]; then
