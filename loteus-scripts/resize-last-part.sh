@@ -2,6 +2,12 @@
 
 DISK=$1
 
+if [ -z "$DISK" ]; then
+    printf "ERROR. Full path to device name required.
+    Usage: $0 /dev/<device-name>"
+    exit 1
+fi
+
 echo "move second header to end of disk (update gpt part to use whole disk)"
 sgdisk -e $DISK
 
