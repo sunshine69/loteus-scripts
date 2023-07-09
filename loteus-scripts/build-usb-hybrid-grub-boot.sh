@@ -8,7 +8,10 @@ if [ -z "$LOOP_DEV" ]; then
     printf "ERROR - Usage: $0 [disk-device-like-sda] <boot-from-dir-name> <porteus-devname-like-sdc3>
     env vars used
       - MKFS to make the file ssytem on the third partition; default is mkfs.btrfs with compression support
-      - OS_DIR where to copy the OS dir base images, default to be the current running system OS dir"
+      - OS_DIR where to copy the OS dir base images, default to be the current running system OS dir
+      - CURRENT_BOOT_DIR - Path to the boot directory where the bzImage and initrd.xz will be installed. If not set it uses the current one.
+      - FORCE_HYBRID value yes|no|legacy. Make the boot disk hybrid mode. By default if device is loop, then it is yes, otherwise is no (only EFI boot is setup). Set it to yes to force building EFI and legacy hybrid diskc
+      f vaule is legacy then setup teh boot disk is legacy only, no EFI."
     exit 1
 fi
 
@@ -22,6 +25,12 @@ fi
 
 CURRENT_BOOT_FROM=$2
 CURRENT_BOOT_OS=$(grep -oP '(?<=os=)[^\s]+' /proc/cmdline)
+
+if [ ! -z "$OS_DIR" ]; then
+    BOOT_OS=$(basename $OS_DIR)
+else
+    BOOT_OS=$CURRENT_BOOT_OS
+fi
 
 if [ -z "$CURRENT_BOOT_FROM" ]; then
     CURRENT_BOOT_FROM=$(grep -oP '(?<=from=)[^\s]+' /proc/cmdline)
@@ -102,10 +111,17 @@ else
 	PART_CHAR=""
 fi
 
+FORCE_HYBRID=${FORCE_HYBRID:-no}
+if [ "$FORCE_HYBRID" = "yes" ]; then HYBRID=yes; fi
+
 if [[ $HYBRID = "yes" ]]; then
     sgdisk /dev/${LOOP_DEV} --hybrid=1:2:3
 else
-    echo "Operating on real disk do not make hybrid disk"
+    if [ "$FORCE_HYBRID" != "legacy" ]; then
+        echo "Operating on real disk do not make hybrid disk"
+    else
+        echo "Only use legacy boot due to FORCE_HYBRID=$FORCE_HYBRID"
+    fi
 fi
 
 # refresh partition table in kernel memory
@@ -134,18 +150,20 @@ if [ -d /mnt/root/boot ]; then
 else
     mkdir /mnt/root
 fi
-mount /dev/${LOOP_DEV}${PART_CHAR}3 /mnt/root
 
-mkdir -p /mnt/root/boot/efi
-mount /dev/${LOOP_DEV}${PART_CHAR}2 /mnt/root/boot/efi
+if [ "$FORCE_HYBRID" != "legacy" ]; then
 
-grub-install --target=x86_64-efi --efi-directory=/mnt/root/boot/efi --boot-directory=/mnt/root/boot --removable --recheck --uefi-secure-boot
+    mount /dev/${LOOP_DEV}${PART_CHAR}3 /mnt/root
 
-if [[ $HYBRID = "yes" ]]; then
-	grub-install --target=i386-pc --boot-directory=/mnt/root/boot /dev/${LOOP_DEV}
+    mkdir -p /mnt/root/boot/efi
+    mount /dev/${LOOP_DEV}${PART_CHAR}2 /mnt/root/boot/efi
+
+    grub-install --target=x86_64-efi --efi-directory=/mnt/root/boot/efi --boot-directory=/mnt/root/boot --removable --recheck --uefi-secure-boot
 fi
 
-if [ -z "$BOOT_OS" ]; then BOOT_OS=$CURRENT_BOOT_OS; fi
+if [[ $HYBRID = "yes" ]] || [[ $FORCE_HYBRID = "legacy" ]]; then
+	grub-install --target=i386-pc --boot-directory=/mnt/root/boot /dev/${LOOP_DEV}
+fi
 
 ROOT_PART_UUID=$(grep -oP '(?<=search.fs_uuid )[^\s]+(?= root)' /mnt/root/boot/efi/EFI/BOOT/grub.cfg)
 
@@ -156,12 +174,12 @@ sed "s/<SET_ME_ROOT_PART_UUID>/${ROOT_PART_UUID}/g; s/<SET_ME_BOOT_OS>/${BOOT_OS
 # Populate things here
 cp ${CURRENT_BOOT_DIR}/{bzImage,initrd.xz} /mnt/root/boot/
 
-mkdir /mnt/root/$BOOT_FROM/${CURRENT_BOOT_OS} -p
+mkdir /mnt/root/$BOOT_FROM/${BOOT_OS} -p
 
-OS_DIR=${OS_DIR:-$CURRENT_PORT_DIR/$CURRENT_BOOT_OS}
+OS_DIR=${OS_DIR:-$CURRENT_PORT_DIR/$BOOT_OS}
 echo "Use OS_DIR: '$OS_DIR'"
 
-rsync --exclude '999*' --exclude '*.old' --exclude '*.new' --inplace -avh ${OS_DIR}/ /mnt/root/$BOOT_FROM/${CURRENT_BOOT_OS}/
+rsync --exclude '999*' --exclude '*.old' --exclude '*.new' --inplace -avh ${OS_DIR}/ /mnt/root/$BOOT_FROM/${BOOT_OS}/
 
 CURRENT_KERNEL_VER=$(uname -r)
 cp -a ${CURRENT_PORT_DIR}/000-*${CURRENT_KERNEL_VER}* /mnt/root/$BOOT_FROM/
