@@ -176,13 +176,20 @@ cp ${CURRENT_BOOT_DIR}/{bzImage,initrd.xz} /mnt/root/boot/
 
 mkdir /mnt/root/$BOOT_FROM/${BOOT_OS} -p
 
+if [ ! -z "$OS_DIR" ]; then CURRENT_KERNEL_VER="custom"; fi
+
 OS_DIR=${OS_DIR:-$CURRENT_PORT_DIR/$BOOT_OS}
 echo "Use OS_DIR: '$OS_DIR'"
 
 rsync --exclude '999*' --exclude '*.old' --exclude '*.new' --inplace -avh ${OS_DIR}/ /mnt/root/$BOOT_FROM/${BOOT_OS}/
 
-CURRENT_KERNEL_VER=$(uname -r)
-cp -a ${CURRENT_PORT_DIR}/000-*${CURRENT_KERNEL_VER}* /mnt/root/$BOOT_FROM/
+if [ -z "$CURRENT_KERNEL_VER" ]; then
+    CURRENT_KERNEL_VER=$(uname -r)
+    cp -a ${CURRENT_PORT_DIR}/000-*${CURRENT_KERNEL_VER}* /mnt/root/$BOOT_FROM/
+else
+    CUSTOM_PORT_DIR=$(dirname $OS_DIR)
+    cp -a $CUSTOM_PORT_DIR/000-* /mnt/root/$BOOT_FROM/
+fi
 
 mkdir /mnt/root/c-${BOOT_FROM}/${BOOT_OS} -p
 if [[ $MKFS =~ mkfs.btrfs ]]; then
