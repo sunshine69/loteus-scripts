@@ -4,7 +4,13 @@
 
 LOOP_DEV=$1
 
-if [ -z "$LOOP_DEV" ]; then echo "ERROR - Usage: $0 [disk-device-like-sda] <boot-from-dir-name> <porteus-devname-like-sdc3>"; exit 1; fi
+if [ -z "$LOOP_DEV" ]; then
+    printf "ERROR - Usage: $0 [disk-device-like-sda] <boot-from-dir-name> <porteus-devname-like-sdc3>
+    env vars used
+      - MKFS to make the file ssytem on the third partition; default is mkfs.btrfs with compression support
+      - OS_DIR where to copy the OS dir base images, default to be the current running system OS dir"
+    exit 1
+fi
 
 export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -119,7 +125,8 @@ parted -a optimal -s /dev/${LOOP_DEV} print
 # create and mount file-system
 yes | mkdosfs -F 32 -I -n "BOOTDISK" /dev/${LOOP_DEV}${PART_CHAR}2
 #yes | mkdosfs -F 32 -I -n "BOOTDISK" /dev/${LOOP_DEV}${PART_CHAR}3
-yes | mkfs.btrfs -f /dev/${LOOP_DEV}${PART_CHAR}3
+MKFS=${MKFS:-mkfs.btrfs}
+yes | $MKFS -f /dev/${LOOP_DEV}${PART_CHAR}3
 
 if [ -d /mnt/root/boot ]; then
     echo "/mnt/root exist, aborting"
@@ -151,15 +158,19 @@ cp ${CURRENT_BOOT_DIR}/{bzImage,initrd.xz} /mnt/root/boot/
 
 mkdir /mnt/root/$BOOT_FROM/${CURRENT_BOOT_OS} -p
 
-rsync --exclude '999*' --exclude '*.old' --exclude '*.new' --inplace -avh ${CURRENT_PORT_DIR}/${CURRENT_BOOT_OS}/ /mnt/root/$BOOT_FROM/${CURRENT_BOOT_OS}/
+OS_DIR=${OS_DIR:-$CURRENT_PORT_DIR/$CURRENT_BOOT_OS}
+echo "Use OS_DIR: '$OS_DIR'"
+
+rsync --exclude '999*' --exclude '*.old' --exclude '*.new' --inplace -avh ${OS_DIR}/ /mnt/root/$BOOT_FROM/${CURRENT_BOOT_OS}/
 
 CURRENT_KERNEL_VER=$(uname -r)
 cp -a ${CURRENT_PORT_DIR}/000-*${CURRENT_KERNEL_VER}* /mnt/root/$BOOT_FROM/
 
 mkdir /mnt/root/c-${BOOT_FROM}/${BOOT_OS} -p
-chattr +c -R /mnt/root/c-${BOOT_FROM}
-btrfs property set /mnt/root/c-${BOOT_FROM} compression zstd
-btrfs property set /mnt/root/c-${BOOT_FROM}/${BOOT_OS} compression zstd
-
+if [[ $MKFS =~ mkfs.btrfs ]]; then
+    chattr +c -R /mnt/root/c-${BOOT_FROM}
+    btrfs property set /mnt/root/c-${BOOT_FROM} compression zstd
+    btrfs property set /mnt/root/c-${BOOT_FROM}/${BOOT_OS} compression zstd
+fi
 sync
 
