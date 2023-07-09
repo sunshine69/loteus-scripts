@@ -6,12 +6,12 @@ LOOP_DEV=$1
 
 if [ -z "$LOOP_DEV" ]; then
     printf "ERROR - Usage: $0 [disk-device-like-sda] <boot-from-dir-name> <porteus-devname-like-sdc3>
-    env vars used
-      - MKFS to make the file ssytem on the third partition; default is mkfs.btrfs with compression support
-      - OS_DIR where to copy the OS dir base images, default to be the current running system OS dir
+    env vars used and can be customized:
+      - MKFS to make the file ssytem on the third partition; default is 'mkfs.btrfs' with compression support.
+      - OS_DIR where to copy the OS dir base images, default to be the current running system OS dir.
       - CURRENT_BOOT_DIR - Path to the boot directory where the bzImage and initrd.xz will be installed. If not set it uses the current one.
-      - FORCE_HYBRID value yes|no|legacy. Make the boot disk hybrid mode. By default if device is loop, then it is yes, otherwise is no (only EFI boot is setup). Set it to yes to force building EFI and legacy hybrid diskc
-      f vaule is legacy then setup teh boot disk is legacy only, no EFI."
+      - FORCE_HYBRID value yes|no|legacy. Make the boot disk hybrid mode. By default if device is loop, then it is yes, otherwise is no (only EFI boot is setup). Set it to 'yes' to force building EFI and legacy hybrid disk.
+      If the value is 'legacy' then setup teh boot disk is legacy only, no EFI."
     exit 1
 fi
 
