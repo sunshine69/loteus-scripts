@@ -17,7 +17,7 @@ if [ "$( basename $0)" = "make-changes-image-enc.sh" ]; then FILE_ENC=yes; fi
 CRYPTSETUP=$(which cryptsetup)
 
 if [ "$XCHACHA_ENABLED" = "y" ]; then
-    CRYPTSETUP="$CRYPTSETUP luksFormat --type luks2 --sector-size 4096 -c xchacha12,aes-adiantum-plain64 -s 256"
+    CRYPT_OPT="--type luks2 -c xchacha12,aes-adiantum-plain64"
 else
     echo "XCHACHA_ENABLED is not set to y - use default option for cryptsetup"
 fi
@@ -63,7 +63,7 @@ if [ "$FILE_ENC" = "yes" ]; then
         echo "Detected existing LUKS. Wont run luksFormat again"
     else
         echo "Will set up new LUKS container"
-        echo $PASS | $CRYPTSETUP --key-file=- -q luksFormat --type luks1 $DEVICE
+        echo $PASS | $CRYPTSETUP $CRYPT_OPT --key-file=- -q luksFormat $DEVICE
     fi
     echo $PASS | $CRYPTSETUP --key-file=- luksOpen $DEVICE ${IMAGE_NAME}_ENC_$$
     TARGET_DEVICE=/dev/mapper/${IMAGE_NAME}_ENC_$$
