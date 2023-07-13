@@ -152,16 +152,20 @@ def create_change_image():
     MKFS = os.getenv('MKFS', '')
     if MKFS == '':
         print(f"INFO Use {MKFS} to create file system. Set your env var MKFS to change")
-        MKFS = 'mkfs.f2fs'
+        MKFS = 'mkfs.btrfs'
     BOOT_MOUNT = os.getenv('BOOT_MOUNT','')
     if BOOT_MOUNT == '':
         print("INFO BOOT_MOUNT not set, will parse as default but might not correct. You need to edit your own grub file if so. Set BOOT_MOUNT manually mount point to where your /boot/grub partition is - eg /mnt/sda2")
 
+    BTRFS_COMPRESSION = os.getenv('BTRFS_COMPRESSION','zstd')
+    if BOOT_MOUNT == '':
+        print("INFO BTRFS_COMPRESSION not set, default to zstd")
     XCHACHA_ENABLED = os.getenv('XCHACHA_ENABLED', '')
     password = getpass("Enter password to encrypt the image: ")
     cmd = f"""export PASS={password}
     export BOOT_MOUNT={BOOT_MOUNT}
     export XCHACHA_ENABLED={XCHACHA_ENABLED}
+    export BTRFS_COMPRESSION={BTRFS_COMPRESSION}
     /opt/bin/make-changes-image-enc.sh {SIZE} {IMAGE_PATH}/{IMAGE_NAME} {MKFS}
     """
     print(cmd)
@@ -247,7 +251,7 @@ cmdlist = {
             'run': update_kernel
         },
         'create_change_image': {
-            'help': 'Create a encrypted change image. This will be used for the next reboot. The current changes data will be copied into the image and it will be encrypted. Controll Vars: IMAGE_SIZE, IMAGE_NAME, IMAGE_PATH, MKFS, BOOT_MOUNT',
+            'help': 'Create a encrypted change image. This will be used for the next reboot. The current changes data will be copied into the image and it will be encrypted. Controll Vars: IMAGE_SIZE[like 3G], IMAGE_NAME[default:c.img], IMAGE_PATH[auto detect], MKFS[default:mkfs.btrfs], BOOT_MOUNT[auto detect], XCHACHA_ENABLED[default: n y|n], BTRFS_COMPRESSION[default: zstd zstd|lzo|zlib]',
             'run':  create_change_image
         },
         'merge_base': {

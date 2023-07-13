@@ -79,7 +79,12 @@ $MKFS $TARGET_DEVICE
 echo "Mount target device"
 mkdir /tmp/mount$$ -p
 mount $TARGET_DEVICE /tmp/mount$$
-mkdir /tmp/mount$$/${CURRENT_OS}/
+
+mkdir /tmp/mount$$/${CURRENT_OS}
+if [[ "$MKFS" =~ "mkfs.btrfs" ]]; then
+    chattr -R +c /tmp/mount$$/${CURRENT_OS}
+    btrfs property set /tmp/mount$$/${CURRENT_OS} compression ${BTRFS_COMPRESSION:-zstd}
+fi
 
 DISK_UUID=$(blkid $TARGET_DEVICE | grep -oP '(?<= UUID=)[^\s]+' | sed 's/"//g' | cut -b1-8)
 echo "Copy current changes into new one"
