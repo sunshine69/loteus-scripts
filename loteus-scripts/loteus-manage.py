@@ -251,7 +251,7 @@ cmdlist = {
             'run': update_kernel
         },
         'create_change_image': {
-            'help': 'Create a encrypted change image. This will be used for the next reboot. The current changes data will be copied into the image and it will be encrypted. Controll Vars: IMAGE_SIZE[like 3G], IMAGE_NAME[default:c.img], IMAGE_PATH[auto detect], MKFS[default:mkfs.btrfs], BOOT_MOUNT[auto detect], XCHACHA_ENABLED[default: n y|n], BTRFS_COMPRESSION[default: zstd zstd|lzo|zlib]',
+            'help': 'Create a encrypted change image. This will be used for the next reboot. The current changes data will be copied into the image and it will be encrypted. Controll Vars: IMAGE_SIZE[in MB like 3000 for 3G], IMAGE_NAME[default:c.img], IMAGE_PATH[auto detect], MKFS[default:mkfs.btrfs], BOOT_MOUNT[auto detect], XCHACHA_ENABLED[default: n y|n], BTRFS_COMPRESSION[default: zstd zstd|lzo|zlib]',
             'run':  create_change_image
         },
         'merge_base': {
