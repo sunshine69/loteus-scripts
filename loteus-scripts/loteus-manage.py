@@ -157,9 +157,11 @@ def create_change_image():
     if BOOT_MOUNT == '':
         print("INFO BOOT_MOUNT not set, will parse as default but might not correct. You need to edit your own grub file if so. Set BOOT_MOUNT manually mount point to where your /boot/grub partition is - eg /mnt/sda2")
 
+    XCHACHA_ENABLED = os.getenv('XCHACHA_ENABLED', '')
     password = getpass("Enter password to encrypt the image: ")
     cmd = f"""export PASS={password}
     export BOOT_MOUNT={BOOT_MOUNT}
+    export XCHACHA_ENABLED={XCHACHA_ENABLED}
     /opt/bin/make-changes-image-enc.sh {SIZE} {IMAGE_PATH}/{IMAGE_NAME} {MKFS}
     """
     print(cmd)

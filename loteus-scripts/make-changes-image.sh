@@ -16,6 +16,12 @@ if [ "$( basename $0)" = "make-changes-image-enc.sh" ]; then FILE_ENC=yes; fi
 # This is from the initrd image to insure compatibility betwwel LUK VERSION
 CRYPTSETUP=$(which cryptsetup)
 
+if [ "$XCHACHA_ENABLED" = "y" ]; then
+    CRYPTSETUP="$CRYPTSETUP luksFormat --type luks2 --sector-size 4096 -c xchacha12,aes-adiantum-plain64 -s 256"
+else
+    echo "XCHACHA_ENABLED is not set to y - use default option for cryptsetup"
+fi
+
 DIR_NAME="$(dirname $FILE_PATH)"
 
 if [ ! -d $DIR_NAME ]; then
