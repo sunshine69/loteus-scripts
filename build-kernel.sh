@@ -99,7 +99,10 @@ if [ "$KVER" != "$OLD_KVER" ]; then
         echo "Skip patching as this is begin of stream line"
     else
         if [ -z "$REBUILD" ]; then
-            [ -f "../patch-${OLD_KVER}.xz" ] && xzcat ../patch-${OLD_KVER}.xz | patch -p1 -R
+            if [ ! -f "../patch-${OLD_KVER}.xz" ]; then
+                wget https://cdn.kernel.org/pub/linux/kernel/v6.x/patch-${OLD_KVER}.xz -O ../patch-${OLD_KVER}.xz
+            fi
+            xzcat ../patch-${OLD_KVER}.xz | patch -p1 -R
             xzcat ../patch-${KVER}.xz | patch -p1
         fi
     fi
