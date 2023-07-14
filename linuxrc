@@ -460,7 +460,7 @@ else
 fi
 echo -e "done parse passphrase"
 debug
-[ -z "$HOSTNAME" ] && HOSTNAME=$(cat /sys/class/dmi/id/product_name | cut -f1 -d-)
+[ -z "$HOSTNAME" ] && HOSTNAME=$(cat /sys/class/dmi/id/product_name | sed 's| |-|g' | cut -f1 -d-)
 
 echo ${HOSTNAME} > /proc/sys/kernel/hostname
 
