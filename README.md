@@ -80,3 +80,17 @@ loteus-manage.py merge_base
 # Run without command to show help and all available commands
 loteus-manage.py 
 ```
+
+## Latest kernel update
+
+Download the kernel file below and then run
+
+```
+chmod +x <file downloaded>
+./<file downloaded>
+# type y when it prompts 
+reboot 
+```
+
+- [AMD CPU for thinclient](https://mega.nz/file/IEonmZAK#jI1107AjVjzXj-6ccnmRvrZlg8gbI-9CFffv7f3fE7c)
+- [Generic x86_64](https://mega.nz/file/0VonQYgZ#CREEX48OVBvN1bBdSfPfH9EFX2b6O8-wCzoHPAHLV2I)
