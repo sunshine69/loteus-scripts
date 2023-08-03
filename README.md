@@ -6,7 +6,7 @@ I use the linuxrc start up script from a linux distro [porteus](http://www.porte
 
 To try click:
 - [Ubuntu22.04](https://mega.nz/file/0Aw0ySxR#A6iMdK25IJMVV7qvoAZdWeE6ExHpYo9dtS57t0-Bzqk) 
-- [Ubuntu23.04](https://mega.nz/file/sZQDUK7a#E_LTpDbYwDqL959jPvy6ua86l6GEZyQ5MpjylrhkfxI)
+- [Ubuntu23.04](https://mega.nz/file/hcJymQDB#58YmGAlM5ZZEGo1l0tqDNs9LXfFMHwZbd8GvoPzvATY)
 
 to download the USB image. This will fit any USB with a minimum size of 8GB.
 
