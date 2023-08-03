@@ -700,8 +700,8 @@ echo -e "done setup changes\nSetup overlayfs ...\n"
 
 echo -e "\nLoad specific settings for a hostname. The file name is 9XX-${HOSTNAME}-*.sqs ...\n"
 debug
-if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh" ]; then
-    echo "Source file $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh found. Source it now..."
+if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.pre-init.sh" ]; then
+    echo "Source file $CHANGES_MOUNT_SRC/${HOSTNAME}.pre-init.sh found. Source it now..."
     . $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh
 fi
 
