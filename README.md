@@ -92,5 +92,6 @@ chmod +x <file downloaded>
 reboot 
 ```
 
-- [AMD CPU for thinclient](https://mega.nz/file/cVg3ECSJ#tA0N7IHDyJAwMvRPJJMElq8rtHzdQjAyUhn-ldo3at8)
+- [AMD CPU for thinclient](https://mega.nz/file/9cJw2aIK#oQ_aAY3s7Wl-BH21OQYVPE89xgZauM0IKSEpYuCmtpg)
+- [Core2 CPU](https://mega.nz/file/sMJSQQyT#VX3n5ZjuKjZHhKfDg_mJ70jJR6qneQ_vWPlIT9uXvDw)
 - [Generic x86_64](https://mega.nz/file/EYhRnZLC#OHc9YWXI9MIcTTv_PczA4lYF9MwYUrYWBBa6wVFMC_U)
