@@ -212,6 +212,11 @@ for i in $EXCLUDE_DIRS; do
     SQUASHFS_EXCLUDE_OPT="$SQUASHFS_EXCLUDE_OPT -e 'home/${i}/.*' "
 done
 
+for DIR in Documents  Downloads  Music  Pictures  Public Templates  Videos snap; do
+    SQUASHFS_EXCLUDE_OPT="${SQUASHFS_EXCLUDE_OPT} -e home/${DEFAULT_USER}/$DIR/.*"
+done
+
+
 echo "SQUASHFS_EXCLUDE_OPT=$SQUASHFS_EXCLUDE_OPT"
 
 rm -f ${DESTINATION_DIR}/out.sqs
