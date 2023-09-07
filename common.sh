@@ -12,7 +12,7 @@ if [ -z "$BZIMAGE_FULL_PATH" ]; then
 	    #export PORT_DIR=/mnt/portdata/port
 	    #export BOOT_DIR=/mnt/portdata/boot
 	else
-	    export BZIMAGE_FULL_PATH=$(find /mnt/nvme*/${BZIMAGE_DIR}/ /mnt/sd*/${BZIMAGE_DIR}/ -maxdepth 2 -type f -name ${BZIMAGE_NAME}|head -n1)
+	    export BZIMAGE_FULL_PATH=$(find /mnt/mmcblk*/${BZIMAGE_DIR}/ /mnt/nvme*/${BZIMAGE_DIR}/ /mnt/sd*/${BZIMAGE_DIR}/ -maxdepth 2 -type f -name ${BZIMAGE_NAME}|head -n1)
 	fi
 fi
 export PORT_DIR=$(dirname `losetup -a|grep -P '000\-[\d\.]+'|awk '{print $3}'|cut -d'(' -f2` | head -n1)
