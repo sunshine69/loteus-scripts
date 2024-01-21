@@ -104,9 +104,9 @@ sgdisk /dev/${LOOP_DEV} --typecode=3:8300
 
 # make hybrid. Assume that if we uses loop device, otherwise it is hard disk ignore
 
-if [[ $LOOP_DEV =~ "loop" ]]; then
+if [[ $LOOP_DEV =~ "loop" ]] || [[ $LOOP_DEV =~ "nvme" ]]; then
 	HYBRID=yes
-	PART_CHAR="p" # loop device the partition has extra p
+    PART_CHAR="p" # loop device the partition has extra p (parallel devices, not serial one)
 else
 	PART_CHAR=""
 fi
@@ -140,9 +140,11 @@ parted -a optimal -s /dev/${LOOP_DEV} print
 
 # create and mount file-system
 yes | mkdosfs -F 32 -I -n "BOOTDISK" /dev/${LOOP_DEV}${PART_CHAR}2
+if [ "$?" != "0" ]; then echo "ERROR mkdosfs -F 32 -I -n \"BOOTDISK\" /dev/${LOOP_DEV}${PART_CHAR}2 . Aborting..."; exit 1; fi
 #yes | mkdosfs -F 32 -I -n "BOOTDISK" /dev/${LOOP_DEV}${PART_CHAR}3
 MKFS=${MKFS:-mkfs.btrfs}
 yes | $MKFS -f /dev/${LOOP_DEV}${PART_CHAR}3
+if [ "$?" != "0" ]; then echo "ERROR $MKFS -f /dev/${LOOP_DEV}${PART_CHAR}3 . Aborting..."; exit 1; fi
 
 if [ -d /mnt/root/boot ]; then
     echo "/mnt/root exist, aborting"
@@ -154,6 +156,7 @@ fi
 if [ "$FORCE_HYBRID" != "legacy" ]; then
 
     mount /dev/${LOOP_DEV}${PART_CHAR}3 /mnt/root
+    if [ "$?" != "0" ]; then echo "ERROR mounting /dev/${LOOP_DEV}${PART_CHAR}3 /mnt/root. Aborting..."; exit 1; fi
 
     mkdir -p /mnt/root/boot/efi
     mount /dev/${LOOP_DEV}${PART_CHAR}2 /mnt/root/boot/efi
