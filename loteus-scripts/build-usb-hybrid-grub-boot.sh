@@ -104,7 +104,7 @@ sgdisk /dev/${LOOP_DEV} --typecode=3:8300
 
 # make hybrid. Assume that if we uses loop device, otherwise it is hard disk ignore
 
-if [[ $LOOP_DEV =~ "loop" ]] || [[ $LOOP_DEV =~ "nvme" ]]; then
+if [[ $LOOP_DEV =~ "loop" ]] || [[ $LOOP_DEV =~ "nvme" ]] || [[ $LOOP_DEV =~ "mmcblk" ]]; then
 	HYBRID=yes
     PART_CHAR="p" # loop device the partition has extra p (parallel devices, not serial one)
 else
