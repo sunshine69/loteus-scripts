@@ -2,7 +2,7 @@
 
 echo "Start rebuild initrd.xz"
 
-SYSTEM_PRODUCT_NAME=$(dmidecode -s 'system-product-name')
+# SYSTEM_PRODUCT_NAME=$(dmidecode -s 'system-product-name')
 
 CWD="$(pwd)"
 
