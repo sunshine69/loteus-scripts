@@ -4,9 +4,7 @@ I come up with a name for my linux distribution - Loteus!
 
 I use the linuxrc start up script from a linux distro [porteus](http://www.porteus.org/) and modified it to support many functionalities I need. Still, keep the original idea which is to run linux from a compressed root image and mount overlayfs as root.
 
-To try click:
-- [Ubuntu22.04](https://mega.nz/file/0Aw0ySxR#A6iMdK25IJMVV7qvoAZdWeE6ExHpYo9dtS57t0-Bzqk) 
-- [Ubuntu23.04](https://mega.nz/file/hcJymQDB#58YmGAlM5ZZEGo1l0tqDNs9LXfFMHwZbd8GvoPzvATY)
+To try click below to view the folder contents. I recommend to use the LTS version of ubuntu image for old devices like Del Thin Client.
 - [Browser linux folder](https://mega.nz/folder/gB5ShQII#_zlRO_lsbqZltxX1d7kcEQ)  
 
 to download the USB image. This will fit any USB with a minimum size of 8GB.
