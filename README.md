@@ -4,7 +4,8 @@ I come up with a name for my linux distribution - Loteus!
 
 I use the linuxrc start up script from a linux distro [porteus](http://www.porteus.org/) and modified it to support many functionalities I need. Still, keep the original idea which is to run linux from a compressed root image and mount overlayfs as root.
 
-To try click below to view the folder contents. I recommend to use the LTS version of ubuntu image for old devices like Del Thin Client.
+To try click below to view the folder contents. I recommend to use the LTS version of ubuntu image (2204) for old devices like Del Thin Client. The thin version is just smaller if you do not mind download big use the full feature one.
+
 - [Browser linux folder](https://mega.nz/folder/gB5ShQII#_zlRO_lsbqZltxX1d7kcEQ)  
 
 to download the USB image. This will fit any USB with a minimum size of 8GB.
@@ -25,6 +26,8 @@ Then insert the USB into the target machine; boot it up and make sure it boots f
 If all good then you will be auto login the initial user `loteus` running a simple icewm window manager.
 
 The initial password of user loteus is `1q2w3e`.
+
+Note that user loteus is meant to be a media player user. This user does not have sudo or admin right. In order to login and setup your initial system or install it into your hard disk you should login using the user `admin`. The initial password for `admin` is `q1w2e3`.
 
 By default, it will log you in an icewm windows session. You can change the session at the GDM3 login screen though to boot to a standard Ubuntu 22 gnome desktop which then no longer be a thin OS anymore :).
 
