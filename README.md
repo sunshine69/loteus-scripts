@@ -25,6 +25,8 @@ Then insert the USB into the target machine; boot it up and make sure it boots f
 
 If all good then you will be auto login the initial user `loteus` running a simple icewm window manager.
 
+If the boot process stop with green text saying something `porteus not found`. It is likely that the usb devie is not available fast enough. It only happens when using USB disk to boot. Turn off teh machine and boot it again, when you are presented with the boot grub menu, type `e` to edit the boot. Scroll down to where the boot parameters is (search a line that has the string `bzImage`). Within that line, add a new parameters at the end - remember parameters are sperated by space) `usb_delay=3`. Then press F10 to boot the system.
+
 The initial password of user loteus is `1q2w3e`.
 
 Note that user loteus is meant to be a media player user. This user does not have sudo or admin right. In order to login and setup your initial system or install it into your hard disk you should login using the user `admin`. The initial password for `admin` is `q1w2e3`.
