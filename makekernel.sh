@@ -68,7 +68,7 @@ exit
 fi
 if [ ! -d ${INSTALL_MOD_PATH}/$KVER ]; then
         make modules_install
-        build_external_module
+        #build_external_module
 else
     echo "${INSTALL_MOD_PATH}/$KVER exists. Maybe you are building the kernel version same as current version."
     echo "Continue? y/n"
@@ -380,7 +380,7 @@ rm -rf porteus-kernel-$KVER.tar porteus-kernel self-extract.sh
 
 cd $CDIR
 
-rm -rf $TARGET_DIR/kernel-$KVER
+rm -rf $TARGET_DIR/kernel-$KVER ${INSTALL_MOD_PATH}/$KVER
 
 echo "Output in $TARGET_DIR/$TARGET"
 echo "Output porteus-install-kernel $TARGET_DIR/porteus-kernel-$KVER.tar.sfx"

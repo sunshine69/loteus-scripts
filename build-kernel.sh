@@ -111,7 +111,7 @@ fi
 if [ ! -z "$CONFIG_FILE" ]; then cp "$CONFIG_FILE" .config; fi
 
 #make clean
-make oldconfig
+#make oldconfig
 
 CORE=$(lscpu | grep '^CPU(s):' | awk '{print $2}')
 if [[ $CORE -gt 2 ]]; then
@@ -119,7 +119,11 @@ if [[ $CORE -gt 2 ]]; then
 fi
 startbuild=`date +%s`
 
-make -j $CORE bzImage modules
+#export PATH=/mnt/portdata/tmp/clang-17/bin:$PATH
+# -Wno-error=int-conversion for compiling applesmc.c on 5.15 kernel
+#export CLANG_FLAGS=-Wno-error=int-conversion
+#make LLVM=/mnt/portdata/build/clang-17 -j $CORE bzImage modules
+make -j $CORE CLANG=$CLANG bzImage modules
 if [ $? != "0" ]; then
     echo "Build bzImage and modules return error"
     exit 1

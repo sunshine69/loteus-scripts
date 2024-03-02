@@ -76,6 +76,7 @@ if [ ! -z "$KVERS" ]; then
             #Install xzm modules
             ( cd $TEMP_KDIR ; echo n | $TARGET_DIR/porteus-kernel-$KVER.tar.sfx )
             KBUILDDIR="$TEMP_KDIR/porteus-kernel"
+            echo "debug check $TEMP_KDIR/porteus-kernel"
         else
             KBUILDDIR=$KBUILDDIR_ENV
         fi
@@ -101,7 +102,7 @@ if [ ! -z "$KVERS" ]; then
         else
             SRCDIR=$SRCDIR_ENV
         fi
-
+        echo "debug SRCDIR: $SRCDIR"
         echo Clean up old modules
         rm -rf /tmp/initrd_$$/lib/modules/*
         echo Copy some modules over
@@ -111,11 +112,18 @@ if [ ! -z "$KVERS" ]; then
         cp -a $SRCDIR/arch/x86/crypto $DESTDIR/arch/x86/
         cp -a $SRCDIR/drivers/staging/{apple-bce,apple-ibridge} $DESTDIR/drivers/staging/
 
+
         cp -a $SRCDIR/drivers/{input,hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh,usb,thunderbolt,nvme} $DESTDIR/drivers/
+        cp -a $SRCDIR/drivers/{input,hid,ata,block,acpi,crypto,md,macintosh,usb,thunderbolt,nvme} $DESTDIR/drivers/
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $DESTDIR/drivers/hwmon/
         cp -a $SRCDIR/drivers/platform/x86 $DESTDIR/drivers/platform/
-        cp -a $SRCDIR/sound $DESTDIR/
-        cp -a $SRCDIR/fs/{ntfs3,jfs,reiserfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/fs/
+        if [ "$MINI_INITRD" == "y" ]; then
+           echo "skip sound modules"
+        else
+          cp -a $SRCDIR/sound $DESTDIR/
+
+        fi
+        cp -a $SRCDIR/fs/{ntfs3,jfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs} $DESTDIR/fs/
         mkdir $DESTDIR/kernel/crypto -p
         cp -a $SRCDIR/kernel/crypto/{algif_skcipher.ko,af_alg.ko} $DESTDIR/kernel/crypto/
         cp -a $SRCDIR/misc $DESTDIR/
@@ -123,9 +131,9 @@ if [ ! -z "$KVERS" ]; then
         depmod $KVER -b .
         echo "Done copying modules over"
         echo "update helper scripts"
-        for sname in setup-disk.sh go-setup.sh swapcrypt.sh; do
-            cp -a ${SCRIPT_DIR}/porteus-scripts/${sname} /tmp/initrd_$$/bin/
-        done
+        #for sname in setup-disk.sh go-setup.sh swapcrypt.sh; do
+        #    cp -a ${SCRIPT_DIR}/porteus-scripts/${sname} /tmp/initrd_$$/bin/
+        #done
         echo "Going to unmount and clean up ..."
         umount $KBUILDDIR/1
         sleep 3 # avoid race condition
