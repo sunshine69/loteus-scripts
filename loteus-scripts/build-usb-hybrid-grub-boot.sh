@@ -11,7 +11,7 @@ if [ -z "$LOOP_DEV" ]; then
       - OS_DIR where to copy the OS dir base images, default to be the current running system OS dir.
       - CURRENT_BOOT_DIR - Path to the boot directory where the bzImage and initrd.xz will be installed. If not set it uses the current one.
       - FORCE_HYBRID value yes|no|legacy. Make the boot disk hybrid mode. By default if device is loop, then it is yes, otherwise is no (only EFI boot is setup). Set it to 'yes' to force building EFI and legacy hybrid disk.
-      If the value is 'legacy' then setup teh boot disk is legacy only, no EFI."
+      If the value is 'legacy' then setup the boot disk is legacy only, no EFI."
     exit 1
 fi
 
@@ -21,6 +21,13 @@ if [ ! -b "/dev/${LOOP_DEV}" ]; then
     echo "Not a block device /dev/${LOOP_DEV}"
     exit 1
 
+fi
+
+udevadm info --query=all /dev/${LOOP_DEV} | grep ID_USB_DRIVER
+if [ "$?" != "0" ] || [[ "$LOOP_DEV" == loop* ]]; then
+    USB_BOOT_OPT="usb_delay=2"
+else
+    USB_BOOT_OPT=""
 fi
 
 CURRENT_BOOT_FROM=$2
@@ -172,7 +179,7 @@ ROOT_PART_UUID=$(grep -oP '(?<=search.fs_uuid )[^\s]+(?= root)' /mnt/root/boot/e
 
 if [ -z "$BOOT_FROM" ]; then BOOT_FROM=$(echo $ROOT_PART_UUID | cut -f1 -d-); fi
 
-sed "s/<SET_ME_ROOT_PART_UUID>/${ROOT_PART_UUID}/g; s/<SET_ME_BOOT_OS>/${BOOT_OS}/g; s/<SET_ME_BOOT_FROM>/${BOOT_FROM}/g; s/<SET_ME_HOSTNAME>/${HOSTNAME}/g " ${SCRIPT_DIR}/grub.cfg.tmpl > /mnt/root/boot/grub/grub.cfg
+sed "s/<SET_ME_ROOT_PART_UUID>/${ROOT_PART_UUID}/g; s/<SET_ME_BOOT_OS>/${BOOT_OS}/g; s/<SET_ME_BOOT_FROM>/${BOOT_FROM}/g; s/<SET_ME_HOSTNAME>/${HOSTNAME}/g; s/<SET_ME_USB_BOOT_OPT>/${USB_BOOT_OPT}/ " ${SCRIPT_DIR}/grub.cfg.tmpl > /mnt/root/boot/grub/grub.cfg
 
 # Populate things here
 cp ${CURRENT_BOOT_DIR}/{bzImage,initrd.xz} /mnt/root/boot/

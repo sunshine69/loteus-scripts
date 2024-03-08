@@ -161,7 +161,7 @@ menuentry '<SET_ME_BOOT_OS> Thin Client' --class ubuntu --class gnu-linux --clas
     #linux /boot/bzImage.513 intel_iommu=off pcie_aspm=off pass=#sha512sum hostname="macbook-work" apparmor=0 max_loop=64 from=nve os=u21 changes=c/u21
     #linux /boot/bzImage.510 intel_iommu=off pcie_aspm=off hostname="work-usb" apparmor=0 max_loop=64 from=usb64 os=<SET_ME_BOOT_OS> changes=usb-c/focal pass=
     #linux /boot/bzImage video=SVIDEO-1:d pcie_aspm=off intel_iommu=off hostname="<SET_ME_HOSTNAME>" apparmor=0 max_loop=64 from=<SET_ME_BOOT_FROM> os=<SET_ME_BOOT_OS> changes=c/u22
-    linux /boot/bzImage hostname="<SET_ME_HOSTNAME>" apparmor=0 max_loop=64 from=<SET_ME_BOOT_FROM> os=<SET_ME_BOOT_OS> changes=c-<SET_ME_BOOT_FROM>/<SET_ME_BOOT_OS>
+    linux /boot/bzImage hostname="<SET_ME_HOSTNAME>" apparmor=0 max_loop=64 from=<SET_ME_BOOT_FROM> os=<SET_ME_BOOT_OS> changes=c-<SET_ME_BOOT_FROM>/<SET_ME_BOOT_OS> <SET_ME_USB_BOOT_OPT>
     initrd  /boot/initrd.xz
 }
 
@@ -178,7 +178,7 @@ menuentry '<SET_ME_BOOT_OS> Thin Client RESET' --class ubuntu --class gnu-linux 
     #linux /boot/bzImage.513 intel_iommu=off pcie_aspm=off pass=#sha512sum hostname="macbook-work" apparmor=0 max_loop=64 from=nve os=u21 changes=c/u21
     #linux /boot/bzImage.510 intel_iommu=off pcie_aspm=off hostname="work-usb" apparmor=0 max_loop=64 from=usb64 os=<SET_ME_BOOT_OS> changes=usb-c/focal pass=
     #linux /boot/bzImage video=SVIDEO-1:d pcie_aspm=off intel_iommu=off hostname="<SET_ME_HOSTNAME>" apparmor=0 max_loop=64 from=<SET_ME_BOOT_FROM> os=<SET_ME_BOOT_OS> changes=c/u22
-    linux /boot/bzImage hostname="<SET_ME_HOSTNAME>" apparmor=0 max_loop=64 from=<SET_ME_BOOT_FROM> os=<SET_ME_BOOT_OS> changes=c-<SET_ME_BOOT_FROM>/<SET_ME_BOOT_OS> reset=1
+    linux /boot/bzImage hostname="<SET_ME_HOSTNAME>" apparmor=0 max_loop=64 from=<SET_ME_BOOT_FROM> os=<SET_ME_BOOT_OS> changes=c-<SET_ME_BOOT_FROM>/<SET_ME_BOOT_OS> <SET_ME_USB_BOOT_OPT> reset=1
     initrd  /boot/initrd.xz
 }
 
