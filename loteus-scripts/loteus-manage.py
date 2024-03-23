@@ -139,15 +139,22 @@ def create_change_image():
     if SIZE == '':
         print("INFO Use size 1024M. To set size eg. `export IMAGE_SIZE=2048` will create 2G image")
         SIZE = '1024'
-    IMAGE_NAME = os.getenv('IMAGE_NAME', '')
-    if IMAGE_NAME == '':
-        IMAGE_NAME = 'c.img'
-        print("INFO Image name is c.img - set env var IMAGE_NAME to change")
+    
     IMAGE_PATH = os.getenv('IMAGE_PATH', '')
     if IMAGE_PATH == '':
         sys_info = get_info()
         disk_info = sys_info['disk_info']
-        IMAGE_PATH = get_partion_with_max_available_size(disk_info)['mountpoint']
+        partion_with_max_available_size = get_partion_with_max_available_size(disk_info)
+        IMAGE_PATH = partion_with_max_available_size['mountpoint']
+    
+    IMAGE_NAME = os.getenv('IMAGE_NAME', '')
+    if IMAGE_NAME == '':
+        img_uuid_str, _, _ = run_cmd(f"blkid -o export {disk_info['dev']} | grep '^UUID='")
+        img_uuid = img_uuid_str.split(':')[1]
+        short_img_uuid = img_uuid.split('.')[0]
+        IMAGE_NAME = f'c-{short_img_uuid}.img'
+        print("INFO Image name is {IMAGE_NAME} - set env var IMAGE_NAME to change")
+
         print(f"INFO default IMAGE_PATH is {IMAGE_PATH}, set env var IMAGE_PATH to change. It needs to be the root mount point of the partition")
     MKFS = os.getenv('MKFS', '')
     if MKFS == '':
