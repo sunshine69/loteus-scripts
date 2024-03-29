@@ -22,7 +22,7 @@ TARGET_FNAME="${TARGET_DIR}/000-linux-src-${VERSION}.${PATCHLEVEL}.${SUBLEVEL}${
 cd ../
 
 rm -f ${TARGET_FNAME}
-echo "going to run mksquashfs $SOURCE_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*'"
-mksquashfs $KERNEL_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*'
+echo "going to run mksquashfs $SOURCE_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*' -e '.git/*'"
+mksquashfs $KERNEL_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*' -e '.git/*'
 
 echo "Kernel source image generated ${TARGET_FNAME}"
