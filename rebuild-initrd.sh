@@ -123,8 +123,7 @@ if [ ! -z "$KVERS" ]; then
           cp -a $SRCDIR/sound $DESTDIR/
 
         fi
-        cp -a $SRCDIR/fs/{ntfs3,jfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs,ext4,jbd2} $DESTDIR/fs/
-        cp -a $SRCDIR/mbcache.ko $DESTDIR/fs/
+        cp -a $SRCDIR/fs/{mbcache.ko,ntfs3,jfs,xfs,f2fs,fat,isofs,nls,overlayfs,udf,ufs,binfmt_misc,btrfs,ext4,jbd2} $DESTDIR/fs/
         mkdir $DESTDIR/kernel/crypto -p
         cp -a $SRCDIR/kernel/crypto/{algif_skcipher.ko,af_alg.ko} $DESTDIR/kernel/crypto/
         cp -a $SRCDIR/misc $DESTDIR/

@@ -23,6 +23,13 @@ cd ../
 
 rm -f ${TARGET_FNAME}
 echo "going to run mksquashfs $SOURCE_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*' -e '.git/*'"
-mksquashfs $KERNEL_DIR ${TARGET_FNAME} -comp xz -b 1M -e 'Documentation/*' -e '.git/*'
+
+cat <<EOF > /tmp/$$-mksquashfs-exclude
+Documentation/*
+.git/*
+EOF
+
+mksquashfs $KERNEL_DIR ${TARGET_FNAME} -comp xz -b 1M -ef /tmp/$$-mksquashfs-exclude
+rm -f /tmp/$$-mksquashfs-exclude
 
 echo "Kernel source image generated ${TARGET_FNAME}"
