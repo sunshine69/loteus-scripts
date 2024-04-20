@@ -50,7 +50,7 @@ def get_info():
                     output[_dev]['mountpoint'] = _mount
                     output[_dev]['dev'] = _dev
                 except Exception as e:
-                    print(e)
+                    print(f"ERROR get_infor | {e}")
                     continue
         except Exception as e:
             continue
@@ -136,22 +136,28 @@ def save_config():
 
 def create_change_image():
     SIZE = os.getenv('IMAGE_SIZE', '')
+    sys_info = get_info()
+    disk_info = sys_info['disk_info']
+    print(f"DEBUG 111 {disk_info} ")
     if SIZE == '':
         print("INFO Use size 1024M. To set size eg. `export IMAGE_SIZE=2048` will create 2G image")
         SIZE = '1024'
-    
+
     IMAGE_PATH = os.getenv('IMAGE_PATH', '')
     if IMAGE_PATH == '':
-        sys_info = get_info()
-        disk_info = sys_info['disk_info']
         partion_with_max_available_size = get_partion_with_max_available_size(disk_info)
         IMAGE_PATH = partion_with_max_available_size['mountpoint']
-    
+
     IMAGE_NAME = os.getenv('IMAGE_NAME', '')
     if IMAGE_NAME == '':
-        img_uuid_str, _, _ = run_cmd(f"blkid -o export {disk_info['dev']} | grep '^UUID='")
-        img_uuid = img_uuid_str.split(':')[1]
-        short_img_uuid = img_uuid.split('.')[0]
+        device_name = IMAGE_PATH.split('/')[-1]
+        print(f"DEBUG: cmd is blkid -o export /dev/{device_name} | grep '^UUID='")
+        img_uuid_str, c, e = run_cmd(f"blkid -o export /dev/{device_name} | grep '^UUID='")
+        if c != 0:
+            print(f"ERROR blkid {e}")
+            return
+        img_uuid = img_uuid_str.split('=')[1]
+        short_img_uuid = img_uuid.split('-')[0]
         IMAGE_NAME = f'c-{short_img_uuid}.img'
         print("INFO Image name is {IMAGE_NAME} - set env var IMAGE_NAME to change")
 
@@ -175,7 +181,7 @@ def create_change_image():
     export BTRFS_COMPRESSION={BTRFS_COMPRESSION}
     /opt/bin/make-changes-image-enc.sh {SIZE} {IMAGE_PATH}/{IMAGE_NAME} {MKFS}
     """
-    print(cmd)
+    print(f"Command: {cmd}")
     o,c,e = run_cmd(cmd)
     if c != 0:
         print(f"ERROR command {cmd}")
@@ -289,10 +295,6 @@ def help():
         print(f"command `{_cmd}`:\n{cmdlist[_cmd]['help']}\n")
 
 if __name__ == '__main__':
-    try:
-        command = sys.argv[1]
-        cmdlist[command]['run']()
-    except Exception as e:
-        print("ERROR -- ", e)
-        help()
+    command = sys.argv[1]
+    cmdlist[command]['run']()
 
