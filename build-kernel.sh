@@ -123,7 +123,7 @@ startbuild=`date +%s`
 # -Wno-error=int-conversion for compiling applesmc.c on 5.15 kernel
 #export CLANG_FLAGS=-Wno-error=int-conversion
 #make LLVM=/mnt/portdata/build/clang-17 -j $CORE bzImage modules
-make LLVM=1 -j $CORE bzImage modules
+make $LLVM_OPT -j $CORE bzImage modules
 #make -j $CORE CLANG=$CLANG bzImage modules
 if [ $? != "0" ]; then
     echo "Build bzImage and modules return error"

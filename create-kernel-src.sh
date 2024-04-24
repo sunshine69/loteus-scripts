@@ -12,7 +12,8 @@ fi
 cd $SOURCE_DIR
 
 #find . -type f -name "*.o" -o -name "*.ko" -o -name "*.cmd" -o -name ".tmp_*" -o -name "vmlinux" -o -name "*.tmp_*" -o -name "vmlinux.bin*" -o -name "bzImage" -o -name "*.o.cmd" -o -name "*.ko.cmd" -o -name "*.a" | while read fn; do rm -f $fn; done
-find . -type f -name "*.o" -o -name "*.ko" -o -name "*.cmd" -o -name ".tmp_*" -o -name "vmlinux" -o -name "*.tmp_*" -o -name "vmlinux.bin*" -o -name "bzImage" -o -name "*.o.cmd" -o -name "*.ko.cmd" -o -name "*.a" -print0 | xargs -0 rm -rf {} \;
+#find . -type f -name "*.o" -o -name "*.ko" -o -name "*.cmd" -o -name ".tmp_*" -o -name "vmlinux" -o -name "*.tmp_*" -o -name "vmlinux.bin*" -o -name "bzImage" -o -name "*.o.cmd" -o -name "*.ko.cmd" -o -name "*.a" -print0 | xargs -0 rm -rf {} \;
+find . -type f -name "*.o" -o -name "*.ko" -o -name "*.cmd" -o -name ".tmp_*" -o -name "vmlinux" -o -name "*.tmp_*" -o -name "vmlinux.bin*" -o -name "bzImage" -o -name "*.o.cmd" -o -name "*.ko.cmd" -o -name "*.a" | while read fn; do rm -f "$fn"; done
 
 VERSION=$(grep -oP '(?<=VERSION \= )([\d]+)' Makefile)
 PATCHLEVEL=$(grep -oP '(?<=PATCHLEVEL \= )([\d]+)' Makefile)
@@ -30,7 +31,9 @@ cat <<EOF > /tmp/$$-mksquashfs-exclude
 Documentation
 .git
 EOF
-
+echo "Content of exclude file"
+cat /tmp/$$-mksquashfs-exclude
+pwd
 mksquashfs $KERNEL_DIR ${TARGET_FNAME} -comp xz -b 1M -ef /tmp/$$-mksquashfs-exclude
 rm -f /tmp/$$-mksquashfs-exclude
 
