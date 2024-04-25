@@ -39,6 +39,11 @@ for BD in $(echo $BOOT_DIR); do
 
 	echo "Copy new kernel in $BD"
 	cp $SCRIPT_DIR/initrd.xz $SCRIPT_DIR/bzImage $BD/
+	if [[ "$KVER" =~ "fallback" ]]; then
+		cp -a $SCRIPT_DIR/bzImage $BD/bzImage.fallback
+		cp -a $SCRIPT_DIR/initrd.xz $BD/initrd.xz.fallback
+		rm -f $PORT_DIR/000-*fallback.xzm
+	fi
 	cp $SCRIPT_DIR/000-*.xzm $PORT_DIR/
 
 done
