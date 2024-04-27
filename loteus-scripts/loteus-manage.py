@@ -7,7 +7,7 @@ from getpass import getpass
 
 def run_cmd(cmd,sendtxt=None, working_dir=".", args=[], shell=True, DEBUG=False, shlex=False):
     if DEBUG:
-        cmd2 = re.sub('root:([^\s])', 'root:xxxxx', cmd) # suppress the root password printout
+        cmd2 = re.sub(r'root:([^\s])', r'root:xxxxx', cmd) # suppress the root password printout
         print(cmd2)
     if sys.platform == "win32":
         args = cmd
@@ -40,7 +40,7 @@ def get_info():
     acceptedfs = ['ext4', 'btrfs', 'f2fs', 'xfs', 'jfs']
     for line in o.splitlines():
         try:
-            _dev, _fstype, size, avail, _mount = re.split('[\s]+', line)
+            _dev, _fstype, size, avail, _mount = re.split(r'[\s]+', line)
             if _fstype in acceptedfs:
                 try:
                     output[_dev] = {}
@@ -50,11 +50,11 @@ def get_info():
                     output[_dev]['mountpoint'] = _mount
                     output[_dev]['dev'] = _dev
                 except Exception as e:
-                    print(f"ERROR get_infor | {e}")
+                    print(e)
                     continue
         except Exception as e:
             continue
-    os, c, e = run_cmd("""grep -oP '(?<=os=)[^\s]+' /proc/cmdline""")
+    os, c, e = run_cmd(r"""grep -oP '(?<=os=)[^\s]+' /proc/cmdline""")
     arch, c, e = run_cmd("""uname -m""")
 
     return {'os': os, 'arch': arch, 'disk_info': output  }
@@ -69,7 +69,7 @@ def get_partion_with_max_available_size(disk_info):
     return disk_info[key]
 
 def get_baseimage_location(): # full_path, mount_point, size
-    o,c,e = run_cmd("""losetup -a | grep '\/base\/001' | grep -oP '(?<= \()[^\)]+'""")
+    o,c,e = run_cmd(r"""losetup -a | grep '\/base\/001' | grep -oP '(?<= \()[^\)]+'""")
     if c != 0:
         print(f"ERROR {e}")
         sys.exit(1)
@@ -136,31 +136,18 @@ def save_config():
 
 def create_change_image():
     SIZE = os.getenv('IMAGE_SIZE', '')
-    sys_info = get_info()
-    disk_info = sys_info['disk_info']
-    print(f"DEBUG 111 {disk_info} ")
     if SIZE == '':
         print("INFO Use size 1024M. To set size eg. `export IMAGE_SIZE=2048` will create 2G image")
         SIZE = '1024'
-
-    IMAGE_PATH = os.getenv('IMAGE_PATH', '')
-    if IMAGE_PATH == '':
-        partion_with_max_available_size = get_partion_with_max_available_size(disk_info)
-        IMAGE_PATH = partion_with_max_available_size['mountpoint']
-
     IMAGE_NAME = os.getenv('IMAGE_NAME', '')
     if IMAGE_NAME == '':
-        device_name = IMAGE_PATH.split('/')[-1]
-        print(f"DEBUG: cmd is blkid -o export /dev/{device_name} | grep '^UUID='")
-        img_uuid_str, c, e = run_cmd(f"blkid -o export /dev/{device_name} | grep '^UUID='")
-        if c != 0:
-            print(f"ERROR blkid {e}")
-            return
-        img_uuid = img_uuid_str.split('=')[1]
-        short_img_uuid = img_uuid.split('-')[0]
-        IMAGE_NAME = f'c-{short_img_uuid}.img'
-        print("INFO Image name is {IMAGE_NAME} - set env var IMAGE_NAME to change")
-
+        IMAGE_NAME = 'c.img'
+        print("INFO Image name is c.img - set env var IMAGE_NAME to change")
+    IMAGE_PATH = os.getenv('IMAGE_PATH', '')
+    if IMAGE_PATH == '':
+        sys_info = get_info()
+        disk_info = sys_info['disk_info']
+        IMAGE_PATH = get_partion_with_max_available_size(disk_info)['mountpoint']
         print(f"INFO default IMAGE_PATH is {IMAGE_PATH}, set env var IMAGE_PATH to change. It needs to be the root mount point of the partition")
     MKFS = os.getenv('MKFS', '')
     if MKFS == '':
@@ -181,7 +168,7 @@ def create_change_image():
     export BTRFS_COMPRESSION={BTRFS_COMPRESSION}
     /opt/bin/make-changes-image-enc.sh {SIZE} {IMAGE_PATH}/{IMAGE_NAME} {MKFS}
     """
-    print(f"Command: {cmd}")
+    print(cmd)
     o,c,e = run_cmd(cmd)
     if c != 0:
         print(f"ERROR command {cmd}")
@@ -222,15 +209,15 @@ def resize_usb_root():
         print("Aborted...")
         return
     cmd = f"""
-    dev_name=$(echo {dev_name} | sed 's/[0-9]\+//g')
+    dev_name=$(echo {dev_name} | sed 's/[0-9]\\+//g')
     mydev=$(basename $dev_name)
-    if `ls -lha /sys/block/$mydev | grep '/usb[0-9]\+' >/dev/null 2>&1`; then
+    if `ls -lha /sys/block/$mydev | grep '/usb[0-9]\\+' >/dev/null 2>&1`; then
       _x_is_usb=yes
     else
       _x_is_usb=no
     fi
     if [ "$_x_is_usb" = "yes" ]; then
-        dev_name=$(ls -l /sys/block/ | grep '/usb[0-9]\+' | grep -oP '(?<=block\/).*$')
+        dev_name=$(ls -l /sys/block/ | grep '/usb[0-9]\\+' | grep -oP '(?<=block\\/).*$')
         echo "DEBUG: $_x_is_usb: dev_name: $dev_name "
         /opt/bin/resize-last-part.sh /dev/$dev_name
     fi"""
@@ -295,6 +282,10 @@ def help():
         print(f"command `{_cmd}`:\n{cmdlist[_cmd]['help']}\n")
 
 if __name__ == '__main__':
-    command = sys.argv[1]
-    cmdlist[command]['run']()
+    try:
+        command = sys.argv[1]
+        cmdlist[command]['run']()
+    except Exception as e:
+        print("ERROR -- ", e)
+        help()
 
