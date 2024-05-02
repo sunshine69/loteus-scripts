@@ -80,16 +80,16 @@ if [ -z "$SQUASHFS_OPT" ]; then
 	read ans
 	case "$ans" in
 		0)
-			SQUASHFS_OPT="-comp lz4 -Xhc";
+			SQUASHFS_OPT="-comp lz4 -Xhc -b 1M";
 			;;
 		1)
-			SQUASHFS_OPT="-comp zstd -Xcompression-level 19";
+			SQUASHFS_OPT="-comp zstd -Xcompression-level 19 -b 1M";
 			;;
 		2)
-			SQUASHFS_OPT="-comp gzip";
+			SQUASHFS_OPT="-comp gzip -b 1M";
 			;;
 		3)
-			SQUASHFS_OPT="-comp xz";
+			SQUASHFS_OPT="-comp xz -b 1M";
 			;;
 		4)
 			umount ${NAME_PREFIX}3/dev || exit 1
