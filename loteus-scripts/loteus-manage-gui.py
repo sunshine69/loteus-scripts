@@ -20,20 +20,29 @@ import loteus_manage as lm
 gladesource = open(f'{script_dir}/LoteusInstall.glade','r').read()
 
 def get_disk_info()-> str:
-    o,c,e = lm.run_cmd("blkid | grep -v squashfs | grep -v '/dev/loop' | grep -v '/dev/zram' | grep -v 'crypto_LUKS' | grep -v 'EFI System' | grep -v 'BIOS boot partition'")
+    o,c,e = lm.run_cmd("lsblk --list --noheadings | grep -v memory | grep -v squashfs | grep -v 'loop' | grep -v 'zram' | grep -v 'crypto_LUKS' | grep -v 'EFI System' | grep -v 'BIOS boot partition'")
     if c != 0:
         return e
     info = lm.get_info()
-    part_with_max_size = lm.get_partion_with_max_available_size(info['disk_info'])
+    # part_with_max_size = lm.get_partion_with_max_available_size(info['disk_info'])
+    _, mount_point, size = lm.get_baseimage_location()
+
     return f"""{o}
 
-part_with_max_size: {part_with_max_size}
+Click the button `Exec Gparted` to run the parition tool to create/resize
+new partition to use. After exiting the disk infor will be refreshed.
 
-Click the button `Exec Gparted` to run the parition tool to create/resize new partition to use. AFter exiting the disk infor will be refreshed.
+Then type the device name below. It can be a full disk, or just a single
+partition.
 
-Then type the device name below. It can be a full disk, or just a single partition.
+CAREFULL
+  - For any case the data in the full disk or the partition will be erased.
+  - You can not select the disk or partition that the current live
+    system runs. They are
 
-CAREFULL - For any case the data in the full disk or the partition will be erased.
+  mount at {mount_point}
+  with size {size}
+
 
 """
 
@@ -47,7 +56,9 @@ class main:
         def bt_cancel_activate_cb(self, *args):
             Gtk.main_quit()
         def bt_next_activate_cb(self, button):
-            self.main.textview_disk_info.get_buffer().set_text("You click Next")
+            device = self.main.builder.get_object("dev_input").get_text()
+            if device != "":
+                lm.run_cmd(f'''xterm -e bash -c 'echo will run /opt/bin/build-usb-hybrid-grub-boot.sh {device}; echo "Review the command and type YES and hit enter to continue. "; read c; if [ "$c" = "YES" ]; then /opt/bin/build-usb-hybrid-grub-boot.sh {device}; echo "Review the result and Hit enter to continue"; read ; else echo Aborted!; fi  ' ''')
         def bt_gparted_activate_cb(self, button):
             lm.run_cmd("gparted")
             self.main.textview_disk_info.get_buffer().set_text(get_disk_info() )
