@@ -69,9 +69,9 @@ def get_partion_with_max_available_size(disk_info):
     return disk_info[key]
 
 def get_baseimage_location(): # full_path, mount_point, size
-    o,c,e = run_cmd(r"""losetup -a | grep '\/base\/001' | grep -oP '(?<= \()[^\)]+'""")
+    o,c,e = run_cmd(r"""losetup -a |  grep -P '\/001[^\s]+\.xzm' | grep -oP '(?<= \()[^\)]+'""")
     if c != 0:
-        print(f"ERROR {e}")
+        print(f"ERROR get_baseimage_location {e}")
         sys.exit(1)
     _tmp = o.split('/')
     mount_point = '/'.join(_tmp[1:3])
@@ -81,7 +81,7 @@ def get_avail_size(disk_info, mountpoint):
     try:
         return [disk_info[x]['avail'] for x in disk_info if disk_info[x]['mountpoint'] == mountpoint][0]
     except:
-        print("ERROR not found")
+        print("ERROR get_avail_size not found")
         return 0
 
 
@@ -130,7 +130,7 @@ def save_config():
     print(cmd)
     o, c, e = run_cmd(cmd)
     if c != 0:
-        print(f"ERROR {e}")
+        print(f"ERROR save_config {e}")
     else:
         print(f"Done {o}\n{e}")
 
@@ -286,6 +286,6 @@ if __name__ == '__main__':
         command = sys.argv[1]
         cmdlist[command]['run']()
     except Exception as e:
-        print("ERROR -- ", e)
+        print("ERROR main", e)
         help()
 
