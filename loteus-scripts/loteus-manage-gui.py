@@ -58,8 +58,9 @@ class main:
         def bt_next_activate_cb(self, button):
             device = self.main.builder.get_object("dev_input").get_text()
             if device != "":
-                install_out,install_c,e = lm.run_cmd(f'''xterm -e bash -c 'echo will run /opt/bin/build-usb-hybrid-grub-boot.sh {device}; echo "Review the command and type YES and hit enter to continue. "; read c; if [ "$c" = "YES" ]; then /opt/bin/build-usb-hybrid-grub-boot.sh {device}; echo "Review the result and Hit enter to continue"; read ; else echo Aborted!; fi  ' ''')
+                install_out,install_c,e = lm.run_cmd(f'''xterm -e bash -c 'echo will run /opt/bin/build-usb-hybrid-grub-boot.sh {device}; echo "Review the command and type YES and hit enter to continue. "; read c; if [ "$c" = "YES" ]; then /opt/bin/build-usb-hybrid-grub-boot.sh {device} | tee /tmp/install.log; echo "Review the result and Hit enter to continue"; read ; else echo Aborted!; fi  ' ''')
                 status = "SUCCESS" if install_c == 0 else "FAIL"
+                install_out = open('/tmp/install.log','r').read()
                 o,c,e = lm.run_cmd("efibootmgr")
                 if c == 0:
                     msg = f"""List the current EFI boot order
