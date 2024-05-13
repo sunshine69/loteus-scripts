@@ -69,7 +69,7 @@ def get_partion_with_max_available_size(disk_info):
     return disk_info[key]
 
 def get_baseimage_location(): # full_path, mount_point, size
-    o,c,e = run_cmd(r"""losetup -a |  grep -P '\/001[^\s]+\.xzm' | grep -oP '(?<= \()[^\)]+'""")
+    o,c,e = run_cmd(r"""losetup -a |  grep -P r'\/001[^\s]+\.xzm' | grep -oP '(?<= \()[^\)]+'""")
     if c != 0:
         print(f"ERROR get_baseimage_location {e}")
         sys.exit(1)

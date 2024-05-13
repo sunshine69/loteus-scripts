@@ -58,7 +58,31 @@ class main:
         def bt_next_activate_cb(self, button):
             device = self.main.builder.get_object("dev_input").get_text()
             if device != "":
-                lm.run_cmd(f'''xterm -e bash -c 'echo will run /opt/bin/build-usb-hybrid-grub-boot.sh {device}; echo "Review the command and type YES and hit enter to continue. "; read c; if [ "$c" = "YES" ]; then /opt/bin/build-usb-hybrid-grub-boot.sh {device}; echo "Review the result and Hit enter to continue"; read ; else echo Aborted!; fi  ' ''')
+                install_out,install_c,e = lm.run_cmd(f'''xterm -e bash -c 'echo will run /opt/bin/build-usb-hybrid-grub-boot.sh {device}; echo "Review the command and type YES and hit enter to continue. "; read c; if [ "$c" = "YES" ]; then /opt/bin/build-usb-hybrid-grub-boot.sh {device}; echo "Review the result and Hit enter to continue"; read ; else echo Aborted!; fi  ' ''')
+                status = "SUCCESS" if install_c == 0 else "FAIL"
+                o,c,e = lm.run_cmd("efibootmgr")
+                if c == 0:
+                    msg = f"""List the current EFI boot order
+{o}
+
+Make sure the entry `ubuntu` is the first one to boot if you want Ubuntu to boot first. If not then you can set the boot order the way you want by running the command
+
+sudo efibootmgr --bootorder XXXX,YYYY,ZZZZ
+
+Explain:
+    Explicitly set BootOrder (hex).  Any value from 0 to FFFF is accepted so long as it corresponds to  an  existing
+    Boot#### variable, and zero padding is not required.
+
+Install completed with status {status}. The command output is below
+
+{install_out}"""
+
+                else:
+                    msg = f"""Install completed with status {status}. The command output is below
+
+{install_out}"""
+                self.main.textview_disk_info.get_buffer().set_text(msg)
+
         def bt_gparted_activate_cb(self, button):
             lm.run_cmd("gparted")
             self.main.textview_disk_info.get_buffer().set_text(get_disk_info() )
