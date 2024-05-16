@@ -4,8 +4,15 @@
 
 import re, sys, subprocess, os
 from getpass import getpass
+import threading
 
-def run_cmd(cmd,sendtxt=None, working_dir=".", args=[], shell=True, DEBUG=False, shlex=False):
+def stdout_printer(p, output_list: list):
+    for line in p.stdout:
+        _l = line.rstrip()
+        print(_l)
+        output_list.append(_l)
+
+def run_cmd(cmd, sendtxt="\n", working_dir=".", args=[], shell=True, DEBUG=False, shlex=False):
     if DEBUG:
         cmd2 = re.sub(r'root:([^\s])', r'root:xxxxx', cmd) # suppress the root password printout
         print(cmd2)
@@ -21,18 +28,28 @@ def run_cmd(cmd,sendtxt=None, working_dir=".", args=[], shell=True, DEBUG=False,
     popen = subprocess.Popen(
             args,
             shell=shell,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            universal_newlines=True,
             cwd=working_dir
         )
-    if sendtxt: output, err = popen.communicate(bytearray(sendtxt, 'utf-8'))
-    else: _output, err = popen.communicate()
+    output_list = []
+    t = threading.Thread(target=stdout_printer, args=(popen, output_list))
+    t.start()
+    # write like that we can not have the return code
+    # if sendtxt: popen.stdin.write(bytearray(sendtxt, 'utf-8'))
+    # else: popen.stdin.write("\n")
+    popen.communicate( sendtxt )
+    # popen.stdin.flush()
+    # popen.stdin.close()
+    t.join()
     code = popen.returncode
-    output = _output.decode('utf-8')
+    output = "\n".join( output_list )
     if not code == 0 or DEBUG:
-        output = "Command string: '%s'\n\n%s" % (cmd, output)
-    return (output.strip(), code, err.decode('utf-8'))
+        errmsg = "Command string: '%s'" % (cmd)
+    else:
+        errmsg = ""
+
+    return (output.strip(), code, errmsg)
 
 def get_info():
     output = {  }
@@ -116,6 +133,13 @@ def merge_base():
     print(f"COMMAND: {command}")
     run_cmd(command)
     print("Done")
+
+def do_update():
+    cmd = "apt update; apt -y upgrade"
+    print(f"Run {cmd}")
+    run_cmd(cmd)
+    print("Run merge_base")
+    merge_base()
 
 def save_config():
     sys_info = get_info()
@@ -246,6 +270,10 @@ def install_mod():
     print(o)
 
 cmdlist = {
+        'do_update': {
+            'help': 'Run apt update ; apt -y upgrade and then merge it to base. You need to restart the system after that',
+            'run': do_update
+        },
         'update_kernel': {
             'help': 'Update kernel to the latest version',
             'run': update_kernel

@@ -46,15 +46,15 @@ CAREFULL
 
 """
 
-class main:
+class install_loteus:
 
     class Handler:
         def __init__(self, main):
             self.main = main
         def onDestroy(self, *args):
-            Gtk.main_quit()
+            self.main.w.close()
         def bt_cancel_activate_cb(self, *args):
-            Gtk.main_quit()
+            self.main.w.close()
         def bt_next_activate_cb(self, button):
             device = self.main.builder.get_object("dev_input").get_text()
             if device != "":
@@ -85,7 +85,8 @@ Install completed with status {status}. The command output is below
                 self.main.textview_disk_info.get_buffer().set_text(msg)
 
         def bt_gparted_activate_cb(self, button):
-            lm.run_cmd("gparted")
+            o,c,e = lm.run_cmd("gparted")
+            print(f"DEBUG {o} error {e}")
             self.main.textview_disk_info.get_buffer().set_text(get_disk_info() )
 
 
@@ -93,11 +94,43 @@ Install completed with status {status}. The command output is below
         self.builder = Gtk.Builder()
         self.builder.add_from_string(gladesource)
         self.builder.connect_signals(self.Handler(self))
-        w = self.builder.get_object("mainwindow")
+        self.w = self.builder.get_object("install_window")
         self.textview_disk_info = self.builder.get_object("textview_disk_info")
         self.textview_disk_info.get_buffer().set_text(get_disk_info() )
 
-        w.show_all()
-        Gtk.main()
 
-m = main()
+class main:
+    class Handler:
+        def __init__(self, main):
+            self.main = main
+        def onDestroy(self, *args):
+            Gtk.main_quit()
+
+        def BT_INSTALL_clicked_cb(self, *arg):
+            i_win = install_loteus()
+            i_win.w.show_all()
+
+        def BT_UPDATE_clicked_cb(self, *arg):
+            lm.run_cmd(f"xterm -e {script_dir}/loteus-manage.py do_update; echo 'Hit enter to close'; read _junk")
+            # lm.run_cmd(f"""xterm -e bash -c "apt update; echo 'Hit enter to close'; read _junk" """)
+        def BT_SAVE_CONFIG_clicked_cb(self, *arg):
+            lm.run_cmd(f"xterm -e {script_dir}/loteus-manage.py save_config; echo 'Hit enter to close'; read _junk")
+        def BT_SYS_UPGARDE_clicked_bt(self, *arg):
+            pass
+        def BT_HELP_clicked_cb(self, *arg):
+            pass
+
+
+    def __init__(self):
+        self.builder = Gtk.Builder()
+        self.builder.add_from_string(gladesource)
+        self.builder.connect_signals(self.Handler(self))
+        self.w = self.builder.get_object("main_window")
+
+def start()        :
+    mainclass = main()
+    mainclass.w.show_all()
+    Gtk.main()
+
+if __name__ == "__main__":
+    start()

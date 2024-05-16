@@ -3,7 +3,7 @@
 <interface>
   <requires lib="gtk+" version="3.24"/>
   <object class="GtkTextBuffer"/>
-  <object class="GtkApplicationWindow" id="mainwindow">
+  <object class="GtkApplicationWindow" id="install_window">
     <property name="can-focus">False</property>
     <property name="window-position">center</property>
     <property name="gravity">center</property>
@@ -171,6 +171,110 @@
               <attribute name="font-desc" value="Sans Bold 20"/>
             </attributes>
           </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="main_window">
+    <property name="can-focus">False</property>
+    <property name="window-position">center-always</property>
+    <signal name="delete-event" handler="onDestroy" swapped="no"/>
+    <signal name="destroy" handler="onDestroy" swapped="no"/>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="label" translatable="yes">Loteus Linux Admin</property>
+            <attributes>
+              <attribute name="font-desc" value="Sans Bold 24"/>
+              <attribute name="weight" value="bold"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="BT_INSTALL">
+            <property name="label" translatable="yes">Install Loteus</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Install the current running system to hard disk or USB disk</property>
+            <signal name="clicked" handler="BT_INSTALL_clicked_cb" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="BT_UPDATE">
+            <property name="label" translatable="yes">Run Update</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Run update the current running system. You need to reboot the system after that.</property>
+            <signal name="clicked" handler="BT_UPDATE_clicked_cb" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="BT_SAVE_CONFIG">
+            <property name="label" translatable="yes">Save Local Config</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">The local config such as wifi, network or user accounts will be saved</property>
+            <signal name="clicked" handler="BT_SAVE_CONFIG_clicked_cb" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="BT_SYS_UPGRADE">
+            <property name="label" translatable="yes">Sys Upgrade</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Download and replace the current OS images with the next version.</property>
+            <signal name="clicked" handler="BT_SYS_UPGRADE_clicked_cb" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">4</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="BT_HELP">
+            <property name="label" translatable="yes">Help</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Open help page in the browser.</property>
+            <signal name="clicked" handler="BT_HELP_clicked_cb" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">5</property>
+          </packing>
         </child>
       </object>
     </child>
