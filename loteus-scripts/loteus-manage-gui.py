@@ -90,9 +90,8 @@ Install completed with status {status}. The command output is below
             self.main.textview_disk_info.get_buffer().set_text(get_disk_info() )
 
 
-    def __init__(self):
-        self.builder = Gtk.Builder()
-        self.builder.add_from_string(gladesource)
+    def __init__(self, builder):
+        self.builder = builder
         self.builder.connect_signals(self.Handler(self))
         self.w = self.builder.get_object("install_window")
         self.textview_disk_info = self.builder.get_object("textview_disk_info")
@@ -107,11 +106,11 @@ class main:
             Gtk.main_quit()
 
         def BT_INSTALL_clicked_cb(self, *arg):
-            i_win = install_loteus()
+            i_win = install_loteus(self.main.builder)
             i_win.w.show_all()
 
         def BT_UPDATE_clicked_cb(self, *arg):
-            lm.run_cmd(f"xterm -e {script_dir}/loteus-manage.py do_update; echo 'Hit enter to close'; read _junk")
+            lm.run_cmd(f"""xterm -e bash -c "{script_dir}/loteus-manage.py do_update; echo 'Hit enter to close'; read _junk"  """)
             # lm.run_cmd(f"""xterm -e bash -c "apt update; echo 'Hit enter to close'; read _junk" """)
         def BT_SAVE_CONFIG_clicked_cb(self, *arg):
             lm.run_cmd(f"xterm -e {script_dir}/loteus-manage.py save_config; echo 'Hit enter to close'; read _junk")
@@ -121,14 +120,15 @@ class main:
             pass
 
 
-    def __init__(self):
-        self.builder = Gtk.Builder()
-        self.builder.add_from_string(gladesource)
+    def __init__(self, builder):
+        self.builder = builder
         self.builder.connect_signals(self.Handler(self))
         self.w = self.builder.get_object("main_window")
 
 def start()        :
-    mainclass = main()
+    builder = Gtk.Builder()
+    builder.add_from_string(gladesource)
+    mainclass = main(builder)
     mainclass.w.show_all()
     Gtk.main()
 
