@@ -5,14 +5,19 @@
 import re, sys, subprocess, os
 from getpass import getpass
 import threading
+import time
 
-def stdout_printer(p, output_list: list):
+def stdout_printer(p, output_list: dict):
     for line in p.stdout:
-        _l = line.rstrip()
+        _l = line.decode('utf-8').rstrip()
         print(_l)
-        output_list.append(_l)
+        output_list['stdout'].append(_l)
+    for line in p.stderr:
+        _l = line.decode('utf-8').rstrip()
+        print(_l)
+        output_list['stderr'].append(_l)
 
-def run_cmd(cmd, sendtxt="\n", working_dir=".", args=[], shell=True, DEBUG=False, shlex=False):
+def run_cmd(cmd, sendtxt=None, working_dir=".", args=[], shell=True, DEBUG=False, shlex=False, printOutput=False):
     if DEBUG:
         cmd2 = re.sub(r'root:([^\s])', r'root:xxxxx', cmd) # suppress the root password printout
         print(cmd2)
@@ -28,26 +33,35 @@ def run_cmd(cmd, sendtxt="\n", working_dir=".", args=[], shell=True, DEBUG=False
     popen = subprocess.Popen(
             args,
             shell=shell,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            universal_newlines=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             cwd=working_dir
         )
-    output_list = []
-    t = threading.Thread(target=stdout_printer, args=(popen, output_list))
-    t.start()
-    # write like that we can not have the return code
-    # if sendtxt: popen.stdin.write(bytearray(sendtxt, 'utf-8'))
-    # else: popen.stdin.write("\n")
-    popen.communicate( sendtxt )
-    # popen.stdin.flush()
-    # popen.stdin.close()
-    t.join()
-    code = popen.returncode
-    output = "\n".join( output_list )
-    if not code == 0 or DEBUG:
-        errmsg = "Command string: '%s'" % (cmd)
+
+    output, code, errmsg = "", 0, ""
+    if printOutput:
+        output_list = {'stdout': [], 'stderr': []}
+        t = threading.Thread(target=stdout_printer, args=(popen, output_list))
+        t.start()
+        if sendtxt: popen.stdin.write(sendtxt.encode('utf-8'))
+        popen.stdin.flush()
+        popen.stdin.close()
+        while True:
+            code = popen.poll()
+            if code is None: time.sleep(1)
+            else: break
+        t.join()
+        output = "\n".join( output_list['stdout'] )
+        errmsg = "\n".join( output_list['stderr'] )
     else:
-        errmsg = ""
+        if sendtxt: output, err = popen.communicate(bytearray(sendtxt, 'utf-8'))
+        else: _output, err = popen.communicate()
+        code = popen.returncode
+        output = _output.decode('utf-8')
+        if not code == 0 or DEBUG:
+            output = "Command string: '%s'\n\n%s" % (cmd, output)
+        errmsg = err.decode('utf-8')
 
     return (output.strip(), code, errmsg)
 
@@ -131,13 +145,13 @@ def merge_base():
     rm -rf tmp_$$
     """
     print(f"COMMAND: {command}")
-    run_cmd(command)
+    run_cmd(command, printOutput=True)
     print("Done")
 
 def do_update():
     cmd = "apt update; apt -y upgrade"
     print(f"Run {cmd}")
-    run_cmd(cmd)
+    run_cmd(cmd, printOutput=True)
     print("Run merge_base")
     merge_base()
 
@@ -210,13 +224,13 @@ def update_tools():
     cmd = f'''if [ ! -d /tmp/loteus-scripts/.git ]; then
         git clone {repo_url} /tmp/loteus-scripts
         else
-            cd /tmp/loteus-scripts && git pull
+            cd /tmp/loteus-scripts && git reset --hard; git clean -fd; git pull
         fi
         rsync -avh /tmp/loteus-scripts/loteus-scripts/ /opt/bin/
         chmod +x /opt/bin/*
     '''
-    o,c,e = run_cmd(cmd)
-    print(f"Output: {o}\nError: '{e}' (Ignore if empty)")
+    o,c,e = run_cmd(cmd, printOutput=True)
+
 
 def resize_usb_root():
     print("**** WARNING ****\nTHIS SCRIPT ONLE RESIZE THE LIVE USB ROOT CREATED BY THE USB IMAGE\nIF YOU ALREADY INSTALL IT INTO THE INTERNAL DISK THEN DO NOT RUN THIS COMMAND\nBACKUP BEFORE PROCEED IF YOU ALREADY HAVE DATA")
