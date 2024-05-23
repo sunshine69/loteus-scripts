@@ -4,7 +4,7 @@ function help() {
     printf "\nUsage: $0 </path/current/porteus/module> <encryption_flag:(y|n)> </path/to/working/dir|auto> [coma,sep,list,of-directory-to-be-selected-4compress]
 
 If the first arg is 999 then it will find a module started with 999 (only
-config settings in etc, home is saved) and only update these. 
+config settings in etc, home is saved) and only update these.
 
 If the first arg point to a non-existant mod file - it will be created as new.
 If it is existing file, it will update the changes from that mod file and
@@ -17,7 +17,7 @@ current will be renamed as .old
 
 if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ "$1" = "help" ] || [ -z "$1" ]; then
     help
-fi    
+fi
 
 
 CHANGES='/mnt/live/memory/changes'
@@ -44,19 +44,19 @@ function realpath {
 
 FROM_DIR=$(losetup -a | grep -oP '(?<=\()[^\s]+(?=000)')
 [ -z "$FROM_DIR" ] && echo "Not running in porteus environment" && exit 1
-  
+
 OS_DIR=$(cat /proc/cmdline | grep -oP '(?<=os=)[^\s]+(?= )')
 
 if [[ "$1" =~ "999" ]]; then
 	EXISTING_LOCAL_PATH=$(losetup -a | grep -oP '(?<=\()[^\s]+999[^\s]+(?=\))')
 fi
-  
+
 if [ ! -z "$EXISTING_LOCAL_PATH" ]; then
 	SRCPATH="$EXISTING_LOCAL_PATH"
-else      
+else
 	SRCPATH="`realpath $1`"
 fi
- 
+
 if `ps -ef|grep -v grep | grep '/opt/bin/save-session' >/dev/null 2>&1`; then
     if [ -f ${DESTINATION_DIR}/out.sqs ] || [ -d ${WORKDIR}/${NAME_PREFIX}0 ]; then
         echo "Another save session exists using the same ${DESTINATION_DIR} or ${WORKDIR} Aborting"
@@ -64,7 +64,7 @@ if `ps -ef|grep -v grep | grep '/opt/bin/save-session' >/dev/null 2>&1`; then
     fi
 fi
 
-     
+
 CDIR=`pwd`; cd $WORKDIR; rm -rf ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 >/dev/null 2>&1; mkdir ${NAME_PREFIX}0 ${NAME_PREFIX}1 ${NAME_PREFIX}2 >/dev/null 2>&1
 
 LODEV=`losetup -f`; losetup $LODEV $SRCPATH
@@ -75,7 +75,7 @@ if [ $? == 0 ]; then
 		if [ $? != 0 ]; then echo "Second try .."; cryptsetup luksOpen $LODEV ${NAME_PREFIX}_DEC; fi
 		mount /dev/mapper/${NAME_PREFIX}_DEC ${NAME_PREFIX}0
 	else
-		mount $LODEV ${NAME_PREFIX}0 
+		mount $LODEV ${NAME_PREFIX}0
 	fi
 else
   echo "Error mount old changes module. New changes will be saved into new module"
@@ -83,7 +83,7 @@ else
 fi
 
 #if grep aufs /proc/filesystems >/dev/null 2>&1; then
-#    mount -t aufs none ${NAME_PREFIX}2 -o br=${NAME_PREFIX}2=rw:${CHANGES}/rootdir=ro+wh:${NAME_PREFIX}1=ro 
+#    mount -t aufs none ${NAME_PREFIX}2 -o br=${NAME_PREFIX}2=rw:${CHANGES}/rootdir=ro+wh:${NAME_PREFIX}1=ro
 #else
 
 mkdir ${NAME_PREFIX}_wd
@@ -97,10 +97,39 @@ if [ $? != 0 ]; then echo "Fatal Error mount overlay fs"; umount ${NAME_PREFIX}0
 
 echo "Cleaning global and default users ${DEFAULT_USER} files..."
 rm -f ${NAME_PREFIX}2/var/lib/alsa/asound.state
-rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/.bash_history
 rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/*.log
-rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xsession-errors
+rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/.xsession*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.config
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.dbus
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.docker
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.gnome
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.gnupg
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.ipython
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.local
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.pki
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.ssh
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.vmware
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.vnc
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.vscode
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/snap/*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.gitconfig
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.gnote*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.ssh-agent
+rm -f ${NAME_PREFIX}2/home/${DEFAULT_USER}/.*_history
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.viminfo
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/tmp
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.cache
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/Downloads/*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/Documents/*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/Music/*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/Pictures/*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/Public/*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/Videos/*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/go
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/src
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/data
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/Templates/*
+rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/Desktop/*
 rm -rf ${NAME_PREFIX}2/home/*/.cache
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.thumbnails
 rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.ACEStream
@@ -143,7 +172,7 @@ find ${NAME_PREFIX}2/var/log -type f -exec rm -f {} \;
 find ${NAME_PREFIX}2/usr/share/doc -type f | while read f; do cp /dev/null $f; done
 
 # We dont remove home fodler here as it takes long time for big home dir. Instead we exclude them in squashfs exclude
-#ls ${NAME_PREFIX}2/home/ | grep -v "$DEFAULT_USER" | while read dname; do 
+#ls ${NAME_PREFIX}2/home/ | grep -v "$DEFAULT_USER" | while read dname; do
 #	rm -rf ${NAME_PREFIX}2/home/${dname}
 #done
 
@@ -176,7 +205,7 @@ rm -rf ${NAME_PREFIX}2/tmp/* ${NAME_PREFIX}2/tmp/.*
 # If startswith 999 that is only config saved in etc and home/root is retained
 if [[ "$1" =~ "999"  ]]; then
     MOD_999=y
-    ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root|var)" | while read dname; do 
+    ls ${NAME_PREFIX}2/ | grep -v -P "(etc|home|root|var)" | while read dname; do
 	rm -rf ${NAME_PREFIX}2/${dname}
     done
     ls ${NAME_PREFIX}2/var | grep -v 'spool' | while read dname; do
@@ -254,7 +283,7 @@ if [ -z "$SQUASHFS_OPT" ]; then
     fi
 fi
 
-# I dont understand why if not running in a sub shell bash mksquashfs never respect the exclude. 
+# I dont understand why if not running in a sub shell bash mksquashfs never respect the exclude.
 rm -rf $OUTDIR/usr/lib/modules/*
 /bin/bash -c "$MKSQUASHFS $OUTDIR ${DESTINATION_DIR}/out.sqs $SQUASHFS_OPT $SQUASHFS_EXCLUDE_OPT"
 
@@ -275,10 +304,10 @@ fi
 if [[ "$1" =~ "999"  ]]; then
   if [ ! -z "$EXISTING_LOCAL_PATH" ]; then
       mv ${DESTINATION_DIR}/out.sqs ${EXISTING_LOCAL_PATH}.new
-  else    
+  else
 #linuxrc load pattern as host specific local settings
       mv ${DESTINATION_DIR}/out.sqs ${FROM_DIR}/${OS_DIR}/base/999-${HOSTNAME}-$(uname -m).sqs
-  fi    
+  fi
 else
   if $(df | grep /mnt/doc >/dev/null 2>&1); then
     echo "Mounted /mnt/doc detected. Copy out.sqs over"
