@@ -145,7 +145,9 @@ def merge_base():
     rm -rf tmp_$$
     """
     print(f"COMMAND: {command}")
-    run_cmd(command, printOutput=True)
+    print("Please wait. It may take up to 30 minutes to finish")
+    # Python threading is still flaky. Running below if set printOutput to true mksquashfs hung inside
+    run_cmd(command, printOutput=False)
     print("Done")
 
 def do_update():
