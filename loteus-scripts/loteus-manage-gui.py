@@ -115,10 +115,16 @@ class main:
             # lm.run_cmd(f"""xterm -e bash -c "apt update; echo 'Hit enter to close'; read _junk" """)
         def BT_SAVE_CONFIG_clicked_cb(self, *arg):
             lm.run_cmd(f"""xterm -e bash -c "{script_dir}/loteus-manage.py save_config; echo 'Hit enter to close'; read _junk" """)
-        def BT_SYS_UPGARDE_clicked_bt(self, *arg):
-            pass
+        def BT_SYS_UPGRADE_clicked_cb(self, *arg):
+            lm.run_cmd(f"""xterm -e bash -c "echo 'The feature is currently not implemented yet. Hit enter to conitnue'; read junk" """)
         def BT_HELP_clicked_cb(self, *arg):
-            pass
+            lm.run_cmd(f"""xterm -e bash -c "echo 'The feature is currently not implemented yet. Hit enter to conitnue'; read junk" """)
+        def BT_RESIZE_USB_clicked_cb(self, *arg):
+            lm.run_cmd(f"""xterm -e bash -c "{script_dir}/loteus-manage.py resize_usb_root; echo 'Hit enter to close'; read _junk" """)
+        def BT_CREATE_CHANGE_IMAGE_clicked_cb(self, *arg):
+            lm.run_cmd(f"""xterm -e bash -c "echo 'Enter the size of the container. Hit enter to choose default 1G. To create 5G container enter 5000. You should make it as large as your disk space allows it. '; read IMAGE_SIZE; [ -z \"$IMAGE_SIZE\" ] && IMAGE_SIZE=1024; export IMAGE_SIZE; {script_dir}/loteus-manage.py create_change_image; echo 'Hit enter to close'; read _junk" """)
+        def BT_UPDATE_TOOLS_clicked_cb(self, *arg):
+            lm.run_cmd(f"""xterm -e bash -c "{script_dir}/loteus-manage.py update_tools; echo 'Hit enter to close'; read _junk" """)
 
 
     def __init__(self, builder):

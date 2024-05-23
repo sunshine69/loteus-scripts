@@ -222,7 +222,7 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
-            <property name="tooltip-text" translatable="yes">Run update the current running system. You need to reboot the system after that.</property>
+            <property name="tooltip-text" translatable="yes">Run update the current running system. You need to reboot the system after that. Remember to select the menu `RESET`</property>
             <signal name="clicked" handler="BT_UPDATE_clicked_cb" swapped="no"/>
           </object>
           <packing>
@@ -252,13 +252,58 @@
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
-            <property name="tooltip-text" translatable="yes">Download and replace the current OS images with the next version.</property>
+            <property name="tooltip-text" translatable="yes">Download and replace the current OS images with the selected version.</property>
             <signal name="clicked" handler="BT_SYS_UPGRADE_clicked_cb" swapped="no"/>
           </object>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">4</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="BT_RESIZE_USB">
+            <property name="label" translatable="yes">Resize USB Disk</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Resize the last partition of USB live. When you create the USB disk by writting disk image your USB disk will be limited to the image disk size even it might be larger. Run this to maximize the USB disk space for you to use.</property>
+            <signal name="clicked" handler="BT_RESIZE_USB_clicked_cb" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">5</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="BT_CREATE_CHANGE_IMAGE">
+            <property name="label" translatable="yes">Encrypted Change Image</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">The default installation use non encrypted personal data. To create a disk container and encrypt it, click this button.</property>
+            <signal name="clicked" handler="BT_CREATE_CHANGE_IMAGE_clicked_cb" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">6</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="BT_UPDATE_TOOLS">
+            <property name="label" translatable="yes">Update Management Tools</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="tooltip-text" translatable="yes">Run to update the loteus magement tools to have new features, etc. Require Internet connection.</property>
+            <signal name="clicked" handler="BT_UPDATE_TOOLS_clicked_cb" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">7</property>
           </packing>
         </child>
         <child>
@@ -273,7 +318,7 @@
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="position">5</property>
+            <property name="position">8</property>
           </packing>
         </child>
       </object>
