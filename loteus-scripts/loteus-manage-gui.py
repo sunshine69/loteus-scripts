@@ -116,9 +116,9 @@ class main:
         def BT_SAVE_CONFIG_clicked_cb(self, *arg):
             lm.run_cmd(f"""xterm -e bash -c "{script_dir}/loteus-manage.py save_config; echo 'Hit enter to close'; read _junk" """)
         def BT_SYS_UPGRADE_clicked_cb(self, *arg):
-            lm.run_cmd(f"""xterm -e bash -c "echo 'The feature is currently not implemented yet. Hit enter to conitnue'; read junk" """)
+            lm.run_cmd(f"""xterm -e bash -c "echo 'The feature is currently not implemented yet. Hit enter to continue'; read junk" """)
         def BT_HELP_clicked_cb(self, *arg):
-            lm.run_cmd(f"""xterm -e bash -c "echo 'The feature is currently not implemented yet. Hit enter to conitnue'; read junk" """)
+            lm.run_cmd(f"""xterm -e bash -c "echo 'The feature is currently not implemented yet. Hit enter to continue'; read junk" """)
         def BT_RESIZE_USB_clicked_cb(self, *arg):
             lm.run_cmd(f"""xterm -e bash -c "{script_dir}/loteus-manage.py resize_usb_root; echo 'Hit enter to close'; read _junk" """)
         def BT_CREATE_CHANGE_IMAGE_clicked_cb(self, *arg):
