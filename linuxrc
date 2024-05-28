@@ -431,7 +431,7 @@ if [ ! -z "${PASSPHRASE_FILE}" ]; then
         _PASSPHRASE_DEV=$(echo ${PASSPHRASE_FILE} | egrep -o '^[^/]+')
         PASSPHRASE_FILE=$(echo ${PASSPHRASE_FILE} | cut -f 2- -d/)
     else
-        echo "[WARN] PASSPHRASE_FILE (opt passfile) supplied but haing no device separator. The format is <devicename>[:/]<path-to-file> "
+        echo "[WARN] PASSPHRASE_FILE (opt passfile) supplied but having no device separator. The format is <devicename>[:/]<path-to-file> "
         _PASSPHRASE_DEV=""
     fi
     if [ ! -z "${_PASSPHRASE_DEV}" ] && [ -b /dev/${_PASSPHRASE_DEV} ]; then

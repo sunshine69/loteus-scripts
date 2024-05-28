@@ -1,4 +1,5 @@
 #!/bin/bash -x
+export CC=/usr/bin/gcc-14
 
 # This is starting script
 
