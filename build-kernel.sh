@@ -29,8 +29,8 @@ export KSOURCE_DIR=$(pwd)
 LONGTERM=${LONGTERM:-6.6}
 #LONGTERM="5.15"
 #STABLE="5.17"
-STABLE=${STABLE:-6.7}
-MAINLINE=${MAINLINE:-6.8}
+STABLE=${STABLE:-6.9}
+MAINLINE=${MAINLINE:-6.10}
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
