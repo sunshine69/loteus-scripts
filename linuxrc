@@ -49,6 +49,7 @@ OSDIR=`value os`; [ $OSDIR ] || OSDIR="ubuntu"
 SGN=`value sgnfile`; [ $SGN ] || SGN=${OSDIR}-$arch.sgn
 FROM=`value from`; ISO=`echo $FROM | egrep ".*\.iso( |\$)"`
 IP=`value ip | cut -d: -f2`
+NFS=`value nfs | cut -d: -f2`
 MOPT=`value mopt`; [ $MOPT ] || MOPT="noatime,nodiratime,suid,dev,exec,async"
 # format <file-system-name>:<option-string>. It will be appended to the MOPT
 MOPT1=`value mopt1`; [ $MOPT1 ] || MOPT1=""
@@ -508,18 +509,21 @@ fi
 
 echo -e "done\n$i searching for $SGN file ...\n"
 debug
-if [ "$IP" ]; then BOOTDEV=network; SGNDEV=/mnt/nfs
+if [ "$IP" ]; then 
+  if [ "$NFS" = "1" ]; then
+    BOOTDEV=network; SGNDEV=/mnt/nfs
     for x in `lspci | grep 0200: | cut -d: -f3-4 | sed s/:/.*/g | tr a-z A-Z`; do modprobe `grep $x /lib/modules/$(uname -r)/modules.alias | tail -n1 | rev | cut -d" " -f1 | rev` 2>/dev/null; done
     ls /sys/class/net | grep -q eth || { for x in `find /lib/modules/$(uname -r)/kernel/drivers/net -name "*.ko" | sed 's/.ko//g'`; do modprobe `basename $x` 2>/dev/null; ls /sys/class/net | grep -q eth && break || modprobe -r `basename $x` 2>/dev/null; done; }
     mkdir -p /mnt/nfs/porteus /mnt/nfs/storage; udhcpc; modprobe nfsv4; mount -t nfs4 $IP:/srv/pxe/porteus /mnt/nfs/porteus -o ro,nolock 2>/dev/null || { modprobe nfsv3; mount -t nfs $IP:/srv/pxe/porteus /mnt/nfs/porteus -o ro,nolock 2>/dev/null; }
     MAC=`ifconfig | grep eth0 | cut -d: -f5-7 | sed s/://g | cut -d" " -f1`
     if [ "$CHANGES" = /srv/pxe/storage ]; then
-    if lsmod | grep -q nfsv3; then
-        mount -t nfs $IP:/srv/pxe/storage /mnt/nfs/storage -o rw,nolock 2>/dev/null && { mkdir -p /mnt/nfs/storage/client-$MAC/changes/home; CHANGES="/storage/client-$MAC"; }
-    else
-        mount -t nfs4 $IP:/srv/pxe/storage /mnt/nfs/storage -o rw,nolock 2>/dev/null && { mkdir -p /mnt/nfs/storage/client-$MAC/changes/home; CHANGES="/storage/client-$MAC"; }
+      if lsmod | grep -q nfsv3; then
+          mount -t nfs $IP:/srv/pxe/storage /mnt/nfs/storage -o rw,nolock 2>/dev/null && { mkdir -p /mnt/nfs/storage/client-$MAC/changes/home; CHANGES="/storage/client-$MAC"; }
+      else
+          mount -t nfs4 $IP:/srv/pxe/storage /mnt/nfs/storage -o rw,nolock 2>/dev/null && { mkdir -p /mnt/nfs/storage/client-$MAC/changes/home; CHANGES="/storage/client-$MAC"; }
+      fi
     fi
-    fi
+  fi
 elif [ "$ISO" ]; then SGNDEV=/mnt/isoloop
     locate -e $FROM && { BOOTDEV=/mnt/$DEV; mkdir /mnt/isoloop; mount -o loop /mnt/$DEV/$LPTH /mnt/isoloop; }
 else

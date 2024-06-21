@@ -143,6 +143,8 @@ if [[ "$1" =~ "999" ]]; then
   echo "999 mod, not clean crontab"
 else
   rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
+  rm -rf ${NAME_PREFIX}2/etc/ksmbd/*
+  rm -rf ${NAME_PREFIX}2/etc/wireguard/*
   rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
   rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
 fi
