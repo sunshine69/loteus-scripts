@@ -197,7 +197,7 @@ if [ "$FORCE_HYBRID" != "legacy" ]; then
     mkdir -p /mnt/root/boot/efi
     mount $TARGET_EFI_PART /mnt/root/boot/efi
     if [ "$IS_USB" = "true" ]; then GRUB_OPT="--removable"; else GRUB_OPT=""; fi
-    grub-install --target=x86_64-efi --efi-directory=/mnt/root/boot/efi --boot-directory=/mnt/root/boot $GRUB_OPT --recheck --uefi-secure-boot
+    grub-install --target=x86_64-efi --efi-directory=/mnt/root/boot/efi --boot-directory=/mnt/root/boot $GRUB_OPT --recheck 
 fi
 
 if [[ $HYBRID = "yes" ]] || [[ $FORCE_HYBRID = "legacy" ]]; then
