@@ -91,6 +91,7 @@ mkdir ${NAME_PREFIX}_wd
 echo "Copying changes files into ${NAME_PREFIX}1"
 
 # When in doubt check https://www.kernel.org/doc/Documentation/filesystems/overlayfs.txt
+# Multiple lowerdir allowed using the :. stacked from the right most to left, that is left most is at the top of the layer
 mount -t overlay overlay -o index=off,lowerdir=${CHANGES}/rootdir:${NAME_PREFIX}0,upperdir=${NAME_PREFIX}1,workdir=${NAME_PREFIX}_wd ${NAME_PREFIX}2
 
 if [ $? != 0 ]; then echo "Fatal Error mount overlay fs"; umount ${NAME_PREFIX}0; losetup -d $LODEV >/dev/null 2>&1 ;exit 1; fi
@@ -140,13 +141,17 @@ rm -f ${NAME_PREFIX}2/etc/blkid-cache
 rm -f ${NAME_PREFIX}2/var/lib/dhcp/dhclient.eth0.leases
 rm -f ${NAME_PREFIX}2/var/lib/dhcpcd/*.lease
 if [[ "$1" =~ "999" ]]; then
-  echo "999 mod, not clean crontab"
+  echo "999 mod, not cleaning routine "
 else
   rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
   rm -rf ${NAME_PREFIX}2/etc/ksmbd/*
-  rm -rf ${NAME_PREFIX}2/etc/wireguard/*
+  rm -rf ${NAME_PREFIX}2/etc/wireguard/*  
   rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
   rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
+  # these files are restored from original. Changes should be save in `loteus_manage save_config` command
+  for retain_dir in /etc/default/ /etc/apt/apt.conf.d/ /etc/gdm3/  ; do
+    rsync -a --delete ${NAME_PREFIX}0/${retain_dir} ${NAME_PREFIX}2/${retain_dir}
+  done
 fi
 rm -rf ${NAME_PREFIX}2/dev/*
 rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
