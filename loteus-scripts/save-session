@@ -149,7 +149,7 @@ else
   rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
   rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
   # these files are restored from original. Changes should be save in `loteus_manage save_config` command
-  for retain_dir in /etc/default/ /etc/apt/apt.conf.d/ /etc/gdm3/  ; do
+  for retain_dir in /etc/default/ /etc/apt/apt.conf.d/ /etc/gdm3/ /var/lib/AccountsService/users/ ; do
     rsync -a --delete ${NAME_PREFIX}0/${retain_dir} ${NAME_PREFIX}2/${retain_dir}
   done
 fi
