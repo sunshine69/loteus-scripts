@@ -2,7 +2,12 @@
 
 SRC=$1
 
-[ -z "$SRC" ] && echo "Usage: $0 <image_file> [sub-command] [enc] [enc password]\nif var CHROOT=command then it will mount proc and dev and chroot in. and execute the command" && exit 1
+function help() {
+	echo "Usage: $0 <image_file> [sub-command] [enc] [enc password]\nif var CHROOT=command then it will mount proc and dev and chroot in. and execute the command"	
+}
+
+[ -z "$SRC" ] && help && exit 1
+[ "$SRC" = '-h' ] && help && exit 0
 
 [ -z "$WORKDIR" ] && WORKDIR=$(pwd)
 
