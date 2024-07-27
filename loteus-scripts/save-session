@@ -140,21 +140,6 @@ rm -rf ${NAME_PREFIX}2/home/${DEFAULT_USER}/.Skype/DataRv
 rm -f ${NAME_PREFIX}2/etc/blkid-cache
 rm -f ${NAME_PREFIX}2/var/lib/dhcp/dhclient.eth0.leases
 rm -f ${NAME_PREFIX}2/var/lib/dhcpcd/*.lease
-if [[ "$1" =~ "999" ]]; then
-  echo "999 mod, not cleaning routine "
-else
-  rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
-  rm -rf ${NAME_PREFIX}2/etc/ksmbd/*
-  rm -rf ${NAME_PREFIX}2/etc/wireguard/*  
-  rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
-  rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
-  # these files are restored from original. Changes should be save in `loteus_manage save_config` command
-  for retain_dir in /etc/openvpn/ /etc/default/ /etc/apt/apt.conf.d/ /etc/gdm3/custom.conf /var/lib/AccountsService/users/ /etc/sudoers.d/ /etc/sudoers /etc/passwd /etc/groups /etc/shadow /etc/passwd- /etc/groups- /etc/shadow- ; do
-    rsync -a --delete ${NAME_PREFIX}0/${retain_dir} ${NAME_PREFIX}2/${retain_dir}
-  done
-  cp -a ${NAME_PREFIX}0/etc/hosts* ${NAME_PREFIX}2/etc/
-
-fi
 rm -rf ${NAME_PREFIX}2/dev/*
 rm -rf ${NAME_PREFIX}2/var/crash/* ${NAME_PREFIX}2/var/crash/.*
 rm -rf ${NAME_PREFIX}2/var/lib/snapd/cache/*
@@ -225,7 +210,18 @@ if [[ "$1" =~ "999"  ]]; then
     done
 
 else
-    MOD_999=
+  MOD_999=
+  rm -rf ${NAME_PREFIX}2/etc/udev/rules.d/70-persistent*
+  rm -rf ${NAME_PREFIX}2/etc/ksmbd/*
+  rm -rf ${NAME_PREFIX}2/etc/wireguard/*  
+  rm -f ${NAME_PREFIX}2/etc/NetworkManager/system-connections/*
+  rm -f ${NAME_PREFIX}2/var/spool/cron/crontabs/*
+  # these files are restored from original. Changes should be save in `loteus_manage save_config` command
+  for retain_dir in /etc/openvpn/ /etc/default/ /etc/apt/apt.conf.d/ /etc/gdm3/custom.conf /var/lib/AccountsService/users/ /etc/sudoers.d/ /etc/sudoers /etc/passwd /etc/groups /etc/shadow /etc/passwd- /etc/groups- /etc/shadow- /etc/libvirt /var/lib/libvirt ; do
+    rsync -a --delete ${NAME_PREFIX}0/${retain_dir} ${NAME_PREFIX}2/${retain_dir}
+  done
+  cp -a ${NAME_PREFIX}0/etc/hosts* ${NAME_PREFIX}2/etc/
+
 fi
 
 # If supply the third arg which the folder or coma separated list of folders we wil only compress that folder under a new rootdir. Example to update a specific modules
