@@ -150,7 +150,7 @@ echo "Building ..."
 echo "Kernel modules file list"
 find ./lib/modules/
 #if $(which pixz >/dev/null 2>&1); then COMP_CMD=pixz; else COMP_CMD=pigz; fi
-COMP_CMD='lzma -9'
+COMP_CMD='zstd -9'
 find . | cpio --quiet -o -H newc | $COMP_CMD > $OUT
 
 cd $CWD

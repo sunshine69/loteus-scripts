@@ -25,4 +25,4 @@ if [ -z "$BOOT_DIR" ]; then export BOOT_DIR=$(dirname $BZIMAGE_FULL_PATH); else 
 [ -z "$TARGET_DIR" ] && TARGET_DIR=/mnt/portdata/build/kernel-binary
 
 echo "TARGET_DIR=$TARGET_DIR PORT_DIR $PORT_DIR BOOT_DIR $BOOT_DIR"
-export KVER=6.4.1-3-amd64
+#export KVER=6.4.1-3-amd64
