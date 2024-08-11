@@ -3,7 +3,7 @@
 SRC=$1
 
 function help() {
-	echo "Usage: $0 <image_file> [sub-command] [enc] [enc password]\nif var CHROOT=command then it will mount proc and dev and chroot in. and execute the command"	
+	echo "Usage: $0 <image_file> [sub-command] [enc] [enc password]\nif var CHROOT=command then it will mount proc and dev and chroot in. and execute the command"
 }
 
 [ -z "$SRC" ] && help && exit 1
@@ -72,7 +72,7 @@ ln -sf /run/systemd/resolve/resolv.conf etc/resolv.conf
 
 if [ -z "$SQUASHFS_OPT" ]; then
 	# Best balance now seems to be lz4 -Xhc. The zstd is good to built rescue but level 19 is too slow
-	SQUASHFS_OPT="-comp zstd -Xcompression-level 15"
+	SQUASHFS_OPT="-comp zstd -b 1M -Xcompression-level 15"
 	#SQUASHFS_OPT="-comp lz4 -Xhc -b 1024K"
 	#SQUASHFS_OPT="-b 1024K"
 	echo "Default SQUASHFS_OPT is '$SQUASHFS_OPT' - fast enough and good compression"
