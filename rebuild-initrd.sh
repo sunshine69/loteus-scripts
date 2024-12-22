@@ -9,6 +9,8 @@ CWD="$(pwd)"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $SCRIPT_DIR/common.sh
 
+EXTRACT_IMAGE_CMD='zstd -dc'
+COMP_CMD='zstd -9'
 
 if [ -z "$1" ]; then
     INF=$BOOT_DIR/initrd.xz
@@ -39,7 +41,7 @@ fi
 mkdir /tmp/initrd_$$
 cd /tmp/initrd_$$
 
-xzcat $INF | cpio -id
+$EXTRACT_IMAGE_CMD $INF | cpio -id
 #zcat $INF | cpio -id
 
 LINUXRC_FILE="linuxrc"
@@ -142,7 +144,7 @@ if [ ! -z "$KVERS" ]; then
 fi
 
 echo "Get into the new initrd root dir /tmp/initrd_$$ and modify things if u need. Then hit enter to build"
-#read _junk
+read _junk
 
 echo "Building ..."
 
