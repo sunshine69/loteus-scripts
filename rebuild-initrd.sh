@@ -85,7 +85,8 @@ if [ ! -z "$KVERS" ]; then
 
         if [ -z "$SRCDIR_ENV" ]; then
             if [ -f $KBUILDDIR/000-$KVER.xzm ]; then
-                mkdir $KBUILDDIR/1 ; mount -o loop $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1
+                mkdir $KBUILDDIR/1
+                unsquashfs -d $KBUILDDIR/1 $KBUILDDIR/000-$KVER.xzm
                 SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
             else
                 if [ -d /lib/modules/$KVER ]; then
@@ -136,8 +137,8 @@ if [ ! -z "$KVERS" ]; then
         #for sname in setup-disk.sh go-setup.sh swapcrypt.sh; do
         #    cp -a ${SCRIPT_DIR}/porteus-scripts/${sname} /tmp/initrd_$$/bin/
         #done
-        echo "Going to unmount and clean up ..."
-        umount $KBUILDDIR/1
+        echo "Going to clean up ..."
+        rm -rf $KBUILDDIR/1
         sleep 3 # avoid race condition
         rm -rf $KBUILDDIR/1 $TEMP_KDIR
     done
