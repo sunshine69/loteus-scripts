@@ -83,6 +83,11 @@ if [ "NOTIFY_ONLY" = "yes" ]; then
     exit 0
 fi
 
+if [ -z "$KVER" ]; then
+    echo "No new version found. Check these outputs and make sure the dependecies tools are available.Aborted!"
+    exit 1
+fi
+
 if [ ! -f "patch-$KVER.xz" ] && [ -z "$REBUILD" ]; then
     wget https://cdn.kernel.org/pub/linux/kernel/v${VERSION}.x/patch-$KVER.xz
 fi
