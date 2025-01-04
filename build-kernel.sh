@@ -1,5 +1,5 @@
 #!/bin/bash -x
-export CC=/usr/bin/gcc-14
+export CC=${CC:-/usr/bin/gcc-14}
 
 # This is starting script
 
@@ -9,7 +9,7 @@ export CC=/usr/bin/gcc-14
 
 # dependencies
 # pip3 install bs4
-# apt install flex libssl-dev libncurses-dev
+# apt install flex libssl-dev libncurses-dev bison m4 curl
 
 export INSTALL_MOD_PATH=/var/tmp/kernel-build
 
