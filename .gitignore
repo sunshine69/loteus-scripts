@@ -1,3 +1,4 @@
+.ipynb_checkpoints/*
 webnote-go
 webnote-linux-amd64-static
 uploads/*

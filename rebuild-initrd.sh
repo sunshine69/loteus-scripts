@@ -86,7 +86,7 @@ if [ ! -z "$KVERS" ]; then
         if [ -z "$SRCDIR_ENV" ]; then
             if [ -f $KBUILDDIR/000-$KVER.xzm ]; then
                 mkdir $KBUILDDIR/1
-                unsquashfs -d $KBUILDDIR/1 $KBUILDDIR/000-$KVER.xzm
+                mount $KBUILDDIR/000-$KVER.xzm $KBUILDDIR/1 || unsquashfs -d $KBUILDDIR/1 $KBUILDDIR/000-$KVER.xzm
                 SRCDIR="$KBUILDDIR/1/lib/modules/$KVER/kernel"
             else
                 if [ -d /lib/modules/$KVER ]; then
@@ -138,7 +138,7 @@ if [ ! -z "$KVERS" ]; then
         #    cp -a ${SCRIPT_DIR}/porteus-scripts/${sname} /tmp/initrd_$$/bin/
         #done
         echo "Going to clean up ..."
-        rm -rf $KBUILDDIR/1
+        umount $KBUILDDIR/1 ; rm -rf $KBUILDDIR/1
         sleep 3 # avoid race condition
         rm -rf $KBUILDDIR/1 $TEMP_KDIR
     done

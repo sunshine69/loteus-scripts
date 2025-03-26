@@ -2,9 +2,10 @@
 export CC=${CC:-/usr/bin/gcc-14}
 
 # This is starting script
-
+# mkdir -p /mnt/portdata/build/kernel-binary
+# chown stevek:stevek /mnt/portdata/build -R
 # Run like this: (as normal user but having sudo because e need sudo when building the initrd)
-# env STABLE=6.3 LONGTERM=5.15 VERSION=6 PATCHLEVEL=3 REBUILD=y /home/stevek/src/kernel-build-scripts/build-kernel.sh
+# env STABLE=6.13 LONGTERM=6.12 VERSION=6 PATCHLEVEL=14 REBUILD=y /home/stevek/src/kernel-build-scripts/build-kernel.sh
 # env STABLE=6.3 LONGTERM=5.15 VERSION=5 PATCHLEVEL=15 REBUILD=y /home/stevek/src/kernel-build-scripts/build-kernel.sh
 
 # dependencies
@@ -26,11 +27,11 @@ export KSOURCE_DIR=$(pwd)
 # Change this to match with what is in the https://kernel.org site
 # From kernel.org what is longer and stable? Used to detect what version we will build
 # This is the first number (version) and minor as now stable and longterm having the same version.
-LONGTERM=${LONGTERM:-6.6}
+LONGTERM=${LONGTERM:-6.12}
 #LONGTERM="5.15"
 #STABLE="5.17"
-STABLE=${STABLE:-6.9}
-MAINLINE=${MAINLINE:-6.10}
+STABLE=${STABLE:-6.13}
+MAINLINE=${MAINLINE:-6.14}
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section
