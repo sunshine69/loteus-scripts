@@ -29,7 +29,7 @@ fi
 if [ ! -f "$INF" ]; then
     INF=$SCRIPT_DIR/initrd-template.xz
     if [ ! -f $INF ]; then
-        INF=$(find /mnt/*/build/kernel-binary/initrd-template.xz /mnt/doc/opc-backup/initrd-template.xz 2>/dev/null | head -n1)
+        INF=$(find /mnt/*/build/initrd-template.xz /mnt/doc/opc-backup/initrd-template.xz 2>/dev/null | head -n1)
     fi
     if [ -z "$INF" ]; then echo "Enter path to initrd: "; read INF ; fi
     if [ ! -f $INF ]; then
