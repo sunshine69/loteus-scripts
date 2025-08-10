@@ -28,10 +28,8 @@ export KSOURCE_DIR=$(pwd)
 # From kernel.org what is longer and stable? Used to detect what version we will build
 # This is the first number (version) and minor as now stable and longterm having the same version.
 LONGTERM=${LONGTERM:-6.12}
-#LONGTERM="5.15"
-#STABLE="5.17"
-STABLE=${STABLE:-6.13}
-MAINLINE=${MAINLINE:-6.14}
+STABLE=${STABLE:-6.15}
+MAINLINE=${MAINLINE:-6.16}
 
 # Change these to select what kernel we are going to build eg. 5.1. The first number (version)
 # The combination needs to match with one of the above section

@@ -209,10 +209,10 @@ if [[ "$1" =~ "999"  ]]; then
        	rm -rf ${NAME_PREFIX}2/var/spool/${dname}
     done
     ls ${NAME_PREFIX}2/var/lib | grep -v -P '(AccountsService|libvirt)' | while read dname; do
-       	rm -rf ${NAME_PREFIX}2/var/spool/${dname}
+       	rm -rf ${NAME_PREFIX}2/var/lib/${dname}
     done
     ls ${NAME_PREFIX}2/var/lib/libvirt | grep -v -P '(dnsmasq|swtpm)' | while read dname; do
-       	rm -rf ${NAME_PREFIX}2/var/spool/${dname}
+       	rm -rf ${NAME_PREFIX}2/var/libvirt/${dname}
     done
 
 else
