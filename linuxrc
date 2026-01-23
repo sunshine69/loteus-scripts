@@ -11,9 +11,8 @@ umount /proc
 param() { egrep -qo " $1( |\$)" /etc/cmdline; }
 value() { egrep -o " $1=[^ ]+" /etc/cmdline | cut -d= -f2- ; }
 debug() { param debug && { echo -e "\n=====\n: Debugging started. Here is the shell for you.\n: Type your desired commands, hit Ctrl+D to continue booting\n: or press Ctrl+Alt+Del to reboot."; sh; echo -e "\n\n"; }; }
-# Enable pivot_root in initramfs to let it behave like initrd: we need that because aufs not work on initrd but works on tmpfs
 KMODS=`value kmods`
-if [ -d /m ]; then
+if [ -d /m ]; then # this part wont exec after we switch_root first time. This only for loading mods
     echo "Start to load modules from initrd ..."
     if [ -d /lib/modules/`uname -r` ]; then
       if [ ! -z "$KMODS" ]; then KMODS=$(echo $KMODS | sed 's/,/ /'); fi
@@ -704,9 +703,9 @@ echo -e "done setup changes\nSetup overlayfs ...\n"
 
 echo -e "\nLoad specific settings for a hostname. The file name is 9XX-${HOSTNAME}-*.sqs ...\n"
 debug
-if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh" ]; then
-    echo "Source file $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh found. Source it now..."
-    . $CHANGES_MOUNT_SRC/${HOSTNAME}.init.sh
+if [ -f "$CHANGES_MOUNT_SRC/${HOSTNAME}-init0.sh" ]; then
+    echo "Source file $CHANGES_MOUNT_SRC/${HOSTNAME}-init0.sh found. To run init in the new root make $CHANGES_MOUNT_SRC/${HOSTNAME}-init.sh"
+    . $CHANGES_MOUNT_SRC/${HOSTNAME}-init0.sh
 fi
 
 if [ "$FACTORYRESET" == '4' ] || [ "$FACTORYRESET" == 'reset_999' ];  then
@@ -959,17 +958,19 @@ cp -af $livedbg /union/var/log/porteus-livedbg
 echo $i"changing root directory"
 
 if param noauto; then
-nofstab=yes
+    nofstab=yes
     for x in `grep ^/dev/ /etc/fstab | cut -d/ -f3`; do mkdir -p "/union/mnt/$x"; umount -n "/mnt/$x" 2>/dev/null && rmdir "/mnt/$x"; done
 else
     grep /dev/ /etc/fstab >> /union/etc/mtab
-    for x in `grep ^/dev/ /etc/fstab | cut -d" " -f1`; do
-        _mountdir=$(basename $x)
-        echo "creating mount directories in union/mnt/${_mountdir} for newly root"
-        mkdir -p "/union/mnt/${_mountdir}"
-        mount -n --move "/mnt/${_mountdir}" "/union/mnt/${_mountdir}" && rmdir "/mnt/${_mountdir}"
-    done
 fi
+for x in `grep ^/dev/ /etc/fstab | cut -d" " -f1`; do
+    _mountdir=$(basename $x)
+    echo "creating mount directories in union/mnt/${_mountdir} for newly root"
+    mkdir -p "/union/mnt/${_mountdir}"
+    mount -n --move "/mnt/${_mountdir}" "/union/mnt/${_mountdir}" && rmdir "/mnt/${_mountdir}"
+done
+
+
 sed -i "s/ ntfs / $NTFS_TYPE /g" /etc/fstab
 echo -e "\n# Hotplugged devices:" >> /etc/fstab
 mv /union/etc/fstab /union/etc/fstab-orig
@@ -982,19 +983,9 @@ if [ -f /union/lib/systemd/systemd ]; then
     ( cd /union/sbin; rm -f init; ln -sf ../lib/systemd/systemd init )
 fi
 if [ $? -eq 0 ]; then
-    if [ -f /union/usr/sbin/chroot ]; then
-    CHROOT='usr/sbin/chroot'
-    elif [ -f /union/sbin/chroot ]; then
-    CHROOT='sbin/chroot'
-    elif [ -f /union/usr/bin/chroot ]; then
-    CHROOT='usr/bin/chroot'
-    else
-    CHROOT='bin/chroot'
-    fi
     rm -rf /union/proc /union/sys /union/run /union/tmp /union/srv /union/media >/dev/null 2>&1
     mkdir /union/proc /union/sys /union/run /union/tmp /union/srv /union/media /union/snap >/dev/null 2>&1
     debug
-    mount -o move /dev /union/dev
     #set hostname file - only for Debian and Centos os. We can even run chroot /union/ lsb_release to find out more.
     if [ ! -z "$HOSTNAME" ]; then
        echo "$HOSTNAME" > /union/etc/hostname
@@ -1009,7 +1000,7 @@ EOF
        fi
     fi
     chmod 1777 /union/tmp
-    mkdir /union/mnt/live >/dev/null 2>&1
+    mkdir -p /union/mnt/live/memory >/dev/null 2>&1
     debug
     echo "Create /tmp/rc.local for this host. search in /union/${CHANGES_MOUNT_SRC}/${HOSTNAME}-rc.local In /etc/rc.local you can detect and exec it"
     if [ -f /union/${CHANGES_MOUNT_SRC}/${HOSTNAME}-rc.local ]; then
@@ -1023,35 +1014,44 @@ EOF
         cp -a /union/${CHANGES_MOUNT_SRC}/${HOSTNAME}-init.sh /union/tmp/${HOSTNAME}-init.sh
         chmod +x /union/tmp/${HOSTNAME}-init.sh
     fi
-    if [ -f /union/${CHANGES_MOUNT_SRC}/${HOSTNAME}-init-playbook.yaml ]; then
-        echo "Detected ${HOSTNAME}-init-playbook.yaml, Create /tmp/init-playbook.yaml for this host. In /etc/rc.local you can detect and run ansible-playbook on it to provision the host"
-        cp -a /union/${CHANGES_MOUNT_SRC}/${HOSTNAME}-init-playbook.yaml /union/tmp/init-playbook.yaml
-        chmod 0600 /union/tmp/init-playbook.yaml
-    fi
+    if [ -f /union/${CHANGES_MOUNT_SRC}/${HOSTNAME}-init-go ]; then
+        echo "Detected ${HOSTNAME}-init-go. Copy it to /tmp/init-go for execution later on"
+        cp -a /union/${CHANGES_MOUNT_SRC}/${HOSTNAME}-init-go /tmp/init-go 
+    fi 
+    mount -o move /dev /union/dev
+    mount -o move /proc /union/proc
+    mkdir /union/mnt/live/memory/changes -p
+    mount -o move /memory/changes /union/mnt/live/memory/changes
+    for d in $(ls /memory/images/); do
+      mkdir -p /union/mnt/live/memory/images/$d
+      mount -o move /memory/images/$d /union/mnt/live/memory/images/$d
+    done
     debug
-    pivot_root /union  /union/mnt/live
+    cd /union
     echo "Execute commands in the new root eg. prepare, cleaning up before execting init."
     echo clean up systemd journal
-    (rm -rf /var/log/journal/* >/dev/null 2>&1)
-    echo "clean up /mnt/live to free up memory if possible ..."
-    rm -rf /mnt/live/bin /mnt/live/linuxrc /mnt/live/lib64 /mnt/live/tmp || true
-    if ! `ps -ef|grep ntfs-3g >/dev/null 2>&1`; then rm -rf /mnt/live/lib32; fi
-    mkdir /var/log/live >/dev/null 2>&1
-    mv /mnt/live/*.log /var/log/live/
-    mv /mnt/live/var/log/* /var/log/live/
-    (cd /mnt ; rm -f portdata ; ln -sf $PORTDATA_DEV portdata)
+    (rm -rf var/log/journal/* >/dev/null 2>&1)
+    echo "Move live logs over"    
+    mkdir var/log/live >/dev/null 2>&1
+    mv /var/log/livedbg /loadmodules.log var/log/live/
+    (cd mnt ; if [ -s portdata ]; then rm -f portdata; fi; ln -sf $PORTDATA_DEV portdata)
     echo "portdata device $PORTDATA_DEV"
     echo "remove the systemd mount trouble lines in fstab"
-    sed -i '/mapper/d' /etc/fstab
-    sed -i '/_DEC/d' /etc/fstab
-    if [ -f /tmp/${HOSTNAME}-init.sh ]; then
+    sed -i '/mapper/d' etc/fstab
+    sed -i '/_DEC/d' etc/fstab
+    if [ -f tmp/${HOSTNAME}-init.sh ]; then
         echo "executing /tmp/${HOSTNAME}-init.sh"
-        /tmp/${HOSTNAME}-init.sh
+        chroot . /bin/bash /tmp/${HOSTNAME}-init.sh
     fi
-    umount /mnt/live/_keystore
+    if [ -f tmp/${HOSTNAME}-init-go ]; then
+        echo "executing /tmp/${HOSTNAME}-init-go"
+        chroot . /tmp/${HOSTNAME}-init-go 
+    fi
+    umount mnt/live/_keystore
     echo done
+    echo "**** STARTED INIT NOW ***"
     debug
-    exec $CHROOT . /sbin/init "$@" <dev/console >dev/console 2>&1
+    exec switch_root . /sbin/init "$@" <dev/console >dev/console
 else
     echo -e "[31m""!!ERROR!!\nSomething went wrong and I cannot continue.\nPress Ctrl+Alt+Del to reboot.""[0m"
     sh
