@@ -1,6 +1,16 @@
 #!/bin/bash -x
 
-echo "Start rebuild initrd.xz"
+echo "Start rebuild initrd.xz. By default it parse the current initrd of the running system and prompt but default for the current running kernel"
+
+echo "To rebuild a specific give argument $1 - old initrd.xz if empty then it will build completely new one from the template. $2 - output file path. If not supplied it will be the same as $1 and a backup will be created."
+
+echo "To extract kmodule need to pass one of env var TARGET_DIR points to a directory where the full kernel file eg porteus-kernel-<VERSION>.tar.sfx. Or pass KBUILDDIR_ENV to the dir where the compressed kernel mod is eg. 000-<VERSION>.xzm. VERSION contains the arch string like x86_64"
+
+if [ -z "$TARGET_DIR" ] && [ -z "$KBUILDDIR_ENV" ]; then
+    echo "Both TARGET_DIR and KBUILDDIR_ENV is not set. Are you sure to continue? YES? "
+    read ans
+    if [ "$ans" != "YES" ]; then exit 1; fi
+fi
 
 # SYSTEM_PRODUCT_NAME=$(dmidecode -s 'system-product-name')
 

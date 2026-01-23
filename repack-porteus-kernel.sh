@@ -5,6 +5,8 @@ export SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 [ ! -d porteus-kernel ] && echo "porteus-kernel dir does not exist - abort" && exit 1
 
+[ ! -f ${SCRIPT_DIR}/self-extract.sh ] && echo "self-extract.sh in the same dir does not exist, abort" && exit 1
+
 KVER=$(ls porteus-kernel/000*.xzm | grep -v 'linux-src' | sed 's/porteus-kernel\///; s/.xzm$// ; s/000\-// ')
 if [ -z "$KVER" ]; then
     KVER=$(ls porteus-kernel/000*.xzm.new | grep -v 'linux-src' | sed 's/porteus-kernel\///; s/.xzm$// ; s/000\-// ')
