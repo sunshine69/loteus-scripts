@@ -49,6 +49,28 @@ if [ ! -z "${CHROOT}" ]; then
     done
     rm -f ${NAME_PREFIX}3/etc/resolv.conf; echo "nameserver 8.8.8.8" > ${NAME_PREFIX}3/etc/resolv.conf
 	chroot ${NAME_PREFIX}3 /bin/sh -c "${CHROOT}"
+
+    chroot ${NAME_PREFIX}3 /bin/bash -c "
+cd /
+rm -rf tmp/* var/tmp/*
+rm -f etc/resolv.conf
+ln -sf /run/systemd/resolve/resolv.conf etc/resolv.conf
+rm -rf root
+mkdir root
+for f in .vimrc .viminfo .profile .bashrc .bash_history .bash_aliases .config/fish .selected_editor .config; do
+	cp -a /root/$f root/
+done
+mkdir -p root/.local/share
+cp -a /root/.local/share/fish root/.local/share/
+
+rm -rf run/*
+rm -rf tmp/* tmp/.*
+rm -rf var/tmp/*
+rm -rf var/backups/*
+rm -rf srv/*
+rm -rf lib/modules/*
+"
+
 	for _d in dev proc; do umount ${NAME_PREFIX}3/${_d}; done
 
 else
@@ -65,9 +87,6 @@ fi
 cd $WORKDIR
 rm -f out.sqs var/crash/*
 
-rm -rf tmp/* var/tmp/*
-rm -f etc/resolv.conf
-ln -sf /run/systemd/resolve/resolv.conf etc/resolv.conf
 
 
 if [ -z "$SQUASHFS_OPT" ]; then

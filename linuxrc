@@ -1030,7 +1030,7 @@ EOF
     cd /union
     echo "Execute commands in the new root eg. prepare, cleaning up before execting init."
     echo clean up systemd journal
-    (rm -rf var/log/journal/* >/dev/null 2>&1)
+    (rm -rf var/log/journal/* tmp/** >/dev/null 2>&1)
     echo "Move live logs over"    
     mkdir var/log/live >/dev/null 2>&1
     mv /var/log/livedbg /loadmodules.log var/log/live/

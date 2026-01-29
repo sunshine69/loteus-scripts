@@ -25,7 +25,7 @@ NAME_PREFIX='save_session'
 # The home of this user will get cleaned and preserved changes. All other home
 # folder wont be included. See what cleand and what preserved in the cleanup section below
 DEFAULT_USER='loteus'
-#EXCLUDE_USERS='stevek kaycao andrewk'
+#EXCLUDE_USERS='a b c'
 
 HOSTNAME=$(hostname)
 
