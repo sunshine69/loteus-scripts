@@ -9,7 +9,7 @@ echo "To extract kmodule need to pass one of env var TARGET_DIR points to a dire
 if [ -z "$TARGET_DIR" ] && [ -z "$KBUILDDIR_ENV" ]; then
     echo "Both TARGET_DIR and KBUILDDIR_ENV is not set. Are you sure to continue? YES? "
     read ans
-    if [ "$ans" != "YES" ]; then exit 1; fi
+    if [ "$ans" != "y" ]; then exit 1; fi
 fi
 
 # SYSTEM_PRODUCT_NAME=$(dmidecode -s 'system-product-name')
