@@ -129,6 +129,7 @@ if [ ! -z "$KVERS" ]; then
         cp -a $SRCDIR/drivers/{input,hid,ata,block,acpi,crypto,md,memstick,mmc,cdrom,scsi,macintosh,usb,thunderbolt,nvme} $DESTDIR/drivers/
         cp -a $SRCDIR/drivers/{input,hid,ata,block,acpi,crypto,md,macintosh,usb,thunderbolt,nvme} $DESTDIR/drivers/
         cp -a $SRCDIR/drivers/hwmon/applesmc.ko $DESTDIR/drivers/hwmon/
+        cp -a $SRCDIR/drivers/ufs $DESTDIR/drivers/
         cp -a $SRCDIR/drivers/platform/x86 $DESTDIR/drivers/platform/
         if [ "$MINI_INITRD" == "y" ]; then
            echo "skip sound modules"
