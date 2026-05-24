@@ -2,8 +2,9 @@
 export CC=${CC:-/usr/bin/gcc-14}
 
 # This is starting script
-# mkdir -p /mnt/portdata/build/kernel-binary
-# chown stevek:stevek /mnt/portdata/build -R
+sudo mkdir -p /mnt/portdata/build/kernel-binary
+sudo chown -R stevek:stevek /mnt/portdata/build
+sudo chmod 1777 /var/tmp
 # Run like this: (as normal user but having sudo because e need sudo when building the initrd)
 # env STABLE=6.13 LONGTERM=6.12 VERSION=6 PATCHLEVEL=14 REBUILD=y /home/stevek/src/kernel-build-scripts/build-kernel.sh
 # env STABLE=6.3 LONGTERM=5.15 VERSION=5 PATCHLEVEL=15 REBUILD=y /home/stevek/src/kernel-build-scripts/build-kernel.sh
