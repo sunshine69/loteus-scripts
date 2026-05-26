@@ -1,4 +1,6 @@
 .ipynb_checkpoints/*
+*.log
+.playwright**
 webnote-go
 webnote-linux-amd64-static
 uploads/*
