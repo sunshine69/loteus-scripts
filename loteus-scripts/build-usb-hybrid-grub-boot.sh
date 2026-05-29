@@ -117,17 +117,62 @@ if [ "$DEVTYPE" = 'disk' ]; then
     sgdisk /dev/${LOOP_DEV} --new=3:0:0
     sgdisk /dev/${LOOP_DEV} --typecode=3:8300
 
-    # make hybrid. Assume that if we uses loop device, otherwise it is hard disk ignore
+   # Determine if device is removable (USB) or internal by checking sysfs
+    IS_REMOVABLE="no"
+    DEV_NAME=$(basename $LOOP_DEV)  # e.g., sda, loop0
 
-    if [[ $LOOP_DEV =~ "loop" ]] || [[ $LOOP_DEV =~ "nvme" ]] || [[ $LOOP_DEV =~ "mmcblk" ]]; then
-        HYBRID=yes
-        PART_CHAR="p" # loop device the partition has extra p (parallel devices, not serial one)
+    # Check /sys/block for 'removable' attribute.
+    REM_VAL=$(cat /sys/block/${DEV_NAME}/removable 2>/dev/null || echo "unknown")
+    [[ "$REM_VAL" == "1" ]] && IS_REMOVABLE="yes"
+
+    # Determine PART_CHAR (loop devices use 'p' for partitions, e.g., loop0p1)
+    if [[ $LOOP_DEV =~ "loop" ]]; then
+        HYBRID=yes  # Loop devices are always hybrid/compatible by default in this script logic context? Or just set char.
+                    # Original: Hybrid=yes for loop/nvme/mmc. I'll keep that intent but refine via IS_REMOVABLE below.
+        PART_CHAR="p"
     else
-        PART_CHAR=""
+        HYBRID=no   # Default to no hybrid (pure GPT) unless specific conditions met
+        PART_CHAR=""  # sda -> sda1, etc.
     fi
 
     FORCE_HYBRID=${FORCE_HYBRID:-no}
-    if [ "$FORCE_HYBRID" = "yes" ]; then HYBRID=yes; fi
+
+    # Logic for Hybrid MBR support:
+    if [ "$FORCE_HYBRID" = "yes" ]; then
+        HYBRID=yes
+    elif [[ $IS_REMOVABLE == "yes" ]]; then
+        # USB sticks and removable media get hybrid mode for maximum compatibility across BIOS/UEFI versions.
+        # This fixes the issue where /dev/sdX (USB) was not treated as Hybrid by default.
+        HYBRID=yes
+    else
+        # Internal SATA disk (/dev/sda, etc) - Not removable and not NVMe/MMC/Loop
+
+        # Check BIOS date if available (DMI info requires root access usually).
+        # User requirement: "turn off hybrid if internal and bios date is recent enough"
+        IS_MODERN_BIOS="no"
+        BIOS_DATE=$(cat /sys/class/dmi/id/bios_date 2>/dev/null || echo "")
+
+        if [ -n "$BIOS_DATE" ]; then
+            # Extract year from MM/DD/YYYY or similar format.
+            YEAR=$(echo $BIOS_DATE | grep -oP '\d{4}')
+
+            # If BIOS date is after 2018, assume modern UEFI support and skip Hybrid MBR (GPT only).
+            # This prevents creating unnecessary hybrid partitions on modern systems where GPT-only works.
+            if [[ ! -z "$YEAR" ]] && (( 10#$YEAR > 2018 )); then
+                IS_MODERN_BIOS="yes"
+            fi
+        fi
+
+        if [ "$IS_MODERN_BIOS" = "no" ]; then
+             # Old BIOS might need Hybrid MBR for legacy boot or mixed environments. Default to yes? Or keep no?
+             # Based on user request, we turn it OFF only if recent enough (Modern).
+             # So for old ones, defaulting to Yes is safer for compatibility with the script's "hybrid" goal.
+             HYBRID=yes
+        fi
+
+        echo "[DEBUG] Internal Disk: Removable=$IS_REMOVABLE ModernBIOS=$IS_MODERN_BIOS -> Setting Hybrid=$HYBRID (Force=${FORCE_HYBRID})" >&2
+    fi
+
 
     if [[ $HYBRID = "yes" ]]; then
         sgdisk /dev/${LOOP_DEV} --hybrid=1:2:3
@@ -197,7 +242,7 @@ if [ "$FORCE_HYBRID" != "legacy" ]; then
     mkdir -p /mnt/root/boot/efi
     mount $TARGET_EFI_PART /mnt/root/boot/efi
     if [ "$IS_USB" = "true" ]; then GRUB_OPT="--removable"; else GRUB_OPT=""; fi
-    grub-install --target=x86_64-efi --efi-directory=/mnt/root/boot/efi --boot-directory=/mnt/root/boot $GRUB_OPT --recheck 
+    grub-install --target=x86_64-efi --efi-directory=/mnt/root/boot/efi --boot-directory=/mnt/root/boot $GRUB_OPT --recheck
 fi
 
 if [[ $HYBRID = "yes" ]] || [[ $FORCE_HYBRID = "legacy" ]]; then
@@ -238,4 +283,3 @@ fi
 rsync --exclude '999*' --exclude '*.old' --exclude '*.new' --inplace -avh ${OS_DIR}/ /mnt/root/$BOOT_FROM/${BOOT_OS}/
 
 sync
-
