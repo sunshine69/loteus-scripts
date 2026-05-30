@@ -88,8 +88,8 @@ func findTerminal() string {
 
 // runInSystemTerminal auto-detects a terminal emulator and runs the command inside it.
 func runInSystemTerminal(s *AppState, fullCmd string) {
-	terminal := findTerminal()
-
+	// terminal := findTerminal()
+	terminal := ""
 	if terminal != "" && os.Getenv("DISPLAY") != "" {
 		// Terminal found and DISPLAY is set: spawn in new terminal window (forked, no suspension needed)
 		go func() {
@@ -97,11 +97,11 @@ func runInSystemTerminal(s *AppState, fullCmd string) {
 		}()
 	} else {
 		// No DISPLAY or no terminal found: suspend tview and run directly in current terminal
-		if os.Getenv("DISPLAY") == "" {
-			fmt.Println("Warning: No X11 display found (DISPLAY not set). Running command directly.")
-		} else if terminal == "" {
-			fmt.Println("Warning: No compatible terminal emulator found. Running command directly.")
-		}
+		// if os.Getenv("DISPLAY") == "" {
+		// 	fmt.Println("Warning: No X11 display found (DISPLAY not set). Running command directly.")
+		// } else if terminal == "" {
+		// 	fmt.Println("Warning: No compatible terminal emulator found. Running command directly.")
+		// }
 
 		s.app.Suspend(func() {
 			cmd := exec.Command("bash", "-c", fullCmd)
@@ -266,7 +266,7 @@ func runIntegratedCommand(s *AppState, fullCmd string) {
 // runInSystemTerminalWithConfirmAndEfibootmgr runs the install with confirmation and shows efibootmgr output after
 func runInSystemTerminalWithConfirmAndEfibootmgr(s *AppState, device string) {
 	installCmd := fmt.Sprintf(`echo "Review the command and type YES and hit enter to continue. "; read c; if [ "$c" = "YES" ]; then /opt/bin/build-usb-hybrid-grub-boot.sh %s | tee /tmp/install.log; echo ""; echo "Install completed. Here is your current EFI boot order:"; echo ""; efibootmgr 2>&1 || true; echo ""; echo "Make sure the entry 'ubuntu' is the first one to boot if you want Ubuntu to boot first."; echo ""; echo "To set boot order run: sudo efibootmgr --bootorder XXXX,YYYY,ZZZZ"; echo ""; echo "--- Install command output ---"; cat /tmp/install.log; echo ""; echo "Hit enter to continue"; read ; else echo Aborted!; fi`, device)
-	
+
 	runInSystemTerminal(s, installCmd)
 }
 
@@ -302,15 +302,6 @@ partition.
 CAREFULLY:
   - For any case the data in the full disk or the partition will be erased.
   - You cannot select the disk or partition that the current live system runs. They are mounted at %s with size %s`, string(output), mountPoint, size)
-}
-
-func getDiskInfoDataOld() string {
-	cmdStr := "lsblk --list --noheadings | grep -v memory | grep -v squashfs | grep -v 'loop' | grep -v 'zram' | grep -v 'crypto_LUKS' | grep -v 'EFI System' | grep -v 'BIOS boot partition'"
-	out, err := exec.Command("bash", "-c", cmdStr).Output()
-	if err != nil {
-		return "[red]Error fetching disk info.[white]"
-	}
-	return string(out) + "\n\n[red]CAREFUL: [white]Data in selected disk/partition will be erased.\n"
 }
 
 // runCreateChangeImage prompts for IMAGE_SIZE in terminal then runs create_change_image
